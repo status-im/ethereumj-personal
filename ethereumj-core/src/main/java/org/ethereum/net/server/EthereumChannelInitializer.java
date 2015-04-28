@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +25,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
-@Component
+//@Component
 public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChannel> {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
@@ -43,6 +43,7 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
     WorldManager worldManager;
 
     public EthereumChannelInitializer() {
+        logger.info("Channel initializer instantiated");
     }
 
     public void initChannel(NioSocketChannel ch) throws Exception {

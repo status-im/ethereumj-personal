@@ -71,13 +71,13 @@ public class RepositoryVMTestDummy extends RepositoryImpl{
                     accountState.setStateRoot(contractDetails.getStorageHash());
                     accountState.setCodeHash(sha3(contractDetails.getCode()));
                     worldState.put(hash, accountState);
-                    if (logger.isDebugEnabled()) {
+                    /*if (logger.isDebugEnabled()) {
                         logger.debug("update: [{}],nonce: [{}] balance: [{}] \n [{}]",
                                 Hex.toHexString(hash.getData()),
                                 accountState.getNonce(),
                                 accountState.getBalance(),
                                 contractDetails.getStorage());
-                    }
+                    }*/
 
                 }
 

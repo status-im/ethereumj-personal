@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -33,7 +33,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 22.05.2014
  */
-@Component
+//@Component
 public class PeerDiscovery {
 
     private static final Logger logger = LoggerFactory.getLogger("peerdiscovery");

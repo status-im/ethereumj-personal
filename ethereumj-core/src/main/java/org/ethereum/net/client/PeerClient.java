@@ -16,8 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -26,8 +26,8 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  *
  * @see <a href="http://netty.io">http://netty.io</a>
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class PeerClient {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
@@ -42,6 +42,11 @@ public class PeerClient {
 
     @Autowired
     public EthereumChannelInitializer ethereumChannelInitializer;
+
+
+    public PeerClient() {
+        logger.info("Peer client instantiated");
+    }
 
     public void connect(String host, int port) {
 

@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -14,8 +14,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  * @author Roman Mandeleil
  * @since 22.05.2014
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class WorkerThread implements Runnable {
 
     private final static Logger logger = LoggerFactory.getLogger("peerdiscovery");

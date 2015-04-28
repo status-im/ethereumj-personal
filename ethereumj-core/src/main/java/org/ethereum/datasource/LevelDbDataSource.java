@@ -17,8 +17,10 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.iq80.leveldb.impl.Iq80DBFactory;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+import android.content.Context;
 
 /**
  * @author Roman Mandeleil
@@ -30,12 +32,17 @@ public class LevelDbDataSource implements KeyValueDataSource {
 
     String name;
     private DB db;
+    private Context context;
 
     public LevelDbDataSource() {
     }
 
     public LevelDbDataSource(String name) {
         this.name = name;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     @Override
@@ -46,20 +53,26 @@ public class LevelDbDataSource implements KeyValueDataSource {
         Options options = new Options();
         options.createIfMissing(true);
         options.compressionType(CompressionType.NONE);
+        org.iq80.leveldb.Logger logger1 = new org.iq80.leveldb.Logger() {
+            public void log(String message) {
+                logger.debug(message);
+            }
+        };
+        options.logger(logger1);
         try {
             logger.debug("Opening database");
-            File dbLocation = new File(System.getProperty("user.dir") + "/" +
-                    SystemProperties.CONFIG.databaseDir() + "/");
+            File dbLocation = context.getDir(SystemProperties.CONFIG.databaseDir(), 0);
             File fileLocation = new File(dbLocation, name);
 
             if (SystemProperties.CONFIG.databaseReset()) {
                 destroyDB(fileLocation);
             }
 
-            logger.debug("Initializing new or existing database: '{}'", name);
+            logger.debug("Initializing new or existing database: '{}'", fileLocation.getAbsolutePath());
             db = factory.open(fileLocation, options);
 
-        } catch (IOException ioe) {
+        } catch (Exception ioe) {
+            logger.debug("x");
             logger.error(ioe.getMessage(), ioe);
             throw new RuntimeException("Can't initialize database");
         }

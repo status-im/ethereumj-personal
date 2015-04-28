@@ -125,8 +125,8 @@ public class RepositoryTrack implements Repository {
         BigInteger saveNonce = accountState.getNonce();
         accountState.incrementNonce();
 
-        logger.trace("increase nonce addr: [{}], from: [{}], to: [{}]", Hex.toHexString(addr),
-                saveNonce, accountState.getNonce());
+        //logger.trace("increase nonce addr: [{}], from: [{}], to: [{}]", Hex.toHexString(addr),
+        //        saveNonce, accountState.getNonce());
 
         return accountState.getNonce();
     }
@@ -140,8 +140,8 @@ public class RepositoryTrack implements Repository {
         BigInteger saveNonce = accountState.getNonce();
         accountState.setNonce(bigInteger);
 
-        logger.trace("increase nonce addr: [{}], from: [{}], to: [{}]", Hex.toHexString(addr),
-                saveNonce, accountState.getNonce());
+        //logger.trace("increase nonce addr: [{}], from: [{}], to: [{}]", Hex.toHexString(addr),
+        //        saveNonce, accountState.getNonce());
 
         return accountState.getNonce();
 
@@ -170,8 +170,8 @@ public class RepositoryTrack implements Repository {
 
         BigInteger newBalance = accountState.addToBalance(value);
 
-        logger.trace("adding to balance addr: [{}], balance: [{}], delta: [{}]", Hex.toHexString(addr),
-                newBalance, value);
+        //logger.trace("adding to balance addr: [{}], balance: [{}], delta: [{}]", Hex.toHexString(addr),
+        //        newBalance, value);
 
         return newBalance;
     }
@@ -192,8 +192,8 @@ public class RepositoryTrack implements Repository {
     @Override
     public void addStorageRow(byte[] addr, DataWord key, DataWord value) {
 
-        logger.trace("add storage row, addr: [{}], key: [{}] val: [{}]", Hex.toHexString(addr),
-                key.toString(), value.toString());
+        //logger.trace("add storage row, addr: [{}], key: [{}] val: [{}]", Hex.toHexString(addr),
+        //        key.toString(), value.toString());
 
         getContractDetails(addr).put(key, value);
     }

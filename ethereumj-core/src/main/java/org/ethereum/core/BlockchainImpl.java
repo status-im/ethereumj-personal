@@ -17,10 +17,11 @@ import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.springframework.util.FileSystemUtils;
+//import org.springframework.stereotype.Component;
+//import org.springframework.util.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
 
-import javax.annotation.Resource;
+//import javax.annotation.Resource;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -62,7 +63,7 @@ import static org.ethereum.core.Denomination.SZABO;
  * @author Nick Savers
  * @since 20.05.2014
  */
-@Component
+//@Component
 public class BlockchainImpl implements Blockchain {
 
     /* A scalar value equal to the minimum limit of gas expenditure per block */
@@ -74,8 +75,6 @@ public class BlockchainImpl implements Blockchain {
     // to avoid using minGasPrice=0 from Genesis for the wallet
     private static final long INITIAL_MIN_GAS_PRICE = 10 * SZABO.longValue();
 
-    @Resource
-    @Qualifier("pendingTransactions")
     private Set<Transaction> pendingTransactions;
 
     @Autowired
@@ -110,6 +109,10 @@ public class BlockchainImpl implements Blockchain {
 
     private List<Chain> altChains = new ArrayList<>();
     private List<Block> garbage = new ArrayList<>();
+
+    public BlockchainImpl(final Set<Transaction> pendingTransactions) {
+        this.pendingTransactions = Collections.synchronizedSet(pendingTransactions);
+    }
 
     @Override
     public byte[] getBestBlockHash() {
@@ -352,8 +355,8 @@ public class BlockchainImpl implements Blockchain {
             receipt.setPostTxState(repository.getRoot());
             receipt.setTransaction(tx);
 
-            stateLogger.info("block: [{}] executed tx: [{}] \n  state: [{}]", block.getNumber(), i,
-                    Hex.toHexString(repository.getRoot()));
+            //stateLogger.info("block: [{}] executed tx: [{}] \n  state: [{}]", block.getNumber(), i,
+            //        Hex.toHexString(repository.getRoot()));
 
             stateLogger.info("[{}] ", receipt.toString());
 
@@ -376,7 +379,7 @@ public class BlockchainImpl implements Blockchain {
 
         long totalTime = System.nanoTime() - saveTime;
         adminInfo.addBlockExecTime(totalTime);
-        logger.info("block: num: [{}] hash: [{}], executed after: [{}]nano", block.getNumber(), block.getShortHash(), totalTime);
+        //logger.info("block: num: [{}] hash: [{}], executed after: [{}]nano", block.getNumber(), block.getShortHash(), totalTime);
 
         return receipts;
     }
@@ -494,7 +497,12 @@ public class BlockchainImpl implements Blockchain {
         if (!CONFIG.recordBlocks()) return;
 
         if (bestBlock.isGenesis()) {
-            FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
+            //FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
+            try{
+              FileUtils.forceDelete(new File(CONFIG.dumpDir()));
+            }catch(IOException e){
+              e.printStackTrace();
+            }
         }
 
         String dir = CONFIG.dumpDir() + "/";

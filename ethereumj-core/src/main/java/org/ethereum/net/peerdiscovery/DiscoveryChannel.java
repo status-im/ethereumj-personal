@@ -27,8 +27,8 @@ import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +39,8 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  *
  * @see <a href="http://netty.io">http://netty.io</a>
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class DiscoveryChannel {
 
     private static final Logger logger = LoggerFactory.getLogger("net");

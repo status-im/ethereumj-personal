@@ -15,14 +15,14 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 /**
  * The PacketEncoder encodes the message and adds a sync token to every packet.
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class MessageEncoder extends MessageToByteEncoder<Message> {
 
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");

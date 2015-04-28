@@ -6,7 +6,7 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.p2p.HelloMessage;
 
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.Set;
  * @author Roman Mandeleil
  * @since 12.11.2014
  */
-@Component(value = "EthereumListener")
+//@Component(value = "EthereumListener")
 public class CompositeEthereumListener implements EthereumListener {
 
     List<EthereumListener> listeners = new ArrayList<>();

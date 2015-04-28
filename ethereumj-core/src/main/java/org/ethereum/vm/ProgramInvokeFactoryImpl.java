@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -21,7 +21,7 @@ import java.math.BigInteger;
  * @author Roman Mandeleil
  * @since 08.06.2014
  */
-@Component("ProgramInvokeFactory")
+//@Component("ProgramInvokeFactory")
 public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
     private static final Logger logger = LoggerFactory.getLogger("VM");
@@ -84,7 +84,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
         /*** GASLIMIT op ***/
         long gaslimit = block.getGasLimit();
-
+/*
         if (logger.isInfoEnabled()) {
             logger.info("Top level call: \n" +
                             "address={}\n" +
@@ -117,7 +117,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
                     Hex.toHexString(difficulty),
                     gaslimit);
         }
-
+*/
         return new ProgramInvokeImpl(address, origin, caller, balance, gasPrice, gas, callValue, data,
                 lastHash, coinbase, timestamp, number, difficulty, gaslimit,
                 repository, blockStore);
@@ -148,7 +148,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
         DataWord number = program.getNumber();
         DataWord difficulty = program.getDifficulty();
         DataWord gasLimit = program.getGaslimit();
-
+/*
         if (logger.isInfoEnabled()) {
             logger.info("Internal call: \n" +
                             "address={}\n" +
@@ -180,7 +180,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
                     Hex.toHexString(difficulty.getNoLeadZeroesData()),
                     gasLimit.longValue());
         }
-
+*/
         return new ProgramInvokeImpl(address, origin, caller, balance, gasPrice, gas, callValue,
                 data, lastHash, coinbase, timestamp, number, difficulty, gasLimit,
                 repository, program.invokeData.getCallDeep() + 1, blockStore, byTestingSuite);

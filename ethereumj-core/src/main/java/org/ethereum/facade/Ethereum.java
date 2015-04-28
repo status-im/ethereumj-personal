@@ -7,6 +7,7 @@ import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.ethereum.net.server.ChannelManager;
+import org.springframework.context.ApplicationContext;
 
 import java.math.BigInteger;
 
@@ -62,6 +63,8 @@ public interface Ethereum {
      *
      */
     public Set<PeerInfo> getPeers();
+
+    public void setContext(ApplicationContext context);
 
     public void startPeerDiscovery();
 

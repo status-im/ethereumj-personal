@@ -1,6 +1,6 @@
 package org.ethereum.wallet;
 
-import javax.xml.bind.DatatypeConverter;
+//import javax.xml.bind.DatatypeConverter;
 
 public class EtherSaleWallet {
 
@@ -14,7 +14,7 @@ public class EtherSaleWallet {
     }
 
     public byte[] getEncseedBytes() {
-        return DatatypeConverter.parseHexBinary(encseed);
+        return hexStringToByteArray(encseed);
     }
 
     public void setEncseed(String encseed) {
@@ -26,7 +26,7 @@ public class EtherSaleWallet {
     }
 
     public byte[] getEthaddrBytes() {
-        return DatatypeConverter.parseHexBinary(ethaddr);
+        return hexStringToByteArray(ethaddr);
     }
 
     public void setEthaddr(String ethaddr) {
@@ -57,5 +57,15 @@ public class EtherSaleWallet {
                 ", email='" + email + '\'' +
                 ", btcaddr='" + btcaddr + '\'' +
                 '}';
+    }
+
+    public static byte[] hexStringToByteArray(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
     }
 }

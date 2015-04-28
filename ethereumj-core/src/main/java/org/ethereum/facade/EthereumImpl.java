@@ -8,6 +8,7 @@ import org.ethereum.manager.WorldManager;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.ethereum.net.server.ChannelManager;
+import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.net.submit.TransactionExecutor;
 import org.ethereum.net.submit.TransactionTask;
@@ -16,9 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -26,13 +26,15 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.robospring.RoboSpring;
+
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
  * @author Roman Mandeleil
  * @since 27.07.2014
  */
-@Component
+//@Component
 public class EthereumImpl implements Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
@@ -54,9 +56,10 @@ public class EthereumImpl implements Ethereum {
 
     public EthereumImpl() {
         System.out.println();
+        logger.info("EthereumImpl constructor");
+        //RoboSpring.autowire(ctx);
     }
 
-    @PostConstruct
     public void init() {
         worldManager.loadBlockchain();
         if (CONFIG.listenPort() > 0) {
@@ -68,6 +71,10 @@ public class EthereumImpl implements Ethereum {
                     }
             );
         }
+    }
+
+    public void setContext(ApplicationContext ctx) {
+        this.ctx = ctx;
     }
 
     /**
@@ -180,7 +187,6 @@ public class EthereumImpl implements Ethereum {
 
         PeerClient peer = worldManager.getActivePeer();
         if (peer == null) {
-
             peer = new PeerClient();
             worldManager.setActivePeer(peer);
         }

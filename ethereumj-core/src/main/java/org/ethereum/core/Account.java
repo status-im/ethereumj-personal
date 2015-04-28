@@ -5,8 +5,8 @@ import org.ethereum.manager.WorldManager;
 import org.ethereum.util.Utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -18,8 +18,8 @@ import java.util.Set;
 /**
  * Representation of an actual account or contract
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class Account {
 
     private ECKey ecKey;

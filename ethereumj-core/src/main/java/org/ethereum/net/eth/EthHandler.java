@@ -19,8 +19,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -50,8 +50,8 @@ import static org.ethereum.net.message.StaticMessages.GET_TRANSACTIONS_MESSAGE;
  * <li>BLOCKS               :   Send a list of blocks</li>
  * </ul>
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 
     public final static byte VERSION = 54;

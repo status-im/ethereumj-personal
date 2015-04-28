@@ -12,8 +12,8 @@ import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.DependsOn;
+//import org.springframework.stereotype.Component;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -48,8 +48,8 @@ import javax.xml.transform.stream.StreamResult;
  * The Wallet handles the management of accounts with addresses and private keys.
  * New accounts can be generated and added to the wallet and existing accounts can be queried.
  */
-@Component
-@DependsOn("worldManager")
+//@Component
+//@DependsOn("worldManager")
 public class Wallet {
 
     private Logger logger = LoggerFactory.getLogger("wallet");

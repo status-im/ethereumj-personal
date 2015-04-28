@@ -15,16 +15,16 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
  * The PacketDecoder parses every valid Ethereum packet to a Message object
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class MessageDecoder extends ByteToMessageDecoder {
 
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");
@@ -80,8 +80,8 @@ public class MessageDecoder extends ByteToMessageDecoder {
         // Don't have the full message yet
         long msgSize = in.getInt(in.readerIndex());
         if (msgSize > in.readableBytes()) {
-            loggerWire.trace("msg decode: magicBytes: [{}], readBytes: [{}] / msgSize: [{}] ",
-                    syncToken, in.readableBytes(), msgSize);
+            //loggerWire.trace("msg decode: magicBytes: [{}], readBytes: [{}] / msgSize: [{}] ",
+            //        syncToken, in.readableBytes(), msgSize);
             in.resetReaderIndex();
             return false;
         }

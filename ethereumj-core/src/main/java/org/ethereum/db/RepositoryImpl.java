@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import org.spongycastle.util.encoders.Hex;
 
-import org.springframework.stereotype.Component;
-import org.springframework.util.FileSystemUtils;
+import org.apache.commons.io.FileUtils;
+//import org.springframework.util.FileSystemUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -65,17 +65,25 @@ public class RepositoryImpl implements Repository {
 
     public RepositoryImpl(KeyValueDataSource detailsDS, KeyValueDataSource stateDS) {
 
+        logger.debug("test1");
         detailsDS.setName(DETAILS_DB);
+        logger.debug("test2");
         detailsDS.init();
+        logger.debug("test3");
         this.detailsDS = detailsDS;
 
         stateDS.setName(STATE_DB);
+        logger.debug("test4");
         stateDS.init();
+        logger.debug("test5");
         this.stateDS = stateDS;
 
         detailsDB = new DatabaseImpl(detailsDS);
+        logger.debug("test6");
         stateDB = new DatabaseImpl(stateDS);
+        logger.debug("test7");
         worldState = new TrieImpl(stateDB.getDb());
+        logger.debug("test8");
     }
 
     public RepositoryImpl(String detailsDbName, String stateDbName) {
@@ -137,14 +145,14 @@ public class RepositoryImpl implements Repository {
                     accountState.setStateRoot(contractDetails.getStorageHash());
                     accountState.setCodeHash(sha3(contractDetails.getCode()));
                     worldState.update(hash.getData(), accountState.getEncoded());
-                    if (logger.isDebugEnabled()) {
+                    /*if (logger.isDebugEnabled()) {
                         logger.debug("update: [{}],nonce: [{}] balance: [{}] \n [{}]",
                                 Hex.toHexString(hash.getData()),
                                 accountState.getNonce(),
                                 accountState.getBalance(),
                                 contractDetails.getStorage());
                     }
-
+*/
                 }
 
             }
@@ -193,7 +201,13 @@ public class RepositoryImpl implements Repository {
 
         if (block.getNumber() == 0 && txNumber == 0)
             if (CONFIG.dumpCleanOnRestart()) {
-                FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
+                try{
+                  FileUtils.forceDelete(new File(CONFIG.dumpDir()));
+                }catch(IOException e){
+                  e.printStackTrace();
+                }
+                
+                //FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
             }
 
         String dir = CONFIG.dumpDir() + "/";

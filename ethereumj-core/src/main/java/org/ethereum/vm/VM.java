@@ -4,16 +4,12 @@ import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.ContractDetails;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.MessageCall.MsgType;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
-
 import java.nio.ByteBuffer;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -79,8 +75,9 @@ public class VM {
 
         try {
             OpCode op = OpCode.code(program.getCurrentOp());
-            if (op == null)
-                throw new Program.IllegalOperationException();
+            if (op == null) {
+                throw Program.Exception.invalidOpCode(program.getCurrentOp());
+            }
 
             program.setLastOp(op.val());
             program.stackRequire(op.require());
@@ -161,7 +158,7 @@ public class VM {
                     gasCost = GasCost.CALL;
                     DataWord callGasWord = stack.get(stack.size() - 1);
                     if (callGasWord.compareTo(program.getGas()) == 1) {
-                        throw program.new OutOfGasException();
+                        throw Program.Exception.notEnoughOpGas(op, callGasWord, program.getGas());
                     }
                     callGas = callGasWord.longValue();
                     BigInteger in = memNeeded(stack.get(stack.size() - 4), stack.get(stack.size() - 5)); // in offset+size
@@ -184,7 +181,7 @@ public class VM {
                     BigInteger dataSize = stack.get(stack.size() - 2).value();
                     BigInteger dataCost = dataSize.multiply(BigInteger.valueOf(GasCost.LOG_DATA_GAS));
                     if (program.getGas().value().compareTo(dataCost) < 0) {
-                        throw program.new OutOfGasException();
+                        throw Program.Exception.notEnoughOpGas(op, dataCost, program.getGas().value());
                     }
 
                     gasCost = GasCost.LOG_GAS +
@@ -203,8 +200,9 @@ public class VM {
             program.spendGas(gasCost, op.name());
 
             // Avoid overflows
-            if (newMemSize.compareTo(MAX_GAS) == 1)
-                throw program.new OutOfGasException();
+            if (newMemSize.compareTo(MAX_GAS) == 1) {
+                throw Program.Exception.gasOverflow(newMemSize, MAX_GAS);
+            }
 
             // memory gas calc
             long memoryUsage = (newMemSize.longValue() + 31) / 32 * 32;
@@ -1008,13 +1006,13 @@ public class VM {
                     DataWord value = program.stackPop();
                     DataWord inOffset = program.stackPop();
                     DataWord inSize = program.stackPop();
-
+/*
                     if (logger.isInfoEnabled())
                         logger.info(logString, program.getPC(),
                                 String.format("%-12s", op.name()),
                                 program.getGas().value(),
                                 program.invokeData.getCallDeep(), hint);
-
+*/
                     program.createContract(value, inOffset, inSize);
 
                     program.step();
@@ -1031,7 +1029,7 @@ public class VM {
 
                     DataWord outDataOffs = program.stackPop();
                     DataWord outDataSize = program.stackPop();
-
+/*
                     if (logger.isInfoEnabled()) {
                         hint = "addr: " + Hex.toHexString(codeAddress.getLast20Bytes())
                                 + " gas: " + gas.shortHex()
@@ -1042,7 +1040,7 @@ public class VM {
                                 program.getGas().value(),
                                 program.invokeData.getCallDeep(), hint);
                     }
-
+*/
                     program.memoryExpand(outDataOffs, outDataSize);
 
                     MessageCall msg = new MessageCall(
@@ -1092,13 +1090,13 @@ public class VM {
             }
 
             program.setPreviouslyExecutedOp(op.val());
-
+/*
             if (logger.isInfoEnabled() && !op.equals(CALL)
                     && !op.equals(CREATE))
                 logger.info(logString, stepBefore, String.format("%-12s",
                                 op.name()), program.getGas().longValue(),
                         program.invokeData.getCallDeep(), hint);
-
+*/
             vmCounter++;
         } catch (RuntimeException e) {
             logger.warn("VM halted: [{}]", e.toString());
@@ -1183,7 +1181,7 @@ public class VM {
             String opString = Hex.toHexString(new byte[]{op.val()});
             String gasString = Hex.toHexString(program.getGas().getNoLeadZeroesData());
 
-            dumpLogger.trace("{} {} {} {}", addressString, pcString, opString, gasString);
+            //dumpLogger.trace("{} {} {} {}", addressString, pcString, opString, gasString);
         } else if (CONFIG.dumpStyle().equals("pretty")) {
             dumpLogger.trace("    STACK");
             for (DataWord item : program.getStack()) {
@@ -1209,9 +1207,9 @@ public class VM {
             int level = program.invokeData.getCallDeep();
             String contract = Hex.toHexString(program.getOwnerAddress().getLast20Bytes());
             String internalSteps = String.format("%4s", Integer.toHexString(program.getPC())).replace(' ', '0').toUpperCase();
-            dumpLogger.trace("{} | {} | #{} | {} : {} | {} | -{} | {}x32",
-                    level, contract, vmCounter, internalSteps, op,
-                    gasBefore, gasCost, memWords);
+            //dumpLogger.trace("{} | {} | #{} | {} : {} | {} | -{} | {}x32",
+            //        level, contract, vmCounter, internalSteps, op,
+             //       gasBefore, gasCost, memWords);
         }
     }
 }

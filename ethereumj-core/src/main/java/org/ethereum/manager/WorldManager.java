@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -27,9 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -38,7 +35,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 01.06.2014
  */
-@Component
+//@Component
 public class WorldManager {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
@@ -52,7 +49,6 @@ public class WorldManager {
     @Autowired
     private Wallet wallet;
 
-    @Autowired
     private PeerClient activePeer;
 
     @Autowired
@@ -71,7 +67,10 @@ public class WorldManager {
     @Autowired
     private EthereumListener listener;
 
-    @PostConstruct
+    public WorldManager() {
+        logger.info("World manager instantiated");
+    }
+
     public void init() {
         byte[] cowAddr = HashUtil.sha3("cow".getBytes());
         wallet.importKey(cowAddr);
@@ -164,10 +163,10 @@ public class WorldManager {
             BigInteger totalDifficulty = blockStore.getTotalDifficulty();
             blockchain.setTotalDifficulty(totalDifficulty);
 
-            logger.info("*** Loaded up to block [{}] totalDifficulty [{}] with stateRoot [{}]",
-                    blockchain.getBestBlock().getNumber(),
-                    blockchain.getTotalDifficulty().toString(),
-                    Hex.toHexString(blockchain.getBestBlock().getStateRoot()));
+            //logger.info("*** Loaded up to block [{}] totalDifficulty [{}] with stateRoot [{}]",
+             //       blockchain.getBestBlock().getNumber(),
+             //       blockchain.getTotalDifficulty().toString(),
+             //       Hex.toHexString(blockchain.getBestBlock().getStateRoot()));
         }
 
         if (CONFIG.rootHashStart() != null) {
@@ -200,7 +199,6 @@ public class WorldManager {
     }
 
 
-    @PreDestroy
     public void close() {
         stopPeerDiscovery();
         repository.close();

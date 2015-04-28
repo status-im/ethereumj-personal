@@ -11,8 +11,8 @@ import org.ethereum.net.wire.MessageDecoder;
 import org.ethereum.net.wire.MessageEncoder;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -22,8 +22,8 @@ import java.net.InetSocketAddress;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class Channel {
 
     @Autowired

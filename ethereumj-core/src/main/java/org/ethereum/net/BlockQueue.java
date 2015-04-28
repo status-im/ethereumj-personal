@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
@@ -34,7 +34,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 27.07.2014
  */
-@Component
+//@Component
 public class BlockQueue {
 
     private static final Logger logger = LoggerFactory.getLogger("blockqueue");

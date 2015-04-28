@@ -1,42 +1,30 @@
 package org.ethereum.facade;
 
 import org.ethereum.config.SystemProperties;
-import org.ethereum.core.Transaction;
-import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.datasource.LevelDbDataSource;
-import org.ethereum.datasource.redis.RedisConnection;
-import org.ethereum.db.RepositoryImpl;
-import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.annotation.Bean;
+//import org.springframework.context.annotation.ComponentScan;
+//import org.springframework.context.annotation.Configuration;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+//import org.springframework.jdbc.datasource.DriverManagerDataSource;
+//import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
+//import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Properties;
-import java.util.Set;
 
-import static org.ethereum.config.SystemProperties.CONFIG;
-
-@Configuration
-@EnableTransactionManagement
-@ComponentScan(basePackages = "org.ethereum")
+//@Configuration
+//@EnableTransactionManagement
+//@ComponentScan(basePackages = "org.ethereum")
 public class CommonConfig {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
 
-    @Autowired
-    private RedisConnection redisConnection;
-
+    //@Autowired
+    //private RedisConnection redisConnection;
+/*
     @Bean
     Repository repository() {
         return new RepositoryImpl(keyValueDataSource(), keyValueDataSource());
@@ -83,7 +71,7 @@ public class CommonConfig {
 
         return builder.buildSessionFactory();
     }
-
+*/
     private Properties getHibernateProperties() {
 
         Properties prop = new Properties();
@@ -100,7 +88,7 @@ public class CommonConfig {
         return prop;
     }
 
-
+/*
     @Bean
     public DataSourceTransactionManager transactionManager() {
         DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
@@ -108,7 +96,8 @@ public class CommonConfig {
 
         return dataSourceTransactionManager;
     }
-
+*/
+    /*
     @Bean(name = "dataSource")
     public DriverManagerDataSource dataSource() {
 
@@ -131,5 +120,6 @@ public class CommonConfig {
 
         return ds;
     }
+    */
 
 }

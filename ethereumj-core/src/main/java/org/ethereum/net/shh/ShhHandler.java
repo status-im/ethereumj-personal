@@ -10,16 +10,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
+//import org.springframework.context.annotation.Scope;
+//import org.springframework.stereotype.Component;
 
 /**
  * Process the messages between peers with 'shh' capability on the network.
  *
  * Peers with 'shh' capability can send/receive:
  */
-@Component
-@Scope("prototype")
+//@Component
+//@Scope("prototype")
 public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     public final static byte VERSION = 1;

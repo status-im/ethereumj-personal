@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+//import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,13 +20,12 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.annotation.PostConstruct;
 
 /**
  * @author Roman Mandeleil
  * @since 11.11.2014
  */
-@Component
+//@Component
 public class ChannelManager {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
@@ -43,7 +42,6 @@ public class ChannelManager {
     }
 
 
-    @PostConstruct
     public void init() {
         scheduleChannelCollector();
     }

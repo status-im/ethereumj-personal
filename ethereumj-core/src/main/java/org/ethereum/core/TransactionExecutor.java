@@ -170,12 +170,13 @@ public class TransactionExecutor {
             track.addBalance(receiverAddress, txValue); // balance will be read again below
             track.addBalance(senderAddress, txValue.negate());
 
-            if (stateLogger.isDebugEnabled())
+            /*if (stateLogger.isDebugEnabled())
                 stateLogger.debug("Update value balance \n "
                                 + "sender={}, receiver={}, value={}",
                         Hex.toHexString(senderAddress),
                         Hex.toHexString(receiverAddress),
                         new BigInteger(tx.getValue()));
+                        */
         }
 
 
@@ -243,6 +244,7 @@ public class TransactionExecutor {
                 if (CONFIG.vmTrace()) {
                     String traceAsJson = "{}";
                     if (program != null) {
+                        ProgramResult result = program.getResult();
                         ProgramTrace trace = program.getProgramTrace();
                         trace.setResult(result.getHReturn());
                         trace.setError(result.getException());
@@ -290,12 +292,13 @@ public class TransactionExecutor {
                 result.getGasUsed()).multiply(gasPrice));
 
         if (refund.signum() > 0) {
-            if (stateLogger.isDebugEnabled())
+            /*if (stateLogger.isDebugEnabled())
                 stateLogger
                         .debug("After contract execution the sender address refunded with gas leftover, "
                                         + "\n sender={} \n contract={}  \n gas_refund= {}",
                                 Hex.toHexString(senderAddress),
                                 Hex.toHexString(contractAddress), refund);
+                                */
             // gas refund
             repository.addBalance(senderAddress, refund);
             repository.addBalance(coinbase, refund.negate());
@@ -307,12 +310,13 @@ public class TransactionExecutor {
             BigInteger futureRefundBI = BigInteger.valueOf(futureRefund);
             BigInteger futureRefundVal = futureRefundBI.multiply(gasPrice);
 
-            if (stateLogger.isDebugEnabled())
+ /*           if (stateLogger.isDebugEnabled())
                 stateLogger
                         .debug("After contract execution the sender address refunded with storage save refunds, "
                                         + "\n sender={} \n contract={}  \n gas_refund= {}",
                                 Hex.toHexString(senderAddress),
                                 Hex.toHexString(contractAddress), futureRefundVal);
+                                */
             repository.addBalance(senderAddress, futureRefundVal);
             repository.addBalance(coinbase, futureRefundVal.negate());
         }
