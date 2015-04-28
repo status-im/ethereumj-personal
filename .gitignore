@@ -31,3 +31,5 @@ test_db
 
 # Mac
 .DS_Store
+
+local.properties

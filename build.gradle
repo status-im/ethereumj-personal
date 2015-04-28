@@ -1,21 +1,10 @@
-wrapper.gradleVersion = '2.2.1'
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-allprojects {
-    apply plugin: 'eclipse'
-}
-
-subprojects {
-    apply plugin: 'java'
-
-    group = 'org.ethereum'
-    version = '0.8.4-SNAPSHOT'
-
-    compileJava.options.encoding = 'UTF-8'
-    compileJava.options.compilerArgs << '-XDignore.symbol.file'
-
-    compileTestJava.options.encoding = 'UTF-8'
-
+buildscript {
     repositories {
         jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.2.0'
     }
 }
