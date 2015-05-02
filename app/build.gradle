@@ -38,7 +38,7 @@ android {
 }
 
 dependencies {
-    compile project(':ethereum-core')
+    compile project(':ethereumj-core')
     compile fileTree(include: ['*.jar'], dir: '../libraries')
     //compile 'com.android.support:appcompat-v7:21.0.3'
     compile files('./libs/robospring-1.0.7.jar')
