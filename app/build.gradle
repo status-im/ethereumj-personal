@@ -35,6 +35,21 @@ android {
     dexOptions {
         javaMaxHeapSize "4g"
     }
+    
+    // TODO remove this
+    lintOptions {
+        abortOnError false
+    }
+
+    buildTypes {
+        debug {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 dependencies {
