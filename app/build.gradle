@@ -41,15 +41,6 @@ android {
         abortOnError false
     }
 
-    buildTypes {
-        debug {
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-
-        release {
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
 }
 
 dependencies {
@@ -59,5 +50,6 @@ dependencies {
     compile files('./libs/robospring-1.0.7.jar')
     //compile 'com.litl:android-leveldb:1.0.3@aar'
     //compile "org.slf4j:slf4j-android:1.6.1-RC1"
+    compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
 }
