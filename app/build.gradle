@@ -41,9 +41,15 @@ android {
         abortOnError false
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
 }
 
 dependencies {
+    compile 'com.android.support:multidex:1.0.0'
     compile project(':ethereumj-core')
     compile fileTree(include: ['*.jar'], dir: '../libraries')
     //compile 'com.android.support:appcompat-v7:21.0.3'
