@@ -1,3 +1,17 @@
+buildscript {
+    repositories {
+        maven {
+            name 'JFrog OSS snapshot repo'
+            url  'https://oss.jfrog.org/oss-snapshot-local/'
+        }
+        jcenter()
+    }
+    dependencies {
+        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
+    }
+}
+
+apply plugin: 'me.champeau.gradle.antlr4'
 apply plugin: 'com.android.library'
 
 repositories {
@@ -9,6 +23,9 @@ repositories {
         dirs "libs"
     }
 }
+
+ext.generatedSrcDir = file('src/gen/java')
+
 
 android {
     compileSdkVersion 21
@@ -27,17 +44,26 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    sourceSets {
+        main {
+            java {
+                srcDirs += generatedSrcDir
+            }
+        }
+    }
 }
-//ext.generatedSrcDir = file('src/gen/java')
 
-//sourceSets.main.java.srcDirs += generatedSrcDir
 
-//antlr4 {
-//    extraArgs = ['-package', 'org.ethereum.serpent']
-//    output = file("${generatedSrcDir}/org/ethereum/serpent")
-//}
+antlr4 {
+    extraArgs = ['-package', 'org.ethereum.serpent']
+    output = file("${generatedSrcDir}/org/ethereum/serpent")
+}
+
 
 //compileJava.dependsOn antlr4
+configurations {
+    compile.extendsFrom antlr4
+}
 
 ext {
     slf4jVersion = '1.7.7'
@@ -92,7 +118,7 @@ dependencies {
 
     // for serpent compilation
 
-    //compile 'com.yuvalshavit:antlr-denter:1.1'
+    compile 'com.yuvalshavit:antlr-denter:1.1'
 
     //compile 'org.javassist:javassist:3.15.0-GA'
     compile 'org.slf4j:slf4j-android:1.6.1-RC1'
