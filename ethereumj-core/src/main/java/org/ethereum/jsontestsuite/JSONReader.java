@@ -15,12 +15,14 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import java.nio.file.Files;
+//import java.nio.file.Files;
+import org.apache.commons.io.FileUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
+import android.util.Base64;
 
 public class JSONReader {
 
@@ -48,7 +50,8 @@ public class JSONReader {
             }
             System.out.println("From: " + System.getProperty("ETHEREUM_TEST_PATH"));
             File vmTestFile = new File(System.getProperty("ETHEREUM_TEST_PATH") + filename);
-            return new String(Files.readAllBytes(vmTestFile.toPath()));
+            //return new String(Files.readAllBytes(vmTestFile.toPath()));
+            return new String(FileUtils.readFileToByteArray(vmTestFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -100,7 +103,8 @@ public class JSONReader {
 
                     testSuiteObj = (JSONObject) parser.parse(blobresult);
                     String blob  = (String) testSuiteObj.get("content");
-                    byte[] valueDecoded= Base64.decodeBase64(blob.getBytes() );
+                    //byte[] valueDecoded= Base64.decodeBase64(blob.getBytes() );
+                    byte[] valueDecoded= Base64.decode(blob.getBytes(), Base64.DEFAULT);
                     //System.out.println("Decoded value is " + new String(valueDecoded));
                     return new String(valueDecoded);
                 }

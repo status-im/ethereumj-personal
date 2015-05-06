@@ -24,6 +24,8 @@ import java.math.BigInteger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -77,7 +79,7 @@ public class TestRunner {
         logger.info("sign tx with: {}", Hex.toHexString(secretKey));
         tx.sign(secretKey);
 
-        BlockchainImpl blockchain = new BlockchainImpl();
+        BlockchainImpl blockchain = new BlockchainImpl(new HashSet<org.ethereum.core.Transaction>());
         blockchain.setRepository(repository);
 
         byte[] coinbase = testCase.getEnv().getCurrentCoinbase();
@@ -126,8 +128,10 @@ public class TestRunner {
             org.ethereum.core.AccountState accountState = repository.getAccountState(addr);
             ContractDetails contractDetails = repository.getContractDetails(addr);
 
+            /*
             logger.info("{} \n{} \n{}", Hex.toHexString(addr),
                     accountState.toString(), contractDetails.toString());
+            */
             logger.info("");
 
             AccountState expectedAccountState = testCase.getPost().get(wrap(addr));
