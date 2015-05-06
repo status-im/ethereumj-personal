@@ -2,7 +2,7 @@ package org.ethereum.facade;
 
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
-import org.hibernate.SessionFactory;
+//import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Bean;
 //import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,9 @@ public class DefaultConfig {
 
     //@Bean
     //@Transactional(propagation = Propagation.SUPPORTS)
+    /*
     public BlockStore blockStore(SessionFactory sessionFactory){
         return new InMemoryBlockStore();
     }
+    */
 }
