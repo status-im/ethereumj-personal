@@ -37,19 +37,18 @@ public class JSONReader {
         String json = "";
         if (!SystemProperties.CONFIG.vmTestLoadLocal())
             json = getFromUrl("https://raw.githubusercontent.com/ethereum/tests/" + shacommit + "/" + filename);
+        if (!json.isEmpty()) json = json.replaceAll("//", "data");
         return json.isEmpty() ? getFromLocal(filename) : json;
     }
 
     public static String getFromLocal(String filename) {
         System.out.println("Loading local file: " + filename);
         try {
-            if (System.getProperty("ETHEREUM_TEST_PATH") == null) {
-                System.out.println("ETHEREUM_TEST_PATH is not passed as a VM argument, please make sure you pass it " +
-                        "with the correct path");
-                return "";
+            File vmTestFile = new File(filename);
+            if (!vmTestFile.exists()){
+                System.out.println(" Error: no file: " +filename);
+                System.exit(1);
             }
-            System.out.println("From: " + System.getProperty("ETHEREUM_TEST_PATH"));
-            File vmTestFile = new File(System.getProperty("ETHEREUM_TEST_PATH") + filename);
             //return new String(Files.readAllBytes(vmTestFile.toPath()));
             return new String(FileUtils.readFileToByteArray(vmTestFile));
         } catch (IOException e) {

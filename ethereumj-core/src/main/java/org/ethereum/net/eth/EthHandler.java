@@ -3,6 +3,7 @@ package org.ethereum.net.eth;
 import org.ethereum.core.Block;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.BlockQueue;
@@ -24,17 +25,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigInteger;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.Vector;
+import java.util.*;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.net.message.StaticMessages.GET_TRANSACTIONS_MESSAGE;
+import static org.ethereum.util.ByteUtil.wrap;
 
 /**
  * Process the messages between peers with 'eth' capability on the network.
@@ -54,7 +49,8 @@ import static org.ethereum.net.message.StaticMessages.GET_TRANSACTIONS_MESSAGE;
 //@Scope("prototype")
 public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 
-    public final static byte VERSION = 54;
+    public final static byte VERSION = 60;
+
     public final static byte NETWORK_ID = 0x0;
 
     private final static Logger logger = LoggerFactory.getLogger("net");
@@ -66,7 +62,6 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     private MessageQueue msgQueue = null;
 
     private SyncStatus syncStatus = SyncStatus.INIT;
-    private boolean active = false;
     private StatusMessage handshakeStatusMessage = null;
 
     private BigInteger totalDifficulty = Genesis.getInstance().getCumulativeDifficulty();
@@ -81,7 +76,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 
     @Autowired
     private WorldManager worldManager;
-    private List<byte[]> sentHashes;
+    private List<ByteArrayWrapper> sentHashes;
     private Block lastBlock = Genesis.getInstance();
 
     public EthHandler() {
@@ -96,8 +91,6 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     public void activate() {
         logger.info("ETH protocol activated");
         worldManager.getListener().trace("ETH protocol activated");
-
-        active = true;
         sendStatus();
     }
 
@@ -106,14 +99,9 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     }
 
 
-    public boolean isActive() {
-        return active;
-    }
 
     @Override
     public void channelRead0(final ChannelHandlerContext ctx, EthMessage msg) throws InterruptedException {
-
-        if (!isActive()) return;
 
         if (EthMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("EthHandler invoke: [{}]", msg.getCommand());
@@ -186,7 +174,6 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         logger.debug("handlerRemoved: kill timers in EthHandler");
-        active = false;
         this.killTimers();
     }
 
@@ -255,6 +242,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
         // or peer doesn't have the best hash anymore
         if (receivedHashes.isEmpty()
                 || !this.peerId.equals(hashRetrievalLock)) {
+            chainQueue.addHash( blockchain.getBestBlockHash() );
             sendGetBlocks(); // start getting blocks from hash queue
             return;
         }
@@ -267,6 +255,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
                 chainQueue.addHash(foundHash);    // store unknown hashes in queue until known hash is found
             } else {
 
+                chainQueue.addHash(blockchain.getBestBlockHash());
                 logger.trace("Catch up with the hashes until: {[]}", foundHash);
                 // if known hash is found, ignore the rest
                 sendGetBlocks(); // start getting blocks from hash queue
@@ -288,15 +277,14 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
                 lastBlock = blockList.get(blockList.size() - 1);
         }
 
-        // check if you got less blocks than you asked
-        if (blockList.size() < sentHashes.size()) {
-            for (int i = 0; i < blockList.size(); ++i)
-                sentHashes.remove(0);
-
-            logger.info("Got less blocks: [{}], return [{}] hashes to the queue",
-                    blockList.size(), sentHashes.size());
-            blockchain.getQueue().returnHashes(sentHashes);
+        // check if you got less blocks than you asked,
+        // and keep the missing to ask again
+        sentHashes.remove(wrap(Genesis.getInstance().getHash()));
+        for (Block block : blockList){
+            ByteArrayWrapper hash = wrap(block.getHash());
+            sentHashes.remove(hash);
         }
+        blockchain.getQueue().returnHashes(sentHashes);
 
         if (blockchain.getQueue().isHashesEmpty()) {
             logger.info(" The peer sync process fully complete");
@@ -410,13 +398,20 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
         // save them locally in case the remote peer
         // will return less blocks than requested.
         List<byte[]> hashes = queue.getHashes();
-        this.sentHashes = hashes;
+        this.sentHashes = new ArrayList<>();
+        for (byte[] hash : hashes)
+            this.sentHashes.add(wrap(hash));
 
         if (hashes.isEmpty()) {
             return;
         }
 
+        Collections.shuffle(hashes);
         GetBlocksMessage msg = new GetBlocksMessage(hashes);
+
+        if (logger.isDebugEnabled())
+            logger.debug(msg.getDetailedString());
+
         msgQueue.sendMessage(msg);
     }
 

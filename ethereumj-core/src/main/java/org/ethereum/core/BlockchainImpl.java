@@ -1,20 +1,22 @@
 package org.ethereum.core;
 
+import org.ethereum.config.Constants;
+import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
+import org.ethereum.db.RepositoryImpl;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.BlockQueue;
 import org.ethereum.net.server.ChannelManager;
-import org.ethereum.util.AdvancedDeviceUtils;
+import org.ethereum.trie.Trie;
+import org.ethereum.trie.TrieImpl;
+import org.ethereum.util.*;
 import org.ethereum.vm.ProgramInvokeFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 //import org.springframework.stereotype.Component;
@@ -26,13 +28,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import java.math.BigInteger;
-
+import java.math.BigDecimal;
 import java.util.*;
 
+import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.core.Denomination.SZABO;
+import static org.ethereum.core.ImportResult.EXIST;
+import static org.ethereum.core.ImportResult.NO_PARENT;
+import static org.ethereum.core.ImportResult.SUCCESS;
 
 /**
  * The Ethereum blockchain is in many ways similar to the Bitcoin blockchain,
@@ -66,8 +71,6 @@ import static org.ethereum.core.Denomination.SZABO;
 //@Component
 public class BlockchainImpl implements Blockchain {
 
-    /* A scalar value equal to the minimum limit of gas expenditure per block */
-    private static final long MIN_GAS_LIMIT = 125000L;
 
     private static final Logger logger = LoggerFactory.getLogger("blockchain");
     private static final Logger stateLogger = LoggerFactory.getLogger("state");
@@ -75,7 +78,9 @@ public class BlockchainImpl implements Blockchain {
     // to avoid using minGasPrice=0 from Genesis for the wallet
     private static final long INITIAL_MIN_GAS_PRICE = 10 * SZABO.longValue();
 
-    private Set<Transaction> pendingTransactions;
+//    @Resource
+//    @Qualifier("pendingTransactions")
+    private Set<Transaction> pendingTransactions = new HashSet<>();
 
     @Autowired
     private Repository repository;
@@ -110,8 +115,21 @@ public class BlockchainImpl implements Blockchain {
     private List<Chain> altChains = new ArrayList<>();
     private List<Block> garbage = new ArrayList<>();
 
+
     public BlockchainImpl(final Set<Transaction> pendingTransactions) {
         this.pendingTransactions = Collections.synchronizedSet(pendingTransactions);
+    }
+
+
+    //todo: autowire over constructor
+    public BlockchainImpl(BlockStore blockStore, Repository repository,
+                          Wallet wallet, AdminInfo adminInfo,
+                          EthereumListener listener) {
+        this.blockStore = blockStore;
+        this.repository = repository;
+        this.wallet = wallet;
+        this.adminInfo = adminInfo;
+        this.listener = listener;
     }
 
     @Override
@@ -145,12 +163,25 @@ public class BlockchainImpl implements Blockchain {
         return blockStore.getListOfHashesStartFrom(hash, qty);
     }
 
-    public void tryToConnect(Block block) {
+    private byte[] calcTxTrie(List<Transaction> transactions){
+
+        Trie txsState = new TrieImpl(null);
+
+        if (transactions == null || transactions.isEmpty())
+            return HashUtil.EMPTY_TRIE_HASH;
+
+        for (int i = 0; i < transactions.size(); i++) {
+            txsState.update(RLP.encodeInt(i), transactions.get(i).getEncoded());
+        }
+        return txsState.getRootHash();
+    }
+
+    public ImportResult tryToConnect(Block block) {
 
         recordBlock(block);
 
-        if (logger.isDebugEnabled())
-            logger.debug("Try connect block hash: {}, number: {}",
+        if (logger.isInfoEnabled())
+            logger.info("Try connect block hash: {}, number: {}",
                     Hex.toHexString(block.getHash()).substring(0, 6),
                     block.getNumber());
 
@@ -162,15 +193,22 @@ public class BlockchainImpl implements Blockchain {
                         block.getNumber());
 
             // retry of well known block
-            return;
+            return EXIST;
         }
 
         // The simple case got the block
         // to connect to the main chain
         if (bestBlock.isParentOf(block)) {
             add(block);
-            return;
+            return SUCCESS;
+        } else {
+            if (1 == 1) // FIXME: WORKARROUND
+                return NO_PARENT;
         }
+
+        //TODO POC9 add rollback support
+        if (1 == 1)
+            return SUCCESS; // todo: temporary cancel the rollback
 
         // cut on the chain got lastBlock + 1 > n
         if (block.getNumber() > bestBlock.getNumber() + 1) {
@@ -180,7 +218,7 @@ public class BlockchainImpl implements Blockchain {
         if (!hasParentOnTheChain(block) && block.getNumber() > bestBlock.getNumber()) {
 
             if (1 == 1)
-                return; // todo: temporary cancel the rollback
+                return SUCCESS; // todo: temporary cancel the rollback
 
             logger.info("*** Blockchain will rollback and resynchronise now ");
 
@@ -198,18 +236,24 @@ public class BlockchainImpl implements Blockchain {
 
             blockQueue.clear();
             channelManager.ethSync();
-            return;
+            return SUCCESS;
         }
 
         // provisional, by the garbage will be
         // defined how to deal with it in the
         // future.
         garbage.add(block);
+        return SUCCESS;
     }
 
 
     @Override
     public void add(Block block) {
+
+        if(!isValid(block)){
+            logger.warn("Invalid block with number: {}", block.getNumber());
+            return;
+        }
 
         track = repository.startTracking();
         if (block == null)
@@ -224,9 +268,28 @@ public class BlockchainImpl implements Blockchain {
         }
 
         List<TransactionReceipt> receipts = processBlock(block);
-        stateLogger.info("applied reward for block: [{}]  \n  state: [{}]",
-                block.getNumber(),
-                Hex.toHexString(repository.getRoot()));
+
+        // Sanity checks
+        String receiptHash = Hex.toHexString( block.getReceiptsRoot() );
+        String receiptListHash = Hex.toHexString(calcReceiptsTrie(receipts));
+
+        if( !receiptHash.equals(receiptListHash) ) {
+          logger.error("Block's given Receipt Hash doesn't match: {} != {}", receiptHash, receiptListHash);
+          //return false;
+        }
+
+        String logBloomHash = Hex.toHexString( block.getLogBloom() );
+        String logBloomListHash = Hex.toHexString(calcLogBloom(receipts));
+
+        if( !logBloomHash.equals(logBloomListHash) ) {
+          logger.error("Block's given logBloom Hash doesn't match: {} != {}", logBloomHash, logBloomListHash);
+          //track.rollback();
+          //return;
+        }
+
+        //DEBUG
+        //System.out.println(" Receipts root is: " + receiptHash + " logbloomhash is " + logBloomHash);
+        //System.out.println(" Receipts listroot is: " + receiptListHash + " logbloomlisthash is " + logBloomListHash);
 
         track.commit();
         repository.flush(); // saving to the disc
@@ -242,7 +305,8 @@ public class BlockchainImpl implements Blockchain {
         listener.onBlock(block);
         listener.onBlockReciepts(receipts);
 
-        if (blockQueue.size() == 0 &&
+        if (blockQueue != null &&
+                blockQueue.size() == 0 &&
                 !syncDoneCalled &&
                 channelManager.isAllSync()) {
 
@@ -252,33 +316,87 @@ public class BlockchainImpl implements Blockchain {
         }
     }
 
+    private byte[] calcReceiptsTrie(List<TransactionReceipt> receipts){
+        //TODO Fix Trie hash for receipts - doesnt match cpp
+        Trie receiptsTrie = new TrieImpl(null);
+
+        if (receipts == null || receipts.isEmpty())
+            return HashUtil.EMPTY_TRIE_HASH;
+
+        for (int i = 0; i < receipts.size(); i++) {
+            receiptsTrie.update(RLP.encodeInt(i), receipts.get(i).getEncoded());
+        }
+        return receiptsTrie.getRootHash();
+    }
+
+    private byte[] calcLogBloom( List<TransactionReceipt> receipts ) {
+
+        Bloom retBloomFilter = new Bloom();
+
+        if (receipts == null || receipts.isEmpty())
+            return retBloomFilter.getData();
+
+        for (int i = 0; i < receipts.size(); i++) {
+            retBloomFilter.or(receipts.get(i).getBloomFilter());
+        }
+
+        return retBloomFilter.getData();
+    }
 
     public Block getParent(BlockHeader header) {
 
         return blockStore.getBlockByHash(header.getParentHash());
     }
 
-    /**
-     * Calculate GasLimit
-     * See Yellow Paper: http://www.gavwood.com/Paper.pdf - page 5, 4.3.4 (25)
-     *
-     * @return long value of the gasLimit
-     */
-    public long calcGasLimit(BlockHeader header) {
-        if (header.isGenesis())
-            return Genesis.GAS_LIMIT;
-
-        Block parent = getParent(header);
-        return Math.max(MIN_GAS_LIMIT, (parent.getGasLimit() * (1024 - 1) + (parent.getGasUsed() * 6 / 5)) / 1024);
-    }
-
 
     public boolean isValid(BlockHeader header) {
 
-        return header.getDifficulty() == header.calcDifficulty() // difficulty meets requirements
-                && header.getGasLimit() == calcGasLimit(header) // gasLimit meets requirements
-                && header.getTimestamp() > getParent(header).getTimestamp() // timestamp meets requirements
-                && (header.getExtraData() == null || header.getExtraData().length <= 1024); // extraData doesn't exceed 1024 bytes
+
+        Block parentBlock = getParent(header);
+
+        BigInteger parentDifficulty = parentBlock.getDifficultyBI();
+        long parentTimestamp = parentBlock.getTimestamp();
+
+        BigInteger minDifficulty = header.getTimestamp() >= parentTimestamp + DURATION_LIMIT ?
+                parentBlock.getDifficultyBI().subtract(parentDifficulty.divide(BigInteger.valueOf(Constants.DIFFICULTY_BOUND_DIVISOR))) :
+                parentBlock.getDifficultyBI().add(parentDifficulty.divide(BigInteger.valueOf(Constants.DIFFICULTY_BOUND_DIVISOR)));
+
+        BigInteger difficulty = new BigInteger(1, header.getDifficulty());
+
+        if (header.getNumber() != (parentBlock.getNumber() + 1) ) {
+            logger.error("Block invalid: block number is not parentBlock number + 1, ");
+            return false;
+        }
+
+        if (header.getGasLimit() < header.getGasUsed()) {
+            logger.error("Block invalid: header.getGasLimit() < header.getGasUsed()");
+            return false;
+        }
+
+        if (difficulty.compareTo(minDifficulty) == -1) {
+            logger.error("Block invalid: difficulty < minDifficulty");
+            return false;
+        }
+
+        if (header.getGasLimit() < MIN_GAS_LIMIT) {
+            logger.error("Block invalid: header.getGasLimit() < MIN_GAS_LIMIT");
+            return false;
+        }
+
+        if (header.getExtraData() != null &&  header.getExtraData().length > MAXIMUM_EXTRA_DATA_SIZE) {
+            logger.error("Block invalid: header.getExtraData().length > MAXIMUM_EXTRA_DATA_SIZE");
+            return false;
+        }
+
+        if (header.getGasLimit() < Constants.MIN_GAS_LIMIT ||
+                header.getGasLimit() < parentBlock.getGasLimit() * (GAS_LIMIT_BOUND_DIVISOR - 1) / GAS_LIMIT_BOUND_DIVISOR ||
+                header.getGasLimit() > parentBlock.getGasLimit() * (GAS_LIMIT_BOUND_DIVISOR + 1) / GAS_LIMIT_BOUND_DIVISOR){
+
+            logger.error("Block invalid: gas limit exceeds parentBlock.getGasLimit() (+-) GAS_LIMIT_BOUND_DIVISOR");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -291,49 +409,72 @@ public class BlockchainImpl implements Blockchain {
     private boolean isValid(Block block) {
 
         boolean isValid = true;
-        if (isValid) return (isValid); // todo get back to the real header validation
 
         if (!block.isGenesis()) {
             isValid = isValid(block.getHeader());
 
+            // Sanity checks
+            String trieHash = Hex.toHexString( block.getTxTrieRoot() );
+            String trieListHash = Hex.toHexString(calcTxTrie(block.getTransactionsList()));
+
+/* FIXME: temporary comment out tx.trie validation
+            if( !trieHash.equals(trieListHash) ) {
+              logger.error("Block's given Trie Hash doesn't match: {} != {}", trieHash, trieListHash);
+              return false;
+            }
+*/
+
+            String unclesHash = Hex.toHexString(block.getHeader().getUnclesHash());
+            String unclesListHash = Hex.toHexString( HashUtil.sha3(block.getHeader().getUnclesEncoded( block.getUncleList() ) ) );
+
+            if( !unclesHash.equals(unclesListHash) ) {
+              logger.error("Block's given Uncle Hash doesn't match: {} != {}", unclesHash, unclesListHash);
+              return false;
+            }
+
+
+            if (block.getUncleList().size() > UNCLE_LIST_LIMIT) {
+                logger.error("Uncle list to big: block.getUncleList().size() > UNCLE_LIST_LIMIT");
+                return false;
+            };
+
             for (BlockHeader uncle : block.getUncleList()) {
+
                 // - They are valid headers (not necessarily valid blocks)
-                isValid = isValid(uncle);
-                // - Their parent is a kth generation ancestor for k in {2, 3, 4, 5, 6, 7}
-                long generationGap = block.getNumber() - getParent(uncle).getNumber();
-                isValid = generationGap > 1 && generationGap < 8;
-                // - They were not uncles of the kth generation ancestor for k in {1, 2, 3, 4, 5, 6}
-                generationGap = block.getNumber() - uncle.getNumber();
-                isValid = generationGap > 0 && generationGap < 7;
+                if (!isValid(uncle)) return false;
+
+                //if uncle's parent's number is not less than currentBlock - UNCLE_GEN_LIMIT, mark invalid
+                isValid = !(getParent(uncle).getNumber() < (block.getNumber() - UNCLE_GENERATION_LIMIT) );
+                if (!isValid){
+                    logger.error("Uncle too old: generationGap must be under UNCLE_GENERATION_LIMIT");
+                    return false;
+                }
+
+
             }
         }
-        if (!isValid)
-            logger.warn("WARNING: Invalid - {}", this);
-        return isValid;
 
+        return isValid;
     }
 
     private List<TransactionReceipt> processBlock(Block block) {
 
         List<TransactionReceipt> receipts = new ArrayList<>();
-        if (isValid(block)) {
-            if (!block.isGenesis()) {
-                if (!CONFIG.blockChainOnly()) {
-                    wallet.addTransactions(block.getTransactionsList());
-                    receipts = applyBlock(block);
-                    wallet.processBlock(block);
-                }
+        if (!block.isGenesis()) {
+            if (!CONFIG.blockChainOnly()) {
+                wallet.addTransactions(block.getTransactionsList());
+                receipts = applyBlock(block);
+                wallet.processBlock(block);
             }
-            storeBlock(block, receipts);
-        } else {
-            logger.warn("Invalid block with nr: {}", block.getNumber());
         }
+        storeBlock(block, receipts);
 
         return receipts;
     }
 
     private List<TransactionReceipt> applyBlock(Block block) {
 
+        logger.info("applyBlock: block: [{}] tx.list: [{}]", block.getNumber(), block.getTransactionsList().size());
         long saveTime = System.nanoTime();
         int i = 1;
         long totalGasUsed = 0;
@@ -344,13 +485,17 @@ public class BlockchainImpl implements Blockchain {
 
             TransactionExecutor executor = new TransactionExecutor(tx, block.getCoinbase(),
                     track, blockStore,
-                    programInvokeFactory, block, listener);
-            executor.execute();
+                    programInvokeFactory, block, listener, totalGasUsed);
 
-            TransactionReceipt receipt = executor.getReceipt();
-            totalGasUsed += receipt.getCumulativeGasLong();
+            executor.init();
+            executor.execute2();
+            executor.go();
+            executor.finalization();
+
+            totalGasUsed += executor.getGasUsed();
 
             track.commit();
+            TransactionReceipt receipt = new TransactionReceipt();
             receipt.setCumulativeGas(totalGasUsed);
             receipt.setPostTxState(repository.getRoot());
             receipt.setTransaction(tx);
@@ -373,6 +518,11 @@ public class BlockchainImpl implements Blockchain {
         updateTotalDifficulty(block);
 
         track.commit();
+
+        stateLogger.info("applied reward for block: [{}]  \n  state: [{}]",
+                block.getNumber(),
+                Hex.toHexString(repository.getRoot()));
+
 
         if (block.getNumber() >= CONFIG.traceStartBlock())
             repository.dumpState(block, totalGasUsed, 0, null);
@@ -398,12 +548,15 @@ public class BlockchainImpl implements Blockchain {
         // Add extra rewards based on number of uncles
         if (block.getUncleList().size() > 0) {
             for (BlockHeader uncle : block.getUncleList()) {
-                track.addBalance(uncle.getCoinbase(), Block.UNCLE_REWARD);
+                track.addBalance(uncle.getCoinbase(),
+                  new BigDecimal(block.BLOCK_REWARD).multiply(BigDecimal.valueOf(8 + uncle.getNumber() - block.getNumber()).divide(new BigDecimal(8))).toBigInteger());
+
+                totalBlockReward = totalBlockReward.add(Block.INCLUSION_REWARD);
             }
-            totalBlockReward = totalBlockReward.add(Block.INCLUSION_REWARD
-                    .multiply(BigInteger.valueOf(block.getUncleList().size())));
         }
         track.addBalance(block.getCoinbase(), totalBlockReward);
+
+
     }
 
     @Override
@@ -576,5 +729,6 @@ public class BlockchainImpl implements Blockchain {
     public void commitTracking() {
         track.commit();
     }
+
 
 }

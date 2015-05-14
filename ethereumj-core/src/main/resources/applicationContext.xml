@@ -93,7 +93,8 @@
   <bean id="channel" class="org.ethereum.net.server.Channel" scope="prototype">
   </bean>
 
-  <bean id="ethereumChannelInitializer" class="org.ethereum.net.server.EthereumChannelInitializer">
+  <bean id="ethereumChannelInitializer" class="org.ethereum.net.server.EthereumChannelInitializer" scope="prototype">
+
   </bean>
 
   <bean id="peerServer" class="org.ethereum.net.server.PeerServer">
@@ -102,10 +103,7 @@
   <bean id="shhHandler" class="org.ethereum.net.shh.ShhHandler" scope="prototype">
   </bean>
 
-  <bean id="messageDecoder" class="org.ethereum.net.wire.MessageDecoder" scope="prototype">
-  </bean>
-
-  <bean id="messageEncoder" class="org.ethereum.net.wire.MessageEncoder" scope="prototype">
+  <bean id="messageCodec" class="org.ethereum.net.wire.MessageCodec" scope="prototype">
   </bean>
 
   <bean id="programInvokeFactory" class="org.ethereum.vm.ProgramInvokeFactoryImpl">

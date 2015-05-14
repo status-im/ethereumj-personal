@@ -6,6 +6,7 @@ import org.ethereum.util.RLPList;
 import org.ethereum.util.Utils;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import static org.ethereum.crypto.HashUtil.EMPTY_TRIE_HASH;
 import static org.ethereum.util.ByteUtil.toHexString;
@@ -54,6 +55,10 @@ public class BlockHeader {
     private long gasLimit;
     /* A scalar value equal to the total gas used in transactions in this block */
     private long gasUsed;
+
+
+    private byte[] mixHash;
+
     /* An arbitrary byte array containing data relevant to this block.
      * With the exception of the genesis block, this must be 32 bytes or fewer */
     private byte[] extraData;
@@ -91,14 +96,14 @@ public class BlockHeader {
         this.timestamp = tsBytes == null ? 0 : (new BigInteger(1, tsBytes)).longValue();
 
         this.extraData = rlpHeader.get(12).getRLPData();
-        this.nonce = rlpHeader.get(13).getRLPData();
-
+        this.mixHash = rlpHeader.get(13).getRLPData();
+        this.nonce = rlpHeader.get(14).getRLPData();
     }
 
     public BlockHeader(byte[] parentHash, byte[] unclesHash, byte[] coinbase,
                        byte[] logsBloom, byte[] difficulty, long number,
                        long gasLimit, long gasUsed, long timestamp,
-                       byte[] extraData, byte[] nonce) {
+                       byte[] extraData, byte[] mixHash, byte[] nonce) {
         this.parentHash = parentHash;
         this.unclesHash = unclesHash;
         this.coinbase = coinbase;
@@ -109,6 +114,7 @@ public class BlockHeader {
         this.gasUsed = gasUsed;
         this.timestamp = timestamp;
         this.extraData = extraData;
+        this.mixHash = mixHash;
         this.nonce = nonce;
         this.stateRoot = HashUtil.EMPTY_TRIE_HASH;
     }
@@ -123,7 +129,7 @@ public class BlockHeader {
     public byte[] calcDifficulty() {
         if (this.isGenesis())
             return Genesis.DIFFICULTY;
-        else { //todo find the right way to calc difficulty
+        else {
 //          Block parent = this.getParent();
 //          long parentDifficulty = new BigInteger(1, parent.getDifficulty()).longValue();
 //          long newDifficulty = this.getTimestamp() < parent.getTimestamp() + 5 ? parentDifficulty - (parentDifficulty >> 10) : (parentDifficulty + (parentDifficulty >> 10));
@@ -139,10 +145,6 @@ public class BlockHeader {
 
     public byte[] getParentHash() {
         return parentHash;
-    }
-
-    public void setParentHash(byte[] parentHash) {
-        this.parentHash = parentHash;
     }
 
     public byte[] getUnclesHash() {
@@ -173,25 +175,31 @@ public class BlockHeader {
         return txTrieRoot;
     }
 
-    public void setTxTrieRoot(byte[] txTrieRoot) {
-        this.txTrieRoot = txTrieRoot;
+    public void setReceiptsRoot(byte[] receiptTrieRoot) {
+        this.receiptTrieRoot = receiptTrieRoot;
     }
 
-    public byte[] getReceiptTrieRoot() {
+    public byte[] getReceiptsRoot() {
         return receiptTrieRoot;
     }
+
+    public void setTransactionsRoot(byte[] stateRoot) {
+        this.txTrieRoot = stateRoot;
+    }
+
 
     public byte[] getLogsBloom() {
         return logsBloom;
     }
 
-    public void setReceiptTrieRoot(byte[] receiptTrieRoot) {
-        this.receiptTrieRoot = receiptTrieRoot;
-    }
-
     public byte[] getDifficulty() {
         return difficulty;
     }
+
+    public BigInteger getDifficultyBI() {
+        return new BigInteger(1, difficulty);
+    }
+
 
     public void setDifficulty(byte[] difficulty) {
         this.difficulty = difficulty;
@@ -229,12 +237,12 @@ public class BlockHeader {
         this.gasUsed = gasUsed;
     }
 
-    public byte[] getExtraData() {
-        return extraData;
+    public byte[] getMixHash() {
+        return mixHash;
     }
 
-    public void setExtraData(byte[] extraData) {
-        this.extraData = extraData;
+    public byte[] getExtraData() {
+        return extraData;
     }
 
     public byte[] getNonce() {
@@ -273,17 +281,30 @@ public class BlockHeader {
         byte[] gasLimit = RLP.encodeBigInteger(BigInteger.valueOf(this.gasLimit));
         byte[] gasUsed = RLP.encodeBigInteger(BigInteger.valueOf(this.gasUsed));
         byte[] timestamp = RLP.encodeBigInteger(BigInteger.valueOf(this.timestamp));
+
         byte[] extraData = RLP.encodeElement(this.extraData);
+        byte[] mixHash = RLP.encodeElement(this.mixHash);
         if (withNonce) {
             byte[] nonce = RLP.encodeElement(this.nonce);
             return RLP.encodeList(parentHash, unclesHash, coinbase,
                     stateRoot, txTrieRoot, receiptTrieRoot, logsBloom, difficulty, number,
-                    gasLimit, gasUsed, timestamp, extraData, nonce);
+                    gasLimit, gasUsed, timestamp, extraData, mixHash, nonce);
         } else {
             return RLP.encodeList(parentHash, unclesHash, coinbase,
                     stateRoot, txTrieRoot, receiptTrieRoot, logsBloom, difficulty, number,
-                    gasLimit, gasUsed, timestamp, extraData);
+                    gasLimit, gasUsed, timestamp, extraData, mixHash);
         }
+    }
+
+    public byte[] getUnclesEncoded(List<BlockHeader> uncleList) {
+
+        byte[][] unclesEncoded = new byte[uncleList.size()][];
+        int i = 0;
+        for (BlockHeader uncle : uncleList) {
+            unclesEncoded[i] = uncle.getEncoded();
+            ++i;
+        }
+        return RLP.encodeList(unclesEncoded);
     }
 
     public String toString() {
@@ -304,6 +325,7 @@ public class BlockHeader {
         toStringBuff.append("  gasUsed=").append(gasUsed).append(suffix);
         toStringBuff.append("  timestamp=").append(timestamp).append(" (").append(Utils.longToDateTime(timestamp)).append(")").append(suffix);
         toStringBuff.append("  extraData=").append(toHexString(extraData)).append(suffix);
+        toStringBuff.append("  mixHash=").append(toHexString(mixHash)).append(suffix);
         toStringBuff.append("  nonce=").append(toHexString(nonce)).append(suffix);
         return toStringBuff.toString();
     }

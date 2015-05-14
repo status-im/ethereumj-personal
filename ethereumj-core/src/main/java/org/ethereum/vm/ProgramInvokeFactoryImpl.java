@@ -171,18 +171,22 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
                     balance.toString(),
                     gasPrice.longValue(),
                     gas.longValue(),
-                    callValue.toString(),
+                    Hex.toHexString(callValue.getNoLeadZeroesData()),
                     data == null ? "" : Hex.toHexString(data),
                     Hex.toHexString(lastHash.getData()),
                     Hex.toHexString(coinbase.getLast20Bytes()),
                     timestamp.longValue(),
                     number.longValue(),
                     Hex.toHexString(difficulty.getNoLeadZeroesData()),
-                    gasLimit.longValue());
+                    gasLimit.bigIntValue());
         }
 */
         return new ProgramInvokeImpl(address, origin, caller, balance, gasPrice, gas, callValue,
                 data, lastHash, coinbase, timestamp, number, difficulty, gasLimit,
                 repository, program.invokeData.getCallDeep() + 1, blockStore, byTestingSuite);
+    }
+
+    public void setBlockchain(Blockchain blockchain) {
+        this.blockchain = blockchain;
     }
 }

@@ -16,6 +16,7 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.security.SignatureException;
+import java.util.Arrays;
 
 import static org.ethereum.util.ByteUtil.*;
 
@@ -96,9 +97,17 @@ public class Transaction {
             this.receiveAddress = ByteUtil.EMPTY_BYTE_ARRAY;
         }
 
-        getEncoded();
         parsed = true;
     }
+
+    public Transaction(byte[] nonce, byte[] gasPrice, byte[] gasLimit, byte[] receiveAddress, byte[] value, byte[] data, byte[] r, byte[] s, byte v) {
+        this(nonce, gasPrice, gasLimit, receiveAddress, value, data);
+
+        ECDSASignature signature = new ECDSASignature(new BigInteger(r), new BigInteger(s));
+        signature.v = v;
+        this.signature = signature;
+    }
+
 
     public void rlpParse() {
 
@@ -208,7 +217,7 @@ public class Transaction {
 
     public boolean isContractCreation() {
         if (!parsed) rlpParse();
-        return this.receiveAddress == null || this.receiveAddress == ByteUtil.EMPTY_BYTE_ARRAY;
+        return this.receiveAddress == null || Arrays.equals(this.receiveAddress,ByteUtil.EMPTY_BYTE_ARRAY);
     }
 
     /*
@@ -342,7 +351,7 @@ public class Transaction {
         return tx.hashCode() == this.hashCode();
     }
 
-    public static Transaction createDefault(String from, String to, BigInteger ammount, BigInteger nonce){
+    public static Transaction createDefault(String to, BigInteger ammount, BigInteger nonce){
 
         return new Transaction(BigIntegers.asUnsignedByteArray(nonce),
                 BigIntegers.asUnsignedByteArray(DEFAULT_GAS_PRICE),
@@ -351,4 +360,6 @@ public class Transaction {
                 BigIntegers.asUnsignedByteArray(ammount),
                 null);
     }
+
+
 }

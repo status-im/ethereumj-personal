@@ -8,9 +8,9 @@ import org.hibernate.SessionFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-//import org.springframework.stereotype.Repository;
-//import org.springframework.transaction.annotation.Propagation;
-//import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 
@@ -23,11 +23,10 @@ import java.util.List;
  */
 public class BlockStoreImpl implements BlockStore {
 
-    @Autowired
     private SessionFactory sessionFactory;
 
-    public BlockStoreImpl() {
-
+    public BlockStoreImpl(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
     @Override
@@ -39,7 +38,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Block getBlockByNumber(long blockNumber) {
 
         List result = sessionFactory.getCurrentSession().
@@ -53,7 +52,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Block getBlockByHash(byte[] hash) {
 
         List result = sessionFactory.getCurrentSession().
@@ -67,7 +66,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public List<byte[]> getListOfHashesStartFrom(byte[] hash, int qty) {
 
@@ -90,7 +89,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public void deleteBlocksSince(long number) {
 
         sessionFactory.getCurrentSession().
@@ -101,7 +100,7 @@ public class BlockStoreImpl implements BlockStore {
 
 
     @Override
-    //@Transactional
+    @Transactional
     public void saveBlock(Block block, List<TransactionReceipt> receipts) {
 
         BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(),
@@ -120,7 +119,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public BigInteger getTotalDifficultySince(long number) {
 
         return (BigInteger) sessionFactory.getCurrentSession().
@@ -131,7 +130,7 @@ public class BlockStoreImpl implements BlockStore {
 
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public BigInteger getTotalDifficulty() {
 
         return (BigInteger) sessionFactory.getCurrentSession().
@@ -140,7 +139,7 @@ public class BlockStoreImpl implements BlockStore {
 
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public Block getBestBlock() {
 
         Long bestNumber = (Long)
@@ -155,7 +154,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     public List<Block> getAllBlocks() {
 
@@ -171,7 +170,7 @@ public class BlockStoreImpl implements BlockStore {
     }
 
     @Override
-    //@Transactional
+    @Transactional
     public void reset() {
         sessionFactory.getCurrentSession().
                 createQuery("delete from BlockVO").executeUpdate();

@@ -3,6 +3,7 @@ package org.ethereum.manager;
 import org.ethereum.core.*;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
@@ -27,6 +28,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+//import javax.annotation.PostConstruct;
+//import javax.annotation.PreDestroy;
+
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -49,6 +53,7 @@ public class WorldManager {
     @Autowired
     private Wallet wallet;
 
+//    @Autowired
     private PeerClient activePeer;
 
     @Autowired
@@ -67,10 +72,11 @@ public class WorldManager {
     @Autowired
     private EthereumListener listener;
 
-    public WorldManager() {
+	public WorldManager() {
         logger.info("World manager instantiated");
     }
 
+//    @PostConstruct
     public void init() {
         byte[] cowAddr = HashUtil.sha3("cow".getBytes());
         wallet.importKey(cowAddr);
@@ -142,15 +148,16 @@ public class WorldManager {
         if (bestBlock == null) {
             logger.info("DB is empty - adding Genesis");
 
-            for (PremineRaw raw : Genesis.getPremine()) {
-                repository.createAccount(raw.getAddr());
-                repository.addBalance(raw.getAddr(), raw.getValue().multiply(raw.getDenomination().value()));
+            Genesis genesis = (Genesis)Genesis.getInstance();
+            for (ByteArrayWrapper key : genesis.getPremine().keySet()) {
+                repository.createAccount(key.getData());
+                repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
 
             blockStore.saveBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
 
             blockchain.setBestBlock(Genesis.getInstance());
-            blockchain.setTotalDifficulty(BigInteger.ZERO);
+            blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
 
             listener.onBlock(Genesis.getInstance());
             repository.dumpState(Genesis.getInstance(), 0, 0, null);
@@ -199,6 +206,7 @@ public class WorldManager {
     }
 
 
+//    @PreDestroy
     public void close() {
         stopPeerDiscovery();
         repository.close();

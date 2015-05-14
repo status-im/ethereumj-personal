@@ -48,25 +48,25 @@ public class StatusMessage extends EthMessage {
     private void parse() {
         RLPList paramsList = (RLPList) RLP.decode2(encoded).get(0);
 
-        this.protocolVersion = paramsList.get(1).getRLPData()[0];
-        byte[] networkIdBytes = paramsList.get(2).getRLPData();
+        this.protocolVersion = paramsList.get(0).getRLPData()[0];
+        byte[] networkIdBytes = paramsList.get(1).getRLPData();
         this.networkId = networkIdBytes == null ? 0 : networkIdBytes[0];
-        this.totalDifficulty = paramsList.get(3).getRLPData();
-        this.bestHash = paramsList.get(4).getRLPData();
-        this.genesisHash = paramsList.get(5).getRLPData();
+
+        this.totalDifficulty = paramsList.get(2).getRLPData();
+        this.bestHash = paramsList.get(3).getRLPData();
+        this.genesisHash = paramsList.get(4).getRLPData();
 
         parsed = true;
     }
 
     private void encode() {
-        byte[] command = RLP.encodeByte(STATUS.asByte());
         byte[] protocolVersion = RLP.encodeByte(this.protocolVersion);
         byte[] networkId = RLP.encodeByte(this.networkId);
         byte[] totalDifficulty = RLP.encodeElement(this.totalDifficulty);
         byte[] bestHash = RLP.encodeElement(this.bestHash);
         byte[] genesisHash = RLP.encodeElement(this.genesisHash);
 
-        this.encoded = RLP.encodeList(command, protocolVersion, networkId,
+        this.encoded = RLP.encodeList( protocolVersion, networkId,
                 totalDifficulty, bestHash, genesisHash);
     }
 

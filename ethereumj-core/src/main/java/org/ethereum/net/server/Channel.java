@@ -1,22 +1,28 @@
 package org.ethereum.net.server;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.net.MessageQueue;
+import org.ethereum.net.client.Capability;
 import org.ethereum.net.eth.EthHandler;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.p2p.P2pHandler;
+import org.ethereum.net.rlpx.FrameCodec;
 import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.wire.MessageDecoder;
-import org.ethereum.net.wire.MessageEncoder;
-
+import org.ethereum.net.wire.MessageCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.math.BigInteger;
-
 import java.net.InetSocketAddress;
+
+import static org.ethereum.net.message.StaticMessages.HELLO_MESSAGE;
 
 /**
  * @author Roman Mandeleil
@@ -25,6 +31,8 @@ import java.net.InetSocketAddress;
 //@Component
 //@Scope("prototype")
 public class Channel {
+
+    private final static Logger logger = LoggerFactory.getLogger("net");
 
     @Autowired
     ChannelManager channelManager;
@@ -42,10 +50,7 @@ public class Channel {
     ShhHandler shhHandler;
 
     @Autowired
-    MessageDecoder messageDecoder;
-
-    @Autowired
-    MessageEncoder messageEncoder;
+    MessageCodec messageCodec;
 
     InetSocketAddress inetSocketAddress;
 
@@ -56,13 +61,45 @@ public class Channel {
     public Channel() {
     }
 
-    public void init() {
+    public void init(String remoteId) {
+
+        messageCodec.setRemoteId(remoteId, this);
+        //messageCodec.setMsgQueue(msgQueue);
+
         p2pHandler.setMsgQueue(msgQueue);
         ethHandler.setMsgQueue(msgQueue);
         shhHandler.setMsgQueue(msgQueue);
 
         startupTS = System.currentTimeMillis();
     }
+
+    public void publicRLPxHandshakeFinished(ChannelHandlerContext ctx, FrameCodec frameCodec, HelloMessage helloRemote, byte[] nodeId) throws IOException, InterruptedException {
+        ctx.pipeline().addLast(Capability.P2P, p2pHandler);
+
+
+        p2pHandler.setChannel(this);
+        p2pHandler.setHandshake(helloRemote, ctx);
+
+//        ctx.pipeline().addLast(Capability.ETH, getEthHandler());
+//        ctx.pipeline().addLast(Capability.SHH, getShhHandler());
+    }
+
+
+    public void sendHelloMessage(ChannelHandlerContext ctx, FrameCodec frameCodec, String nodeId) throws IOException, InterruptedException {
+
+        HELLO_MESSAGE.setPeerId(nodeId);
+        byte[] payload = HELLO_MESSAGE.getEncoded();
+
+        ByteBuf byteBufMsg = ctx.alloc().buffer();
+        frameCodec.writeFrame(new FrameCodec.Frame(HELLO_MESSAGE.getCode(), payload), byteBufMsg);
+        ctx.writeAndFlush(byteBufMsg).sync();
+
+        if (logger.isInfoEnabled())
+            logger.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), HELLO_MESSAGE);
+
+    }
+
+
 
     public P2pHandler getP2pHandler() {
         return p2pHandler;
@@ -76,12 +113,8 @@ public class Channel {
         return shhHandler;
     }
 
-    public MessageDecoder getMessageDecoder() {
-        return messageDecoder;
-    }
-
-    public MessageEncoder getMessageEncoder() {
-        return messageEncoder;
+    public MessageCodec getMessageCodec() {
+        return messageCodec;
     }
 
     public void sendTransaction(Transaction tx) {

@@ -3,11 +3,13 @@ package org.ethereum.db;
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
 import org.ethereum.datasource.KeyValueDataSource;
+import org.ethereum.datasource.HashMapDB;
 import org.ethereum.facade.Repository;
 import org.ethereum.json.EtherObjectMapper;
 import org.ethereum.json.JSONHelper;
+
+import org.ethereum.trie.SecureTrie;
 import org.ethereum.trie.Trie;
-import org.ethereum.trie.TrieImpl;
 import org.ethereum.vm.DataWord;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -65,31 +67,23 @@ public class RepositoryImpl implements Repository {
 
     public RepositoryImpl(KeyValueDataSource detailsDS, KeyValueDataSource stateDS) {
 
-        logger.debug("test1");
         detailsDS.setName(DETAILS_DB);
-        logger.debug("test2");
         detailsDS.init();
-        logger.debug("test3");
         this.detailsDS = detailsDS;
 
         stateDS.setName(STATE_DB);
-        logger.debug("test4");
         stateDS.init();
-        logger.debug("test5");
         this.stateDS = stateDS;
 
         detailsDB = new DatabaseImpl(detailsDS);
-        logger.debug("test6");
         stateDB = new DatabaseImpl(stateDS);
-        logger.debug("test7");
-        worldState = new TrieImpl(stateDB.getDb());
-        logger.debug("test8");
+        worldState = new SecureTrie(stateDB.getDb());
     }
 
     public RepositoryImpl(String detailsDbName, String stateDbName) {
         detailsDB = new DatabaseImpl(detailsDbName);
         stateDB = new DatabaseImpl(stateDbName);
-        worldState = new TrieImpl(stateDB.getDb());
+        worldState = new SecureTrie(stateDB.getDb());
     }
 
 
@@ -102,7 +96,7 @@ public class RepositoryImpl implements Repository {
 
         stateDS.init();
         stateDB = new DatabaseImpl(stateDS);
-        worldState = new TrieImpl(stateDB.getDb());
+        worldState = new SecureTrie(stateDB.getDb());
     }
 
     @Override
@@ -156,7 +150,6 @@ public class RepositoryImpl implements Repository {
                 }
 
             }
-
         }
 
         stateCache.clear();
@@ -253,6 +246,10 @@ public class RepositoryImpl implements Repository {
                 e.printStackTrace();
             }
         }
+    }
+
+    public String getTrieDump(){
+        return worldState.getTrieDump();
     }
 
     public void dumpTrie(Block block) {

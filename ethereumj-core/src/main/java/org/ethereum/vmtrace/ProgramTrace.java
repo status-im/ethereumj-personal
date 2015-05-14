@@ -1,6 +1,8 @@
 package org.ethereum.vmtrace;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.nio.ByteBuffer;
@@ -16,11 +18,12 @@ import static org.ethereum.vmtrace.Serializers.serializeFieldsOnly;
  */
 public class ProgramTrace {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("vmtrace");
     @JsonIgnore
     private byte[] txHash;
     private List<Op> ops = new ArrayList<>();
-    private String result = "";
-    private String error = "";
+    private String result;
+    private String error;
 
     public void setTxHash(byte[] txHash) {
         this.txHash = txHash;
@@ -31,7 +34,7 @@ public class ProgramTrace {
     }
 
     public void setError(Exception error) {
-        this.error = (error == null) ? "" : format("%s: %s", error.getClass().getSimpleName(), error.getMessage());
+        this.error = (error == null) ? "" : format("%s: %s", error.getClass(), error.getMessage());
     }
 
     public void addOp(Op op) {
@@ -46,11 +49,7 @@ public class ProgramTrace {
         this.ops.addAll(programTrace.ops);
     }
 
-    public String asJsonString(boolean needPrettify) {
-        return serializeFieldsOnly(this, needPrettify);
-    }
-    
     public String asJsonString() {
-        return asJsonString(false);
+        return serializeFieldsOnly(this, true);
     }
 }

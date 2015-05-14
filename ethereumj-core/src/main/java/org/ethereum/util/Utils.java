@@ -16,6 +16,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
+//import javax.swing.*;
+
 public class Utils {
 
     private static SecureRandom random = new SecureRandom();
@@ -46,7 +48,13 @@ public class Utils {
         return formatter.format(date);
     }
 
-       static BigInteger _1000_ = new BigInteger("1000");
+/*    public static ImageIcon getImageIcon(String resource) {
+        URL imageURL = ClassLoader.getSystemResource(resource);
+        ImageIcon image = new ImageIcon(imageURL);
+        return image;
+    }*/
+
+    static BigInteger _1000_ = new BigInteger("1000");
 
     public static String getValueShortString(BigInteger number) {
         BigInteger result = number;

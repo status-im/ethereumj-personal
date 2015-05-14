@@ -1,30 +1,24 @@
 package org.ethereum.net;
 
 import org.ethereum.core.Block;
+import org.ethereum.core.ImportResult;
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Blockchain;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
-
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Deque;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
+import static java.lang.Thread.sleep;
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.core.ImportResult.NO_PARENT;
+import static org.ethereum.core.ImportResult.SUCCESS;
 
 /**
  * The processing queue for blocks to be validated and added to the blockchain.
@@ -48,7 +42,7 @@ public class BlockQueue {
     /**
      * Queue with blocks to be validated and added to the blockchain
      */
-    private Queue<Block> blockReceivedQueue = new ConcurrentLinkedQueue<>();
+    private PriorityBlockingQueue<Block> blockReceivedQueue = new PriorityBlockingQueue<>(1000, new BlockByNumberComparator());
 
     /**
      * Highest known total difficulty, representing the heaviest chain on the network
@@ -66,30 +60,47 @@ public class BlockQueue {
     Blockchain blockchain;
 
     public BlockQueue() {
-        timer.scheduleAtFixedRate(new TimerTask() {
+
+        Runnable queueProducer = new Runnable(){
+
+            @Override
             public void run() {
-                nudgeQueue();
+                produceQueue();
             }
-        }, 10, 10);
+        };
+
+        Thread t=new Thread (queueProducer);
+        t.start();
     }
 
     /**
      * Processing the queue adding blocks to the chain.
      */
-    private void nudgeQueue() {
-        try {
-            if (blockReceivedQueue.isEmpty())
-                return;
+    private void produceQueue() {
 
-            logger.info("BlockQueue size: {}", blockReceivedQueue.size());
-            while (!blockReceivedQueue.isEmpty()) {
-                Block block = blockReceivedQueue.poll();
+        while (1==1){
 
-                logger.info("Processing block index: {}", block.getNumber());
-                blockchain.tryToConnect(block);
+            try {
+                Block block = blockReceivedQueue.take();
+                logger.info("BlockQueue size: {}", blockReceivedQueue.size());
+                ImportResult importResult = blockchain.tryToConnect(block);
+
+                // In case we don't have a parent on the chain
+                // return the try and wait for more blocks to come.
+                if (importResult == NO_PARENT){
+                    logger.info("No parent on the chain for block.number: [{}]", block.getNumber());
+                    blockReceivedQueue.add(block);
+                    sleep(2000);
+                }
+
+
+                if (importResult == SUCCESS)
+                    logger.info("Success importing: block number: {}", block.getNumber());
+
+            } catch (Throwable e) {
+                logger.error("Error: {} ", e);
             }
-        } catch (Throwable e) {
-            logger.error("Error: {} ", e.getMessage());
+
         }
     }
 
@@ -105,7 +116,9 @@ public class BlockQueue {
      */
     public void addBlocks(List<Block> blockList) {
 
-        blockReceivedQueue.addAll(blockList);
+        for (Block block : blockList)
+            blockReceivedQueue.put(block);
+
         lastBlock = blockList.get(blockList.size() - 1);
 
         logger.info("Blocks waiting to be proceed:  queue.size: [{}] lastBlock.number: [{}]",
@@ -168,15 +181,27 @@ public class BlockQueue {
         blockHashQueue.addLast(hash);
 
         if (logger.isTraceEnabled()) {
-            logger.trace("Adding hash to a hashQueue: [{}]", Hex.toHexString(hash));
+            logger.trace("Adding hash to a hashQueue: [{}], hash queue size: {} ",
+                    Hex.toHexString(hash).substring(0, 6),
+                    blockHashQueue.size());
         }
     }
 
-    public void returnHashes(List<byte[]> hashes) {
+    public void returnHashes(List<ByteArrayWrapper> hashes) {
+
+        if (hashes.isEmpty()) return;
+
+        logger.info("Hashes remained uncovered: hashes.size: [{}]", hashes.size());
 
         ListIterator iterator = hashes.listIterator(hashes.size());
-        while (iterator.hasPrevious())
-            blockHashQueue.addLast((byte[]) iterator.previous());
+        while (iterator.hasPrevious()) {
+
+            byte[] hash = ((ByteArrayWrapper) iterator.previous()).getData();
+
+            if (logger.isDebugEnabled())
+                logger.debug("Return hash: [{}]", Hex.toHexString(hash));
+            blockHashQueue.addLast(hash);
+        }
     }
 
     public void addNewBlockHash(byte[] hash) {
@@ -203,7 +228,7 @@ public class BlockQueue {
         logger.info("Block hashes list size: [{}]", blockHashQueue.size());
     }
 
-    private class BlockByIndexComparator implements Comparator<Block> {
+    private class BlockByNumberComparator implements Comparator<Block> {
 
         @Override
         public int compare(Block o1, Block o2) {
@@ -254,4 +279,6 @@ public class BlockQueue {
         timer.cancel();
         timer.purge();
     }
+
+
 }

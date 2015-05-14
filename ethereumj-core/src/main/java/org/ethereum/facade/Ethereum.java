@@ -6,6 +6,7 @@ import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.FrameCodec;
 import org.ethereum.net.server.ChannelManager;
 import org.springframework.context.ApplicationContext;
 
@@ -64,15 +65,15 @@ public interface Ethereum {
      */
     public Set<PeerInfo> getPeers();
 
-    public void setContext(ApplicationContext context);
+	public void setContext(ApplicationContext context);
 
     public void startPeerDiscovery();
 
     public void stopPeerDiscovery();
 
-    public void connect(InetAddress addr, int port);
+    public void connect(InetAddress addr, int port, String remoteId);
 
-    public void connect(String ip, int port);
+    public void connect(String ip, int port, String remoteId);
 
     public Blockchain getBlockchain();
 
@@ -137,5 +138,6 @@ public interface Ethereum {
     public ChannelManager getChannelManager();
 
     public Set<Transaction> getPendingTransactions();
+
 
 }

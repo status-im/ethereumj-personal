@@ -33,8 +33,9 @@ public class PeerServer {
 
     @Autowired
     public ChannelManager channelManager;
-
-    @Autowired
+	
+	// TODO: this was removed ???
+	@Autowired
     public EthereumChannelInitializer ethereumChannelInitializer;
 
     @Autowired

@@ -1,37 +1,29 @@
 package org.ethereum.jsontestsuite;
 
-import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Block;
-import org.ethereum.core.TransactionExecutor;
+import org.ethereum.core.BlockchainImpl;
+import org.ethereum.core.TransactionReceipt;
+import org.ethereum.core.Wallet;
 import org.ethereum.db.*;
 import org.ethereum.facade.Repository;
+import org.ethereum.jsontestsuite.builder.BlockBuilder;
+import org.ethereum.jsontestsuite.builder.RepositoryBuilder;
+import org.ethereum.jsontestsuite.model.BlockTck;
+import org.ethereum.listener.CompositeEthereumListener;
+import org.ethereum.listener.EthereumListener;
+import org.ethereum.manager.AdminInfo;
 import org.ethereum.util.ByteUtil;
-import org.ethereum.vm.DataWord;
-import org.ethereum.vm.LogInfo;
-import org.ethereum.vm.Program;
-import org.ethereum.vm.ProgramInvoke;
-import org.ethereum.vm.ProgramInvokeFactory;
-import org.ethereum.vm.ProgramInvokeImpl;
-import org.ethereum.vm.VM;
+import org.ethereum.vm.*;
 import org.ethereum.vmtrace.ProgramTrace;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.ethereum.util.ByteUtil.*;
+import static org.ethereum.jsontestsuite.Utils.parseData;
+import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 
 /**
  * @author Roman Mandeleil
@@ -41,6 +33,8 @@ public class TestRunner {
 
     private Logger logger = LoggerFactory.getLogger("TCK-Test");
     private ProgramTrace trace = null;
+    private boolean setNewStateRoot;
+    private String bestStateRoot;
 
     public List<String> runTestSuite(TestSuite testSuite) {
 
@@ -59,105 +53,92 @@ public class TestRunner {
         return resultCollector;
     }
 
-    public List<String> runTestCase(StateTestCase testCase) {
 
-        List<String> results = new ArrayList<>();
-        logger.info("\n***");
-        logger.info(" Running test case: [" + testCase.getName() + "]");
-        logger.info("***\n");
-
-        logger.info("--------- PRE ---------");
-        RepositoryImpl repository = loadRepository(new RepositoryDummy(),  testCase.getPre());
+    public List<String> runTestCase(BlockTestCase testCase) {
 
 
-        logger.info("loaded repository");
+        /* 1 */ // Create genesis + init pre state
+        Block genesis = BlockBuilder.build(testCase.getGenesisBlockHeader(), null, null);
+        Repository repository = RepositoryBuilder.build(testCase.getPre());
 
-        org.ethereum.core.Transaction tx = createTransaction(testCase.getTransaction());
-        logger.info("transaction: {}", tx.toString());
+        BlockStore blockStore = new InMemoryBlockStore();
+        blockStore.saveBlock(genesis, new ArrayList<TransactionReceipt>());
 
-        byte[] secretKey = testCase.getTransaction().secretKey;
-        logger.info("sign tx with: {}", Hex.toHexString(secretKey));
-        tx.sign(secretKey);
+        Wallet wallet = new Wallet();
+        AdminInfo adminInfo = new AdminInfo();
+        EthereumListener listener = new CompositeEthereumListener();
+        ProgramInvokeFactoryImpl programInvokeFactory = new ProgramInvokeFactoryImpl();
 
-        BlockchainImpl blockchain = new BlockchainImpl(new HashSet<org.ethereum.core.Transaction>());
-        blockchain.setRepository(repository);
+        BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener);
 
-        byte[] coinbase = testCase.getEnv().getCurrentCoinbase();
-        ProgramInvokeFactory invokeFactory = new TestProgramInvokeFactory(testCase.getEnv());
+        blockchain.setBestBlock(genesis);
+        blockchain.setTotalDifficulty(BigInteger.ZERO);
+        blockchain.setProgramInvokeFactory(programInvokeFactory);
+        programInvokeFactory.setBlockchain(blockchain);
 
-        Block block = new Block(
-            ByteUtil.EMPTY_BYTE_ARRAY,
-            ByteUtil.EMPTY_BYTE_ARRAY,
-            coinbase,
-            ByteUtil.EMPTY_BYTE_ARRAY,
-            testCase.getEnv().getCurrentDifficulty(),
-            new BigInteger(1, testCase.getEnv().getCurrentNumber()).longValue(),
-            new BigInteger(1, testCase.getEnv().getCurrentGasLimit()).longValue(),
-            0L,
-            new BigInteger(1, testCase.getEnv().getCurrentTimestamp()).longValue(),
-            ByteUtil.ZERO_BYTE_ARRAY,
-            ByteUtil.ZERO_BYTE_ARRAY,
-            null, null);
 
-        blockchain.setBestBlock(block);
-        blockchain.setProgramInvokeFactory(invokeFactory);
-        blockchain.startTracking();
+        // todo: validate root of the genesis   *!!!*
 
-        Repository track = repository.startTracking();
-        TransactionExecutor executor =
-                new TransactionExecutor(tx, coinbase, track, new BlockStoreDummy(),
-                        invokeFactory, blockchain.getBestBlock());
-        executor.execute();
-        track.commit();
 
-        logger.info("compare results");
+        bestStateRoot = Hex.toHexString(genesis.getStateRoot());
+        /* 2 */ // Create block traffic list
+        List<Block> blockTraffic = new ArrayList<>();
+        for (BlockTck blockTck : testCase.getBlocks()) {
+            Block block = BlockBuilder.build(blockTck.getBlockHeader(),
+                    blockTck.getTransactions(),
+                    blockTck.getUncleHeaders());
 
-        List<LogInfo> logs = null;
-        if (executor.getResult() != null)
-            logs = executor.getResult().getLogInfoList();
+            setNewStateRoot = !((blockTck.getTransactions() == null)
+                && (blockTck.getUncleHeaders() == null)
+                && (blockTck.getBlockHeader() == null));
 
-        List<String> logResults = testCase.getLogs().compareToReal(logs);
-        results.addAll(logResults);
+            //DEBUG System.out.println(" --> " + setNewStateRoot);
+            Block tBlock = null;
+            try {
+                byte[] rlp = parseData(blockTck.getRlp());
+                tBlock = new Block(rlp);
 
-        Set<ByteArrayWrapper> fullAddressSet = repository.getFullAddressSet();
-        int repoSize = 0;
-        for (ByteArrayWrapper addrWrapped : fullAddressSet) {
+//            ArrayList<String> outputSummary =
+//                    BlockHeaderValidator.valid(tBlock.getHeader(), block.getHeader());
 
-            byte[] addr = addrWrapped.getData();
+//            if (!outputSummary.isEmpty()){
+//                for (String output : outputSummary)
+//                    logger.error("%s", output);
+//
+//                System.exit(-1);
+//            }
+                if(setNewStateRoot)
+                  bestStateRoot = Hex.toHexString(tBlock.getStateRoot());
 
-            org.ethereum.core.AccountState accountState = repository.getAccountState(addr);
-            ContractDetails contractDetails = repository.getContractDetails(addr);
-
-            /*
-            logger.info("{} \n{} \n{}", Hex.toHexString(addr),
-                    accountState.toString(), contractDetails.toString());
-            */
-            logger.info("");
-
-            AccountState expectedAccountState = testCase.getPost().get(wrap(addr));
-            if (expectedAccountState == null) {
-                String formattedString = String.format("Unexpected account state: address: %s", Hex.toHexString(addr));
-                results.add(formattedString);
-                continue;
+                blockTraffic.add(tBlock);
+            } catch (Exception e) {
+                System.out.println("*** Exception");
             }
-
-            List<String> result = expectedAccountState.compareToReal(accountState, contractDetails);
-            results.addAll(result);
-
-            ++repoSize;
         }
 
-        int postRepoSize = testCase.getPost().size();
-
-        if (postRepoSize > repoSize) {
-            results.add("ERROR: Expected 'Post' repository contains more accounts than executed repository ");
-
-            logger.info("Full address set: " + fullAddressSet);
-
+        /* 3 */ // Inject blocks to the blockchain execution
+        for (Block block : blockTraffic) {
+            //DEBUG System.out.println(" Examine block: "); System.out.println(block.toString());
+            blockchain.tryToConnect(block);
         }
+
+        //Check state root matches last valid block
+        List<String> results = new ArrayList<>();
+        String currRoot = Hex.toHexString(repository.getRoot());
+        if (!bestStateRoot.equals(currRoot)){
+            String formattedString = String.format("Root hash doesn't match best: expected: %s current: %s",
+                    bestStateRoot, currRoot);
+            results.add(formattedString);
+        }
+
+        Repository postRepository = RepositoryBuilder.build(testCase.getPostState());
+
+        //Uncomment this if you want POST debugging checks enabled
+        //results.addAll(RepositoryValidator.rootValid(repository, postRepository));
 
         return results;
     }
+
 
     public List<String> runTestCase(TestCase testCase) {
 
@@ -168,7 +149,7 @@ public class TestRunner {
 
 
         logger.info("--------- PRE ---------");
-        RepositoryImpl repository = loadRepository(new RepositoryVMTestDummy(),  testCase.getPre());
+        RepositoryImpl repository = loadRepository(new RepositoryVMTestDummy(), testCase.getPre());
 
         try {
 
@@ -484,7 +465,7 @@ public class TestRunner {
                 byte[] expectedHReturn = testCase.getOut();
                 byte[] actualHReturn = EMPTY_BYTE_ARRAY;
                 if (program.getResult().getHReturn() != null) {
-                    actualHReturn = program.getResult().getHReturn().array();
+                    actualHReturn = program.getResult().getHReturn();
                 }
 
                 if (!Arrays.equals(expectedHReturn, actualHReturn)) {
