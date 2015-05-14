@@ -1,21 +1,20 @@
 package org.ethereum.vm;
 
-import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.ContractDetails;
-import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.MessageCall.MsgType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.crypto.HashUtil.sha3;
+import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.vm.OpCode.*;
 
 /**
@@ -183,7 +182,7 @@ public class VM {
                       gasCost += GasCost.NEW_ACCT_CALL;
 
                     //TODO #POC9 Make sure this is converted to BigInteger (256num support)
-                    if (stack.get(stack.size() - 3).intValue() > 0 )
+                    if (!stack.get(stack.size() - 3).isZero() )
                       gasCost += GasCost.VT_CALL;
 
                     callGas = callGasWord.longValue();
@@ -261,7 +260,7 @@ public class VM {
                  * Stop and Arithmetic Operations
                  */
                 case STOP: {
-                    program.setHReturn(ByteBuffer.allocate(0));
+                    program.setHReturn(EMPTY_BYTE_ARRAY);
                     program.stop();
                 }
                 break;
@@ -576,9 +575,9 @@ public class VM {
                 case SHA3: {
                     DataWord memOffsetData = program.stackPop();
                     DataWord lengthData = program.stackPop();
-                    ByteBuffer buffer = program.memoryChunk(memOffsetData, lengthData);
+                    byte[] buffer = program.memoryChunk(memOffsetData.intValue(), lengthData.intValue());
 
-                    byte[] encoded = HashUtil.sha3(buffer.array());
+                    byte[] encoded = sha3(buffer);
                     DataWord word = new DataWord(encoded);
 
                     if (logger.isInfoEnabled())
@@ -702,7 +701,7 @@ public class VM {
                 case CODECOPY:
                 case EXTCODECOPY: {
 
-                    byte[] fullCode = ByteUtil.EMPTY_BYTE_ARRAY;
+                    byte[] fullCode = EMPTY_BYTE_ARRAY;
                     if (op == OpCode.CODECOPY)
                         fullCode = program.getCode();
 
@@ -856,10 +855,10 @@ public class VM {
                         topics.add(topic);
                     }
 
-                    ByteBuffer data = program.memoryChunk(memStart, memOffset);
+                    byte[] data = program.memoryChunk(memStart.intValue(), memOffset.intValue());
 
                     LogInfo logInfo =
-                            new LogInfo(address.getLast20Bytes(), topics, data.array());
+                            new LogInfo(address.getLast20Bytes(), topics, data);
 
                     if (logger.isInfoEnabled())
                         hint = logInfo.toString();
@@ -1056,7 +1055,7 @@ public class VM {
                     DataWord codeAddress = program.stackPop();
                     DataWord value = program.stackPop();
 
-                    if( value.intValue() > 0)
+                    if( !value.isZero())
                       gas = new DataWord(gas.intValue() + GasCost.STIPEND_CALL);
 
                     DataWord inDataOffs = program.stackPop();
@@ -1100,11 +1099,11 @@ public class VM {
                     DataWord offset = program.stackPop();
                     DataWord size = program.stackPop();
 
-                    ByteBuffer hReturn = program.memoryChunk(offset, size);
+                    byte[] hReturn = program.memoryChunk(offset.intValue(), size.intValue());
                     program.setHReturn(hReturn);
 
                     if (logger.isInfoEnabled())
-                        hint = "data: " + Hex.toHexString(hReturn.array())
+                        hint = "data: " + Hex.toHexString(hReturn)
                                 + " offset: " + offset.value()
                                 + " size: " + size.value();
 

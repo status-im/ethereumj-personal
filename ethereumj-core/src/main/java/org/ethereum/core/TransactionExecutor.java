@@ -1,5 +1,6 @@
 package org.ethereum.core;
 
+//import jdk.jfr.events.ThrowablesEvent;
 import org.ethereum.db.BlockStore;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
@@ -181,13 +182,18 @@ public class TransactionExecutor {
     private void create() {
 
         byte[] newContractAddress = tx.getContractAddress();
-        if (!(tx.getData().length == 0)){
+        if (tx.getData() != null && !(tx.getData().length == 0)){
 
             ProgramInvoke programInvoke =
                     programInvokeFactory.createProgramInvoke(tx, currentBlock, cacheTrack, blockStore);
 
             this.vm = new VM();
             this.program = new Program(tx.getData(), programInvoke);
+        } else {
+
+
+            m_endGas = toBI(tx.getGasLimit()).longValue() - basicTxCost;
+            cacheTrack.createAccount(tx.getContractAddress());
         }
 
         BigInteger endowment = toBI(tx.getValue());

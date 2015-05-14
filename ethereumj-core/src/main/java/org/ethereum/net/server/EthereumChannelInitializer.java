@@ -79,4 +79,8 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
         ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
     }
 
+    public void setRemoteId(String remoteId) {
+        this.remoteId = remoteId;
+    }
+
 }

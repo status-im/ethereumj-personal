@@ -54,6 +54,7 @@ public class PeerClient {
         worldManager.getListener().trace("Connecting to: " + host + ":" + port);
 
         EthereumChannelInitializer ethereumChannelInitializer = (EthereumChannelInitializer)ctx.getBean("ethereumChannelInitializer", EthereumChannelInitializer.class);
+        ethereumChannelInitializer.setRemoteId(remoteId);
 
         try {
             Bootstrap b = new Bootstrap();

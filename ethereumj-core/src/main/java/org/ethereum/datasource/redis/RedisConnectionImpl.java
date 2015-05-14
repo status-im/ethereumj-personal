@@ -29,7 +29,7 @@ public class RedisConnectionImpl implements RedisConnection {
         if (!SystemProperties.CONFIG.isRedisEnabled()) return;
 
         String redisCloudUrl = System.getenv(REDISCLOUD_URL);
-        if (hasLength(redisCloudUrl)) {
+        if (!hasLength(redisCloudUrl)) {
             logger.info("Cannot connect to Redis. 'REDISCLOUD_URL' environment variable is not defined.");
             return;
         }

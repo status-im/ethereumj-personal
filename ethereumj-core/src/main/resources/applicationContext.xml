@@ -112,7 +112,8 @@
   <bean id="listener" class="org.ethereum.listener.CompositeEthereumListener">
   </bean>
 
-  
+  <bean id="blockLoader" class="org.ethereum.manager.BlockLoader">
+  </bean>
 
   <bean id="blockStore" class="org.ethereum.db.InMemoryBlockStore">
   </bean>
