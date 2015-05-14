@@ -45,7 +45,7 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
 
     public EthereumChannelInitializer() {
         logger.info("Channel initializer instantiated");
-        this.remoteId = "";
+        this.remoteId = "e3d09d2f829950b5f3f82d1bddb6f5388bff2f2cca880fa47923df4d8129e8c9b5ba5d4371efcffc416b0cefe20cb55b81b2b71183464713a86e60b423b77947";
     }
 
     public EthereumChannelInitializer(String remoteId) {

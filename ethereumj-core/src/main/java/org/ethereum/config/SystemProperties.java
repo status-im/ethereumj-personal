@@ -18,7 +18,7 @@ public class SystemProperties {
 
     private final static int DEFAULT_TX_APPROVE_TIMEOUT = 10;
     private final static String DEFAULT_DISCOVERY_PEER_LIST = "poc-9.ethdev.com:30303";
-    private final static String DEFAULT_ACTIVE_PEER_NODEID = ""; // FIXME
+    private final static String DEFAULT_ACTIVE_PEER_NODEID = "e3d09d2f829950b5f3f82d1bddb6f5388bff2f2cca880fa47923df4d8129e8c9b5ba5d4371efcffc416b0cefe20cb55b81b2b71183464713a86e60b423b77947"; // FIXME
     private final static String DEFAULT_ACTIVE_PEER_IP = "poc-9.ethdev.com";
     private final static int DEFAULT_ACTIVE_PORT = 30303;
     private final static String DEFAULT_SAMPLES_DIR = "samples";
