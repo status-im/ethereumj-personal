@@ -25,7 +25,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.util.BIUtil.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 //import static org.springframework.util.StringUtils.isEmpty;
-import static org.springframework.util.StringUtils.hasLength;
+//import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Roman Mandeleil
@@ -790,7 +790,7 @@ public class Program {
 
     public void saveProgramTraceToFile(String fileName) {
 
-        if (!CONFIG.vmTrace() || !hasLength(CONFIG.vmTraceDir())) return;
+        if (!CONFIG.vmTrace() || CONFIG.vmTraceDir().isEmpty()) return;
 
         String dir = CONFIG.databaseDir() + "/" + CONFIG.vmTraceDir() + "/";
 

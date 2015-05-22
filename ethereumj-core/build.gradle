@@ -1,3 +1,6 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.neenbedankt.android-apt'
+
 buildscript {
     repositories {
         maven {
@@ -8,11 +11,12 @@ buildscript {
     }
     dependencies {
         classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
+        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
     }
 }
 
 apply plugin: 'me.champeau.gradle.antlr4'
-apply plugin: 'com.android.library'
+
 
 repositories {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
@@ -75,8 +79,11 @@ ext {
 }
 
 dependencies {
+    apt 'com.google.dagger:dagger-compiler:2.0'
+    compile 'com.google.dagger:dagger:2.0'
     //compile 'com.android.support:appcompat-v7:+'
     compile fileTree(include: ['*.jar'], dir: 'libs')
+    provided 'org.glassfish:javax.annotation:10.0-b28'
     compile 'com.j256.ormlite:ormlite-core:4.48'
     compile('com.j256.ormlite:ormlite-android:4.48') {
         exclude group: 'commons-logging', module: 'commons-logging'

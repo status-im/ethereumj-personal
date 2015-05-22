@@ -5,25 +5,28 @@ import org.ethereum.core.Block;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.net.BlockQueue;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+//import java.nio.file.Files;
+import org.apache.commons.io.FileUtils;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
-@Component
+//@Component
 public class BlockLoader {
-
-    @Autowired
-    private Blockchain blockchain;
-
+	
+	@Inject
+    Blockchain blockchain;
+  
 
     public void loadBlocks(){
 
@@ -31,7 +34,8 @@ public class BlockLoader {
         try {
             File blocksFile = new File(fileSrc);
             System.out.println("Loading blocks: " + fileSrc);
-            List<String> blocksList = Files.readAllLines(blocksFile.toPath(), StandardCharsets.UTF_8);
+            //List<String> blocksList = Files.readAllLines(blocksFile.toPath(), StandardCharsets.UTF_8);
+            List<String> blocksList = FileUtils.readLines(blocksFile, StandardCharsets.UTF_8);
 
             for (String blockRLP : blocksList){
 

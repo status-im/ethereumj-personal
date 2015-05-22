@@ -21,12 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import static org.ethereum.net.rlpx.FrameCodec.Frame;
 
@@ -61,8 +63,8 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         }
     }
 
-    @Autowired
-    WorldManager worldManager;
+    @Inject
+    EthereumListener listener;
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
@@ -92,7 +94,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         if (loggerNet.isInfoEnabled())
             loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), msg);
 
-        EthereumListener listener = worldManager.getListener();
         listener.onRecvMessage(msg);
 
         out.add(msg);
@@ -102,7 +103,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
 
         String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
-        worldManager.getListener().trace(output);
+        listener.trace(output);
 
         if (loggerNet.isInfoEnabled())
             loggerNet.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), msg);

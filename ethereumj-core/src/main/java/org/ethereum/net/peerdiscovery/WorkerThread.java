@@ -1,14 +1,18 @@
 package org.ethereum.net.peerdiscovery;
 
+import org.ethereum.net.server.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ThreadPoolExecutor;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 /**
  * @author Roman Mandeleil
@@ -23,8 +27,8 @@ public class WorkerThread implements Runnable {
     private PeerInfo peerInfo;
     private ThreadPoolExecutor poolExecutor;
 
-    @Autowired
-    ApplicationContext ctx;
+    @Inject
+    Provider<DiscoveryChannel> discoveryChannelProvider;
 
     public WorkerThread() {
     }
@@ -48,7 +52,8 @@ public class WorkerThread implements Runnable {
 
         try {
 
-            DiscoveryChannel discoveryChannel = ctx.getBean(DiscoveryChannel.class);
+            // TODO: check if this works
+            DiscoveryChannel discoveryChannel = discoveryChannelProvider.get();//ctx.getBean(DiscoveryChannel.class);
             discoveryChannel.connect(peerInfo.getAddress().getHostAddress(), peerInfo.getPort());
             peerInfo.setOnline(true);
 

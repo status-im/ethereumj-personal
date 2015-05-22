@@ -7,13 +7,15 @@ import org.ethereum.facade.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
+
+import javax.inject.Inject;
 
 import static java.lang.Thread.sleep;
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -56,11 +58,11 @@ public class BlockQueue {
 
     private Timer timer = new Timer("BlockQueueTimer");
 
-    @Autowired
     Blockchain blockchain;
 
-    public BlockQueue() {
+    public BlockQueue(Blockchain blockchain) {
 
+        this.blockchain = blockchain;
         Runnable queueProducer = new Runnable(){
 
             @Override

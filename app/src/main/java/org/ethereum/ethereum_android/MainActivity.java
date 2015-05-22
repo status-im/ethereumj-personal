@@ -16,12 +16,20 @@ import android.widget.TextView;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
-import org.springframework.context.ApplicationContext;
+//import org.springframework.context.ApplicationContext;
+import org.ethereum.di.components.DaggerEthereumComponent;
+import org.ethereum.di.components.EthereumComponent;
+import org.ethereum.di.modules.EthereumModule;
+import org.ethereum.ethereum_android.di.components.ApplicationComponent;
+import org.ethereum.ethereum_android.di.modules.ActivityModule;
+import org.ethereum.facade.Ethereum;
+
+import javax.inject.Inject;
 
 
 public class MainActivity extends ActionBarActivity implements OnClickListener, NavigationDrawerCallbacks {
 
-    public static ApplicationContext context = null;
+//    public static ApplicationContext context = null;
     private static final String TAG = "MyActivity";
     private static Integer quit = 0;
     private TextView text1;
@@ -29,13 +37,22 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     private Button walletButton;
 
     public EthereumManager ethereumManager = null;
+    Ethereum ethereum = null;
     private NavigationDrawerFragment mNavigationDrawerFragment;
     private Toolbar mToolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
+
+        //this.getApplicationComponent().inject(this);
+        System.setProperty("sun.arch.data.model", "32");
+        System.setProperty("leveldb.mmap", "false");
+        ethereum = DaggerEthereumComponent.builder()
+                .ethereumModule(new EthereumModule(this))
+                .build().ethereum();
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar_actionbar);
         setSupportActionBar(mToolbar);
@@ -51,9 +68,8 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
 
         StrictMode.enableDefaults();
 
-        System.setProperty("sun.arch.data.model", "32");
-        System.setProperty("leveldb.mmap", "false");
-        new PostTask().execute(getApplicationContext());
+
+        new PostTask().execute(ethereum);
 
         Thread t = new Thread() {
 
@@ -78,6 +94,14 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         };
 
         t.start();
+    }
+
+    protected ApplicationComponent getApplicationComponent() {
+        return ((EthereumApplication)getApplication()).getApplicationComponent();
+    }
+
+    protected ActivityModule getActivityModule() {
+        return new ActivityModule(this);
     }
 
     public void onClick(View v) {
@@ -135,7 +159,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
     }
 
     // The definition of our task class
-    private class PostTask extends AsyncTask<android.content.Context, Integer, String> {
+    private class PostTask extends AsyncTask<Ethereum, Integer, String> {
 
 
         @Override
@@ -145,10 +169,10 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         }
 
         @Override
-        protected String doInBackground(android.content.Context... params) {
-            android.content.Context context=params[0];
+        protected String doInBackground(Ethereum... params) {
+            Ethereum ethereum = params[0];
             Log.v(TAG, "111");
-            ethereumManager = new EthereumManager(context);
+            ethereumManager = new EthereumManager(ethereum);
             Log.v(TAG, "222");
             ethereumManager.connect();
             Log.v(TAG, "333");

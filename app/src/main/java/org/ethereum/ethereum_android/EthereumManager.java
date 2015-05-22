@@ -1,9 +1,11 @@
 package org.ethereum.ethereum_android;
 
+import android.content.Context;
+
+import org.ethereum.EthereumFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.AccountState;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.EthereumFactory;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListenerAdapter;
 
@@ -18,9 +20,9 @@ public class EthereumManager {
 
     public static String log = "";
 
-    public EthereumManager(android.content.Context androidContext) {
+    public EthereumManager(Ethereum ethereum) {
 
-        ethereum = EthereumFactory.getEthereum(androidContext);
+        this.ethereum = ethereum;
         this.addListener();
     }
 
@@ -28,7 +30,7 @@ public class EthereumManager {
 
         ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
                 SystemProperties.CONFIG.activePeerPort(),
-                "e3d09d2f829950b5f3f82d1bddb6f5388bff2f2cca880fa47923df4d8129e8c9b5ba5d4371efcffc416b0cefe20cb55b81b2b71183464713a86e60b423b77947");
+                SystemProperties.CONFIG.activePeerNodeid());
     }
 
     public void loadAccounts() {

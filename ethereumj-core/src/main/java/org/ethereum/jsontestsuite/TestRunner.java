@@ -12,6 +12,9 @@ import org.ethereum.jsontestsuite.model.BlockTck;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
+import org.ethereum.manager.WorldManager;
+import org.ethereum.net.BlockQueue;
+import org.ethereum.net.server.ChannelManager;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.*;
 import org.ethereum.vmtrace.ProgramTrace;
@@ -21,6 +24,8 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.*;
+
+import javax.inject.Inject;
 
 import static org.ethereum.jsontestsuite.Utils.parseData;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -35,6 +40,18 @@ public class TestRunner {
     private ProgramTrace trace = null;
     private boolean setNewStateRoot;
     private String bestStateRoot;
+
+    @Inject
+    public WorldManager worldManager;
+
+    @Inject
+    public ChannelManager channelManager;
+
+    @Inject
+    public ProgramInvokeFactory programInvokeFactory;
+
+    @Inject
+    public BlockQueue blockqueue;
 
     public List<String> runTestSuite(TestSuite testSuite) {
 
@@ -64,17 +81,15 @@ public class TestRunner {
         BlockStore blockStore = new InMemoryBlockStore();
         blockStore.saveBlock(genesis, new ArrayList<TransactionReceipt>());
 
-        Wallet wallet = new Wallet();
+        Wallet wallet = new Wallet(repository);
         AdminInfo adminInfo = new AdminInfo();
         EthereumListener listener = new CompositeEthereumListener();
-        ProgramInvokeFactoryImpl programInvokeFactory = new ProgramInvokeFactoryImpl();
 
-        BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener);
+        BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener, channelManager);
 
         blockchain.setBestBlock(genesis);
         blockchain.setTotalDifficulty(BigInteger.ZERO);
         blockchain.setProgramInvokeFactory(programInvokeFactory);
-        programInvokeFactory.setBlockchain(blockchain);
 
 
         // todo: validate root of the genesis   *!!!*

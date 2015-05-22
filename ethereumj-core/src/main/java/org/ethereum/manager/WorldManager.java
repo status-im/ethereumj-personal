@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import org.spongycastle.util.encoders.Hex;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -33,6 +33,10 @@ import java.util.Set;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+
 /**
  * WorldManager is a singleton containing references to different parts of the system.
  *
@@ -44,39 +48,39 @@ public class WorldManager {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
 
-    @Autowired
     private Blockchain blockchain;
 
-    @Autowired
     private Repository repository;
 
-    @Autowired
     private Wallet wallet;
 
-//    @Autowired
     private PeerClient activePeer;
 
-    @Autowired
     private PeerDiscovery peerDiscovery;
 
-    @Autowired
     private BlockStore blockStore;
 
-    @Autowired
     private ChannelManager channelManager;
 
-    @Autowired
+    // TODO: What is this doing here ?
     private AdminInfo adminInfo;
 
-
-    @Autowired
     private EthereumListener listener;
 
-	public WorldManager() {
+    @Inject
+	public WorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
+                        ,BlockStore blockStore, ChannelManager channelManager, EthereumListener listener) {
         logger.info("World manager instantiated");
+        this.blockchain = blockchain;
+        this.repository = repository;
+        this.wallet = wallet;
+        this.peerDiscovery = peerDiscovery;
+        this.blockStore = blockStore;
+        this.channelManager = channelManager;
+        this.listener = listener;
     }
 
-//    @PostConstruct
+    @PostConstruct
     public void init() {
         byte[] cowAddr = HashUtil.sha3("cow".getBytes());
         wallet.importKey(cowAddr);
@@ -206,7 +210,7 @@ public class WorldManager {
     }
 
 
-//    @PreDestroy
+    @PreDestroy
     public void close() {
         stopPeerDiscovery();
         repository.close();

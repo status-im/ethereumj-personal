@@ -1,5 +1,6 @@
 package org.ethereum.net.shh;
 
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 
@@ -9,7 +10,9 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.inject.Inject;
+
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
@@ -29,8 +32,8 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
-    @Autowired
-    WorldManager worldManager;
+    @Inject
+    public EthereumListener listener;
 
     public ShhHandler() {
     }
@@ -47,7 +50,7 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
         if (ShhMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("ShhHandler invoke: [{}]", msg.getCommand());
 
-        worldManager.getListener().trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
+        listener.trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case STATUS:
@@ -80,7 +83,7 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     public void activate() {
         logger.info("SHH protocol activated");
-        worldManager.getListener().trace("SHH protocol activated");
+        listener.trace("SHH protocol activated");
         this.active = true;
     }
 

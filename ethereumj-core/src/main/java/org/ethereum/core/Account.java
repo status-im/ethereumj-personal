@@ -1,10 +1,11 @@
 package org.ethereum.core;
 
 import org.ethereum.crypto.ECKey;
+import org.ethereum.facade.Repository;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.util.Utils;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
@@ -14,6 +15,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.inject.Inject;
 
 /**
  * Representation of an actual account or contract
@@ -28,10 +31,11 @@ public class Account {
     private Set<Transaction> pendingTransactions =
             Collections.synchronizedSet(new HashSet<Transaction>());
 
-    @Autowired
-    WorldManager worldManager;
+    Repository repository;
 
-    public Account() {
+    @Inject
+    public Account(Repository repository) {
+        this.repository = repository;
     }
 
     public void init() {
@@ -46,7 +50,7 @@ public class Account {
 
     public BigInteger getNonce() {
         AccountState accountState =
-                worldManager.getRepository().getAccountState(getAddress());
+                repository.getAccountState(getAddress());
 
         return accountState.getNonce();
     }
@@ -54,7 +58,7 @@ public class Account {
     public BigInteger getBalance() {
 
         AccountState accountState =
-                worldManager.getRepository().getAccountState(this.getAddress());
+                repository.getAccountState(this.getAddress());
 
         BigInteger balance = BigInteger.ZERO;
 

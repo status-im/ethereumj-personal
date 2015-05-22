@@ -3,12 +3,13 @@ package org.ethereum.net.server;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.db.ByteArrayWrapper;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -19,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 
 //import javax.annotation.PostConstruct;
 
@@ -35,15 +39,15 @@ public class ChannelManager {
     List<Channel> channels = Collections.synchronizedList(new ArrayList<Channel>());
 
     Map<ByteArrayWrapper, Block> blockCache = new HashMap<>();
-
-    @Autowired
-    WorldManager worldManager;
+	
+	@Inject
+    EthereumListener listener;
 
     public ChannelManager() {
     }
 
 
-//    @PostConstruct
+    @PostConstruct
     public void init() {
         scheduleChannelCollector();
     }
@@ -114,7 +118,7 @@ public class ChannelManager {
                 }
 
                 if (channels.size() == 0) {
-                    worldManager.getListener().onNoConnections();
+                    listener.onNoConnections();
                 }
             }
         }, 2000, 5000);

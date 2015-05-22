@@ -14,11 +14,12 @@ import org.ethereum.trie.Trie;
 import org.ethereum.trie.TrieImpl;
 import org.ethereum.util.*;
 import org.ethereum.vm.ProgramInvokeFactory;
+import org.ethereum.vm.ProgramInvokeFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Qualifier;
 //import org.springframework.stereotype.Component;
 //import org.springframework.util.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
@@ -31,6 +32,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
+
+import javax.inject.Inject;
 
 import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -82,34 +85,26 @@ public class BlockchainImpl implements Blockchain {
 //    @Qualifier("pendingTransactions")
     private Set<Transaction> pendingTransactions = new HashSet<>();
 
-    @Autowired
     private Repository repository;
     private Repository track;
 
-    @Autowired
     private BlockStore blockStore;
 
     private Block bestBlock;
     private BigInteger totalDifficulty = BigInteger.ZERO;
 
-    @Autowired
     Wallet wallet;
 
-    @Autowired
     private EthereumListener listener;
 
-    @Autowired
     private BlockQueue blockQueue;
 
-    @Autowired
     private ChannelManager channelManager;
 
     private boolean syncDoneCalled = false;
 
-    @Autowired
     ProgramInvokeFactory programInvokeFactory;
 
-    @Autowired
     private AdminInfo adminInfo;
 
     private List<Chain> altChains = new ArrayList<>();
@@ -122,14 +117,18 @@ public class BlockchainImpl implements Blockchain {
 
 
     //todo: autowire over constructor
+    @Inject
     public BlockchainImpl(BlockStore blockStore, Repository repository,
                           Wallet wallet, AdminInfo adminInfo,
-                          EthereumListener listener) {
+                          EthereumListener listener, ChannelManager channelManager) {
         this.blockStore = blockStore;
         this.repository = repository;
         this.wallet = wallet;
         this.adminInfo = adminInfo;
         this.listener = listener;
+        this.channelManager = channelManager;
+        this.blockQueue = new BlockQueue(this);
+        this.programInvokeFactory = new ProgramInvokeFactoryImpl();
     }
 
     @Override

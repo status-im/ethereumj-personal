@@ -3,8 +3,10 @@ package org.ethereum.net.eth;
 import org.ethereum.core.Block;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
+import org.ethereum.core.Wallet;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Blockchain;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.BlockQueue;
 import org.ethereum.net.MessageQueue;
@@ -19,13 +21,15 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 
 import java.util.*;
+
+import javax.inject.Inject;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.net.message.StaticMessages.GET_TRANSACTIONS_MESSAGE;
@@ -71,11 +75,15 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     private Timer getBlocksTimer = new Timer("GetBlocksTimer");
     private Timer getTxTimer = new Timer("GetTransactionsTimer");
 
-    @Autowired
-    private Blockchain blockchain;
+    @Inject
+    Blockchain blockchain;
 
-    @Autowired
-    private WorldManager worldManager;
+    @Inject
+    EthereumListener listener;
+
+    @Inject
+    Wallet wallet;
+
     private List<ByteArrayWrapper> sentHashes;
     private Block lastBlock = Genesis.getInstance();
 
@@ -90,7 +98,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 
     public void activate() {
         logger.info("ETH protocol activated");
-        worldManager.getListener().trace("ETH protocol activated");
+        listener.trace("ETH protocol activated");
         sendStatus();
     }
 
@@ -106,7 +114,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
         if (EthMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("EthHandler invoke: [{}]", msg.getCommand());
 
-        worldManager.getListener().trace(String.format("EthHandler invoke: [%s]", msg.getCommand()));
+        listener.trace(String.format("EthHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case STATUS:
@@ -156,11 +164,10 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     private void processTransactions(TransactionsMessage msg) {
 
         Set<Transaction> txSet = msg.getTransactions();
-        worldManager.getBlockchain().
-                addPendingTransactions(txSet);
+        blockchain.addPendingTransactions(txSet);
 
         for (Transaction tx : txSet) {
-            worldManager.getWallet().addTransaction(tx);
+            wallet.addTransaction(tx);
         }
     }
 
@@ -417,8 +424,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 
     private void sendPendingTransactions() {
         Set<Transaction> pendingTxs =
-                worldManager.getBlockchain()
-                        .getPendingTransactions();
+                blockchain.getPendingTransactions();
         TransactionsMessage msg = new TransactionsMessage(pendingTxs);
         msgQueue.sendMessage(msg);
     }

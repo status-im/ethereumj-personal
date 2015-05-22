@@ -1,5 +1,6 @@
 package org.ethereum.net.client;
 
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
@@ -15,8 +16,11 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+import javax.inject.Inject;
+import javax.inject.Provider;
+
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
@@ -35,25 +39,27 @@ public class PeerClient {
 
     private boolean peerDiscoveryMode = false;
 
-    @Autowired
-    private ApplicationContext ctx;
+    EthereumListener listener;
 
-    @Autowired
-    WorldManager worldManager;
+    ChannelManager channelManager;
 
-    @Autowired
-    public ChannelManager channelManager;
+    Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider;
 
-	public PeerClient() {
+    @Inject
+	public PeerClient(EthereumListener listener, ChannelManager channelManager,
+                      Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider) {
         logger.info("Peer client instantiated");
+        this.listener = listener;
+        this.channelManager = channelManager;
+        this.ethereumChannelInitializerProvider = ethereumChannelInitializerProvider;
     }
 
     public void connect(String host, int port, String remoteId) {
 
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        worldManager.getListener().trace("Connecting to: " + host + ":" + port);
+        listener.trace("Connecting to: " + host + ":" + port);
 
-        EthereumChannelInitializer ethereumChannelInitializer = (EthereumChannelInitializer)ctx.getBean("ethereumChannelInitializer", EthereumChannelInitializer.class);
+        EthereumChannelInitializer ethereumChannelInitializer = ethereumChannelInitializerProvider.get();
         ethereumChannelInitializer.setRemoteId(remoteId);
 
         try {

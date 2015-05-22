@@ -6,7 +6,7 @@ import org.ethereum.net.shh.ShhHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.context.ApplicationContext;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 //import org.springframework.stereotype.Component;
 
@@ -18,7 +18,7 @@ import org.springframework.context.ApplicationContext;
 public class EthereumFactory {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
-    public static ApplicationContext context = null;
+    //public static ApplicationContext context = null;
     
     public static Ethereum createEthereum() {
         return createEthereum(DefaultConfig.class);
@@ -30,7 +30,7 @@ public class EthereumFactory {
         logger.info("capability shh version: [{}]", ShhHandler.VERSION);
 
   //      context = new AnnotationConfigApplicationContext(clazz);
-        return context.getBean(Ethereum.class);
+        return null;//context.getBean(Ethereum.class);
     }
 
 }

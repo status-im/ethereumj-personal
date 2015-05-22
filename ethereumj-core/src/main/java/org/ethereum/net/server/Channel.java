@@ -14,13 +14,15 @@ import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.wire.MessageCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+
+import javax.inject.Inject;
 
 import static org.ethereum.net.message.StaticMessages.HELLO_MESSAGE;
 
@@ -34,22 +36,16 @@ public class Channel {
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
-    @Autowired
     ChannelManager channelManager;
 
-    @Autowired
     MessageQueue msgQueue;
 
-    @Autowired
     P2pHandler p2pHandler;
 
-    @Autowired
     EthHandler ethHandler;
 
-    @Autowired
     ShhHandler shhHandler;
 
-    @Autowired
     MessageCodec messageCodec;
 
     InetSocketAddress inetSocketAddress;
@@ -57,8 +53,15 @@ public class Channel {
 
     private long startupTS;
 
-
-    public Channel() {
+    @Inject
+    public Channel(ChannelManager channelManager, MessageQueue msgQueue, P2pHandler p2pHandler
+            , EthHandler ethHandler, ShhHandler shhHandler, MessageCodec messageCodec) {
+        this.channelManager = channelManager;
+        this.msgQueue = msgQueue;
+        this.p2pHandler = p2pHandler;
+        this.ethHandler = ethHandler;
+        this.shhHandler = shhHandler;
+        this.messageCodec = messageCodec;
     }
 
     public void init(String remoteId) {

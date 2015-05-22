@@ -3,6 +3,7 @@ package org.ethereum.net.p2p;
 import io.netty.buffer.ByteBuf;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.Capability;
@@ -12,6 +13,7 @@ import org.ethereum.net.eth.NewBlockMessage;
 import org.ethereum.net.eth.TransactionsMessage;
 import org.ethereum.net.message.ReasonCode;
 import org.ethereum.net.message.StaticMessages;
+import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.ethereum.net.rlpx.FrameCodec;
 import org.ethereum.net.server.Channel;
@@ -25,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
@@ -40,6 +42,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import javax.inject.Inject;
 
 import static org.ethereum.net.message.StaticMessages.*;
 
@@ -73,9 +77,12 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     private HelloMessage handshakeHelloMessage = null;
     private Set<PeerInfo> lastPeersSent;
-
-    @Autowired
-    WorldManager worldManager;
+	
+	@Inject
+    EthereumListener listener;
+	
+	@Inject
+    PeerDiscovery peerDiscovery;
     private Channel channel;
 
     public P2pHandler() {
@@ -88,10 +95,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         this.peerDiscoveryMode = peerDiscoveryMode;
     }
 
-    public void setWorldManager(WorldManager worldManager) {
-        this.worldManager = worldManager;
-    }
-
     public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {
         this.peerDiscoveryMode = peerDiscoveryMode;
     }
@@ -101,7 +104,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         logger.info("P2P protocol activated");
         msgQueue.activate(ctx);
-        worldManager.getListener().trace("P2P protocol activated");
+        listener.trace("P2P protocol activated");
         startTimers();
     }
 
@@ -112,7 +115,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         if (P2pMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("P2PHandler invoke: [{}]", msg.getCommand());
 
-        worldManager.getListener().trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
+        listener.trace(String.format("P2PHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case HELLO:
@@ -167,7 +170,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
     }
 
     private void processPeers(ChannelHandlerContext ctx, PeersMessage peersMessage) {
-        worldManager.getPeerDiscovery().addPeers(peersMessage.getPeers());
+        peerDiscovery.addPeers(peersMessage.getPeers());
     }
 
     private void sendGetPeers() {
@@ -176,7 +179,7 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     private void sendPeers() {
 
-        Set<PeerInfo> peers = worldManager.getPeerDiscovery().getPeers();
+        Set<PeerInfo> peers = peerDiscovery.getPeers();
 
         if (lastPeersSent != null && peers.equals(lastPeersSent)) {
             logger.info("No new peers discovered don't answer for GetPeers");
@@ -234,8 +237,8 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
             confirmedPeer.getCapabilities().addAll(msg.getCapabilities());
 
             //todo calculate the Offsets
-            worldManager.getPeerDiscovery().getPeers().add(confirmedPeer);
-            worldManager.getListener().onHandShakePeer(msg);
+            peerDiscovery.getPeers().add(confirmedPeer);
+            listener.onHandShakePeer(msg);
         }
     }
 

@@ -1,5 +1,6 @@
 package org.ethereum.net.server;
 
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,8 +15,9 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.stereotype.Component;
+import javax.inject.Inject;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -31,17 +33,18 @@ public class PeerServer {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
 
-    @Autowired
     public ChannelManager channelManager;
 	
 	// TODO: this was removed ???
-	@Autowired
     public EthereumChannelInitializer ethereumChannelInitializer;
 
-    @Autowired
-    WorldManager worldManger;
+    EthereumListener listener;
 
-    public PeerServer() {
+    @Inject
+    public PeerServer(ChannelManager channelManager, EthereumChannelInitializer ethereumChannelInitializer, EthereumListener listener) {
+        this.channelManager = channelManager;
+        this.ethereumChannelInitializer = ethereumChannelInitializer;
+        this.listener = listener;
     }
 
 
@@ -51,7 +54,7 @@ public class PeerServer {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        worldManger.getListener().trace("Listening on port " + port);
+        listener.trace("Listening on port " + port);
 
 
         try {

@@ -16,7 +16,7 @@ import static org.ethereum.util.ByteUtil.*;
  * Created on: 29/01/2015 20:43
  */
 
-public class InMemoryBlockStore implements BlockStore{
+public class InMemoryBlockStore implements BlockStore {
     
     final static public int MAX_BLOCKS = 1000;
 

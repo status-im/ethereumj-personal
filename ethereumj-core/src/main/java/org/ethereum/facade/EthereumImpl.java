@@ -15,8 +15,8 @@ import org.ethereum.net.submit.TransactionTask;
 import org.ethereum.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.stereotype.Component;
 
 //import javax.annotation.PostConstruct;
@@ -27,7 +27,10 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.robospring.RoboSpring;
+//import org.robospring.RoboSpring;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -40,30 +43,36 @@ public class EthereumImpl implements Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
 
-    @Autowired
+    @Inject
+    EthereumListener listener;
+
     WorldManager worldManager;
 
-    @Autowired
     AdminInfo adminInfo;
 
-    @Autowired
     ChannelManager channelManager;
 
 
     PeerServer peerServer;
 
-    @Autowired
-    ApplicationContext ctx;
-
-    @Autowired
     BlockLoader blockLoader;
 
-    public EthereumImpl() {
+    //@Inject
+    Provider<PeerClient> peerClientProvider;
+
+    @Inject
+    public EthereumImpl(WorldManager worldManager, AdminInfo adminInfo,
+                        ChannelManager channelManager, BlockLoader blockLoader, Provider<PeerClient> peerClientProvider) {
         System.out.println();
 		logger.info("EthereumImpl constructor");
+        this.worldManager = worldManager;
+        this.adminInfo = adminInfo;
+        this.channelManager = channelManager;
+        this.blockLoader = blockLoader;
+        this.peerClientProvider = peerClientProvider;
     }
 
-    //@PostConstruct
+    @PostConstruct
     public void init() {
         worldManager.loadBlockchain();
         if (CONFIG.listenPort() > 0) {
@@ -75,10 +84,6 @@ public class EthereumImpl implements Ethereum {
                     }
             );
         }
-    }
-	
-	public void setContext(ApplicationContext ctx) {
-        this.ctx = ctx;
     }
 
     /**
@@ -104,7 +109,7 @@ public class EthereumImpl implements Ethereum {
     public PeerInfo findOnlinePeer(Set<PeerInfo> excludePeers) {
         logger.info("Looking for online peers...");
 
-        final EthereumListener listener = worldManager.getListener();
+        final EthereumListener listener = this.listener;
         listener.trace("Looking for online peer");
 
         worldManager.startPeerDiscovery();
@@ -160,7 +165,7 @@ public class EthereumImpl implements Ethereum {
 
         PeerClient peerClient = worldManager.getActivePeer();
         if (peerClient == null)
-            peerClient = ctx.getBean(PeerClient.class);
+            peerClient = peerClientProvider.get();
         worldManager.setActivePeer(peerClient);
 
         peerClient.connect(ip, port, remoteId);
@@ -192,7 +197,7 @@ public class EthereumImpl implements Ethereum {
         PeerClient peer = worldManager.getActivePeer();
         if (peer == null) {
 
-            peer = new PeerClient();
+            peer = peerClientProvider.get();
             worldManager.setActivePeer(peer);
         }
         return peer;

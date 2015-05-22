@@ -2,7 +2,7 @@ package org.ethereum.manager;
 
 //import org.springframework.stereotype.Component;
 
-//import javax.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,7 +20,7 @@ public class AdminInfo {
     private List<Long> blockExecTime = new LinkedList<>();
 
 
-//    @PostConstruct
+    @PostConstruct
     public void init() {
         startupTimeStamp = System.currentTimeMillis();
     }

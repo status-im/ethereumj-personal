@@ -5,8 +5,8 @@ import org.ethereum.net.p2p.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.stereotype.Component;
 
 import java.net.InetAddress;
@@ -27,6 +27,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
+import javax.inject.Inject;
+import javax.inject.Provider;
+
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -45,11 +49,10 @@ public class PeerDiscovery {
     private ThreadPoolExecutor executorPool;
     private RejectedExecutionHandler rejectionHandler;
 
-    @Autowired
-    private ApplicationContext ctx;
-
-
     private final AtomicBoolean started = new AtomicBoolean(false);
+
+	@Inject
+    Provider<WorkerThread> workerThreadProvider;
 
     public void start() {
 
@@ -73,7 +76,7 @@ public class PeerDiscovery {
         addPeers(peerDataList);
 
         for (PeerInfo peerData : this.peers) {
-            WorkerThread workerThread = ctx.getBean(WorkerThread.class);
+            WorkerThread workerThread = workerThreadProvider.get();//ctx.getBean(WorkerThread.class);
             workerThread.init(peerData, executorPool);
             executorPool.execute(workerThread);
         }
@@ -123,7 +126,7 @@ public class PeerDiscovery {
     private void startWorker(PeerInfo peerInfo) {
 
         logger.debug("Add new peer for discovery: {}", peerInfo);
-        WorkerThread workerThread = ctx.getBean(WorkerThread.class);
+        WorkerThread workerThread = workerThreadProvider.get();//ctx.getBean(WorkerThread.class);
         workerThread.init(peerInfo, executorPool);
         executorPool.execute(workerThread);
     }

@@ -5,6 +5,8 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.Capability;
@@ -16,12 +18,15 @@ import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.wire.MessageCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -38,33 +43,33 @@ public class DiscoveryChannel {
 
     private boolean peerDiscoveryMode = false;
 
-    @Autowired
-    WorldManager worldManager;
+    @Inject
+    EthereumListener listener;
 
-    @Autowired
+	@Inject
+	Provider<MessageCodec> messageCodecProvider;
+
     MessageQueue messageQueue;
 
-    @Autowired
     P2pHandler p2pHandler;
 
-    @Autowired
     EthHandler ethHandler;
 
-    @Autowired
     ShhHandler shhHandler;
 
-    @Autowired
-    ApplicationContext ctx;
-
-
-    public DiscoveryChannel() {
-
+    @Inject
+    public DiscoveryChannel(MessageQueue messageQueue, P2pHandler p2pHandler
+                            , EthHandler ethHandler, ShhHandler shhHandler) {
+        this.messageQueue = messageQueue;
+        this.p2pHandler = p2pHandler;
+        this.ethHandler = ethHandler;
+        this.shhHandler = shhHandler;
     }
 
     public void connect(String host, int port) {
 
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        worldManager.getListener().trace("Connecting to: " + host + ":" + port);
+        listener.trace("Connecting to: " + host + ":" + port);
 
         try {
             Bootstrap b = new Bootstrap();
@@ -85,7 +90,7 @@ public class DiscoveryChannel {
 
             shhHandler.setMsgQueue(messageQueue);
 
-            final MessageCodec decoder = ctx.getBean(MessageCodec.class);
+            final MessageCodec decoder = messageCodecProvider.get();//ctx.getBean(MessageCodec.class);
 
             b.handler(
 
@@ -125,7 +130,6 @@ public class DiscoveryChannel {
             workerGroup.shutdownGracefully();
 
             if (!peerDiscoveryMode) {
-//                EthereumListener listener =  WorldManager.getInstance().getListener();
 //                listener.onPeerDisconnect(host, port);
             }
 

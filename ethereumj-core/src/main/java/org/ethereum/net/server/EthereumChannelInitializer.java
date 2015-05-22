@@ -6,16 +6,17 @@ import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.ethereum.facade.Blockchain;
-import org.ethereum.manager.WorldManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
 //import org.springframework.context.annotation.Scope;
 //import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -28,28 +29,20 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
 
     private static final Logger logger = LoggerFactory.getLogger("net");
 
-    @Autowired
-    private ApplicationContext ctx;
-
-    @Autowired
     Blockchain blockchain;
 
-    @Autowired
     ChannelManager channelManager;
-
-    @Autowired
-    WorldManager worldManager;
-
 
     String remoteId;
 
-    public EthereumChannelInitializer() {
-        logger.info("Channel initializer instantiated");
-        this.remoteId = "e3d09d2f829950b5f3f82d1bddb6f5388bff2f2cca880fa47923df4d8129e8c9b5ba5d4371efcffc416b0cefe20cb55b81b2b71183464713a86e60b423b77947";
-    }
+    @Inject
+    Provider<Channel> channelProvider;
 
-    public EthereumChannelInitializer(String remoteId) {
+    @Inject
+    public EthereumChannelInitializer(Blockchain blockchain, ChannelManager channelManager, String remoteId) {
 		logger.info("Channel initializer instantiated");
+        this.blockchain = blockchain;
+        this.channelManager = channelManager;
         this.remoteId = remoteId;
     }
 
@@ -58,7 +51,7 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
 
         logger.info("Open connection, channel: {}", ch.toString());
 
-        Channel channel = ctx.getBean(Channel.class);
+        Channel channel = channelProvider.get();
         channel.init(remoteId);
 
         channelManager.addChannel(channel);
