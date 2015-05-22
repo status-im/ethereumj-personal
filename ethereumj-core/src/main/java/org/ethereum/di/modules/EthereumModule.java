@@ -19,21 +19,23 @@ import org.ethereum.manager.AdminInfo;
 import org.ethereum.manager.BlockLoader;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.BlockQueue;
+import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.EthHandler;
+import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.server.ChannelManager;
+import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
+import org.ethereum.net.wire.MessageCodec;
 import org.ethereum.vm.ProgramInvokeFactory;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 
-/**
- * Created by Adrian Tiberius on 20.05.2015.
- */
 @Module
 public class EthereumModule {
 
@@ -46,8 +48,8 @@ public class EthereumModule {
     @Provides
     @Singleton
     Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, PeerClient backupPeerClient) {
-        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, backupPeerClient);
+                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider) {
+        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider);
     }
 
     @Provides
@@ -100,6 +102,18 @@ public class EthereumModule {
     }
 
     @Provides
+    @Singleton
+    ChannelManager provideChannelManager() {
+        return new ChannelManager();
+    }
+
+    @Provides
+    @Singleton
+    BlockLoader provideBlockLoader() {
+        return new BlockLoader();
+    }
+
+    @Provides
     EthHandler provideEthHandler() {
         return new EthHandler();
     }
@@ -110,14 +124,37 @@ public class EthereumModule {
     }
 
     @Provides
+    P2pHandler provideP2pHandler() {
+        return new P2pHandler();
+    }
+
+    @Provides
+    MessageCodec provideMessageCodec() {
+        return new MessageCodec();
+    }
+
+    @Provides
+    PeerClient providePeerClient(EthereumListener listener, ChannelManager channelManager,
+                                 Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider) {
+        return new PeerClient(listener, channelManager, ethereumChannelInitializerProvider);
+    }
+
+    @Provides
+    MessageQueue provideMessageQueue() {
+        return new MessageQueue();
+    }
+
+    @Provides
     @Singleton
     Context provideContext() {
         return context;
     }
 
+
+
     @Provides
     String provideRemoteId() {
-        return "e3d09d2f829950b5f3f82d1bddb6f5388bff2f2cca880fa47923df4d8129e8c9b5ba5d4371efcffc416b0cefe20cb55b81b2b71183464713a86e60b423b77947";
+        return "bf01b54b6bc7faa203286dfb8359ce11d7b1fe822968fb4991f508d6f5a36ab7d9ae8af9b0d61c0467fb08567e0fb71cfb9925a370b69f9ede97927db473d1f5";
     }
 
 

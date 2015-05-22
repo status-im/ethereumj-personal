@@ -11,9 +11,6 @@ import org.ethereum.ethereum_android.di.components.ApplicationComponent;
 import org.ethereum.ethereum_android.di.components.DaggerApplicationComponent;
 import org.ethereum.ethereum_android.di.modules.ApplicationModule;
 
-/**
- * Created by userica on 20.05.2015.
- */
 public class EthereumApplication extends MultiDexApplication {
 
     private ApplicationComponent applicationComponent = null;
