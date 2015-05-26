@@ -24,7 +24,7 @@ import org.spongycastle.util.encoders.Hex;
 //import org.springframework.util.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 
-//import javax.annotation.Resource;
+import javax.annotation.Resource;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -34,6 +34,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import javax.inject.Inject;
+import javax.inject.Qualifier;
 
 import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -81,8 +82,8 @@ public class BlockchainImpl implements Blockchain {
     // to avoid using minGasPrice=0 from Genesis for the wallet
     private static final long INITIAL_MIN_GAS_PRICE = 10 * SZABO.longValue();
 
-//    @Resource
-//    @Qualifier("pendingTransactions")
+    @Resource
+    //@Qualifier("pendingTransactions")
     private Set<Transaction> pendingTransactions = new HashSet<>();
 
     private Repository repository;
@@ -110,11 +111,10 @@ public class BlockchainImpl implements Blockchain {
     private List<Chain> altChains = new ArrayList<>();
     private List<Block> garbage = new ArrayList<>();
 
+    long exitOn = Long.MAX_VALUE;
 
-    public BlockchainImpl(final Set<Transaction> pendingTransactions) {
-        this.pendingTransactions = Collections.synchronizedSet(pendingTransactions);
+    public BlockchainImpl() {
     }
-
 
     //todo: autowire over constructor
     @Inject
@@ -129,6 +129,7 @@ public class BlockchainImpl implements Blockchain {
         this.channelManager = channelManager;
         this.blockQueue = new BlockQueue(this);
         this.programInvokeFactory = new ProgramInvokeFactoryImpl();
+        this.programInvokeFactory.setBlockchain(this);
     }
 
     @Override
@@ -249,6 +250,11 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void add(Block block) {
 
+        if (exitOn < block.getNumber()) {
+            System.out.print("Exiting after block.number: " + getBestBlock().getNumber());
+            System.exit(-1);
+        }
+
         if(!isValid(block)){
             logger.warn("Invalid block with number: {}", block.getNumber());
             return;
@@ -293,6 +299,7 @@ public class BlockchainImpl implements Blockchain {
         track.commit();
         repository.flush(); // saving to the disc
 
+        storeBlock(block, receipts);
 
         // Remove all wallet transactions as they already approved by the net
         wallet.removeTransactions(block.getTransactionsList());
@@ -466,7 +473,7 @@ public class BlockchainImpl implements Blockchain {
                 wallet.processBlock(block);
             }
         }
-        storeBlock(block, receipts);
+
 
         return receipts;
     }
@@ -498,9 +505,10 @@ public class BlockchainImpl implements Blockchain {
             receipt.setCumulativeGas(totalGasUsed);
             receipt.setPostTxState(repository.getRoot());
             receipt.setTransaction(tx);
+            receipt.setLogInfoList(executor.getVMLogs());
 
-            //stateLogger.info("block: [{}] executed tx: [{}] \n  state: [{}]", block.getNumber(), i,
-            //        Hex.toHexString(repository.getRoot()));
+            stateLogger.info("block: [{}] executed tx: [{}] \n  state: [{}]", block.getNumber(), i,
+                    Hex.toHexString(repository.getRoot()));
 
             stateLogger.info("[{}] ", receipt.toString());
 
@@ -528,7 +536,7 @@ public class BlockchainImpl implements Blockchain {
 
         long totalTime = System.nanoTime() - saveTime;
         adminInfo.addBlockExecTime(totalTime);
-        //logger.info("block: num: [{}] hash: [{}], executed after: [{}]nano", block.getNumber(), block.getShortHash(), totalTime);
+        logger.info("block: num: [{}] hash: [{}], executed after: [{}]nano", block.getNumber(), block.getShortHash(), totalTime);
 
         return receipts;
     }
@@ -648,11 +656,11 @@ public class BlockchainImpl implements Blockchain {
 
         if (!CONFIG.recordBlocks()) return;
 
-        if (bestBlock.isGenesis()) {
+        if (block.getNumber() == 1) {
             //FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
-            try{
+            try {
               FileUtils.forceDelete(new File(CONFIG.dumpDir()));
-            }catch(IOException e){
+            } catch (IOException e) {
               e.printStackTrace();
             }
         }
@@ -729,5 +737,8 @@ public class BlockchainImpl implements Blockchain {
         track.commit();
     }
 
+    public void setExitOn(long exitOn) {
+        this.exitOn = exitOn;
+    }
 
 }

@@ -15,12 +15,15 @@ import java.util.List;
 public class AdminInfo {
 
 
-    private long startupTimeStamp;
+    private long startupTimeStamp = System.currentTimeMillis();;
     private boolean consensus = true;
     private List<Long> blockExecTime = new LinkedList<>();
 
+    public AdminInfo() {
+        this.init();
+    }
 
-    @PostConstruct
+    //@PostConstruct
     public void init() {
         startupTimeStamp = System.currentTimeMillis();
     }

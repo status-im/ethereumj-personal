@@ -12,14 +12,13 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
-//import static org.springframework.util.StringUtils.hasLength;
+//import static org.springframework.util.StringUtils.isEmpty;
 
 //@Component
 public class RedisConnectionImpl implements RedisConnection {

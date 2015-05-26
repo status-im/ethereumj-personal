@@ -32,10 +32,12 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
-    @Inject
+
     public EthereumListener listener;
 
-    public ShhHandler() {
+    @Inject
+    public ShhHandler(EthereumListener listener) {
+        this.listener = listener;
     }
 
     public ShhHandler(MessageQueue msgQueue) {

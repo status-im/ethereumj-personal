@@ -1,6 +1,5 @@
 package org.ethereum.net.peerdiscovery;
 
-import org.ethereum.net.server.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,10 +26,11 @@ public class WorkerThread implements Runnable {
     private PeerInfo peerInfo;
     private ThreadPoolExecutor poolExecutor;
 
-    @Inject
     Provider<DiscoveryChannel> discoveryChannelProvider;
 
-    public WorkerThread() {
+    @Inject
+    public WorkerThread(Provider<DiscoveryChannel> discoveryChannelProvider) {
+        this.discoveryChannelProvider = discoveryChannelProvider;
     }
 
     public void init(PeerInfo peer, ThreadPoolExecutor poolExecutor) {

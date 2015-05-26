@@ -1,6 +1,12 @@
 package org.ethereum.facade;
 
 import org.ethereum.config.SystemProperties;
+import org.ethereum.core.Transaction;
+import org.ethereum.datasource.KeyValueDataSource;
+import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.datasource.redis.RedisConnection;
+import org.ethereum.db.RepositoryImpl;
+//import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 //import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +19,13 @@ import org.slf4j.LoggerFactory;
 //import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
 //import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
+
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 //@Configuration
 //@EnableTransactionManagement
@@ -63,7 +75,7 @@ public class CommonConfig {
     }
 
     @Bean
-    public SessionFactory sessionFactory() throws SQLException {
+    public SessionFactory sessionFactory() {
         LocalSessionFactoryBuilder builder =
                 new LocalSessionFactoryBuilder(dataSource());
         builder.scanPackages("org.ethereum.db")
@@ -90,11 +102,8 @@ public class CommonConfig {
 
 /*
     @Bean
-    public DataSourceTransactionManager transactionManager() {
-        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-        dataSourceTransactionManager.setDataSource(dataSource());
-
-        return dataSourceTransactionManager;
+    public HibernateTransactionManager txManager() {
+        return new HibernateTransactionManager(sessionFactory());
     }
 */
     /*
@@ -116,6 +125,7 @@ public class CommonConfig {
         ds.setDriverClassName("org.hsqldb.jdbcDriver");
         ds.setUrl(url);
         ds.setUsername("sa");
+
 
 
         return ds;

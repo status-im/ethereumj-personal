@@ -75,19 +75,20 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
     private Timer getBlocksTimer = new Timer("GetBlocksTimer");
     private Timer getTxTimer = new Timer("GetTransactionsTimer");
 
-    @Inject
     Blockchain blockchain;
 
-    @Inject
     EthereumListener listener;
 
-    @Inject
     Wallet wallet;
 
     private List<ByteArrayWrapper> sentHashes;
     private Block lastBlock = Genesis.getInstance();
 
-    public EthHandler() {
+    @Inject
+    public EthHandler(Blockchain blockchain, EthereumListener listener, Wallet wallet) {
+        this.blockchain = blockchain;
+        this.listener = listener;
+        this.wallet = wallet;
         this.peerDiscoveryMode = false;
     }
 
@@ -212,7 +213,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
 //          msgQueue.sendMessage(new DisconnectMessage(ReasonCode.INCOMPATIBLE_NETWORK));
             ctx.pipeline().remove(this); // Peer is not compatible for the 'eth' sub-protocol
         } else if (msg.getNetworkId() != NETWORK_ID)
-            msgQueue.sendMessage(new DisconnectMessage(ReasonCode.INCOMPATIBLE_NETWORK));
+            msgQueue.sendMessage(new DisconnectMessage(ReasonCode.NULL_IDENTITY));
         else {
             BlockQueue chainQueue = blockchain.getQueue();
             BigInteger peerTotalDifficulty = new BigInteger(1, msg.getTotalDifficulty());

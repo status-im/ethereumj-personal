@@ -47,12 +47,12 @@ public class MessageQueue {
     private Queue<MessageRoundtrip> messageQueue = new ConcurrentLinkedQueue<>();
     private ChannelHandlerContext ctx = null;
     private final Timer timer = new Timer("MessageQueue");
-	
-	@Inject
+
     EthereumListener listener;
     boolean hasPing = false;
 
-    public MessageQueue() {
+    public MessageQueue(EthereumListener listener) {
+        this.listener = listener;
     }
 
     public void activate(ChannelHandlerContext ctx) {

@@ -83,7 +83,7 @@ dependencies {
     compile 'com.google.dagger:dagger:2.0'
     //compile 'com.android.support:appcompat-v7:+'
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    provided 'org.glassfish:javax.annotation:10.0-b28'
+    provided 'javax.annotation:javax.annotation-api:1.2'
     compile 'com.j256.ormlite:ormlite-core:4.48'
     compile('com.j256.ormlite:ormlite-android:4.48') {
         exclude group: 'commons-logging', module: 'commons-logging'
@@ -128,7 +128,7 @@ dependencies {
     compile 'com.yuvalshavit:antlr-denter:1.1'
 
     //compile 'org.javassist:javassist:3.15.0-GA'
-    compile 'org.slf4j:slf4j-android:1.6.1-RC1'
+    compile 'org.slf4j:slf4j-android:1.7.12'
     //compile "org.slf4j:slf4j-api:${slf4jVersion}"
 
     //compile "log4j:log4j:${log4jVersion}"

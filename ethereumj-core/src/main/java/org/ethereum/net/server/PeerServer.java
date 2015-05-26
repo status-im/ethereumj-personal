@@ -34,8 +34,7 @@ public class PeerServer {
     private static final Logger logger = LoggerFactory.getLogger("net");
 
     public ChannelManager channelManager;
-	
-	// TODO: this was removed ???
+
     public EthereumChannelInitializer ethereumChannelInitializer;
 
     EthereumListener listener;

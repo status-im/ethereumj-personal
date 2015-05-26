@@ -49,10 +49,14 @@ public class PeerDiscovery {
     private ThreadPoolExecutor executorPool;
     private RejectedExecutionHandler rejectionHandler;
 
-    private final AtomicBoolean started = new AtomicBoolean(false);
-
-	@Inject
+    @Inject
     Provider<WorkerThread> workerThreadProvider;
+
+    @Inject
+    public PeerDiscovery() {
+    }
+
+    private final AtomicBoolean started = new AtomicBoolean(false);
 
     public void start() {
 
@@ -76,7 +80,7 @@ public class PeerDiscovery {
         addPeers(peerDataList);
 
         for (PeerInfo peerData : this.peers) {
-            WorkerThread workerThread = workerThreadProvider.get();//ctx.getBean(WorkerThread.class);
+            WorkerThread workerThread = workerThreadProvider.get();
             workerThread.init(peerData, executorPool);
             executorPool.execute(workerThread);
         }
@@ -126,7 +130,7 @@ public class PeerDiscovery {
     private void startWorker(PeerInfo peerInfo) {
 
         logger.debug("Add new peer for discovery: {}", peerInfo);
-        WorkerThread workerThread = workerThreadProvider.get();//ctx.getBean(WorkerThread.class);
+        WorkerThread workerThread = workerThreadProvider.get();
         workerThread.init(peerInfo, executorPool);
         executorPool.execute(workerThread);
     }

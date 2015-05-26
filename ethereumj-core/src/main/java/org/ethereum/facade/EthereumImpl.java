@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 //import org.springframework.context.ApplicationContext;
 //import org.springframework.stereotype.Component;
 
-//import javax.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -27,8 +27,6 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-//import org.robospring.RoboSpring;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -43,7 +41,6 @@ public class EthereumImpl implements Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
 
-    @Inject
     EthereumListener listener;
 
     WorldManager worldManager;
@@ -57,12 +54,12 @@ public class EthereumImpl implements Ethereum {
 
     BlockLoader blockLoader;
 
-    //@Inject
     Provider<PeerClient> peerClientProvider;
 
     @Inject
     public EthereumImpl(WorldManager worldManager, AdminInfo adminInfo,
-                        ChannelManager channelManager, BlockLoader blockLoader, Provider<PeerClient> peerClientProvider) {
+                        ChannelManager channelManager, BlockLoader blockLoader,
+                        Provider<PeerClient> peerClientProvider, EthereumListener listener) {
         System.out.println();
 		logger.info("EthereumImpl constructor");
         this.worldManager = worldManager;
@@ -70,9 +67,12 @@ public class EthereumImpl implements Ethereum {
         this.channelManager = channelManager;
         this.blockLoader = blockLoader;
         this.peerClientProvider = peerClientProvider;
+        this.listener = listener;
+
+        this.init();
     }
 
-    @PostConstruct
+    //@PostConstruct
     public void init() {
         worldManager.loadBlockchain();
         if (CONFIG.listenPort() > 0) {
@@ -264,5 +264,10 @@ public class EthereumImpl implements Ethereum {
     @Override
     public BlockLoader getBlockLoader(){
         return  blockLoader;
+    }
+
+    @Override
+    public void exitOn(long number) {
+        worldManager.getBlockchain().setExitOn(number);
     }
 }

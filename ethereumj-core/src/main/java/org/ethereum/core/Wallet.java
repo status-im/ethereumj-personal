@@ -4,7 +4,6 @@ import org.ethereum.crypto.ECKey;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Repository;
 import org.ethereum.manager.WorldManager;
-import org.ethereum.net.server.Channel;
 import org.ethereum.net.submit.WalletTransaction;
 
 import org.slf4j.Logger;
@@ -77,12 +76,12 @@ public class Wallet {
 
     private Map<ByteArrayWrapper, Transaction> transactionMap = new HashMap<>();
 
-    @Inject
     Provider<Account> accountProvider;
 
     @Inject
-    public Wallet(Repository repository) {
+    public Wallet(Repository repository, Provider<Account> accountProvider) {
         this.repository = repository;
+        this.accountProvider = accountProvider;
     }
 
 

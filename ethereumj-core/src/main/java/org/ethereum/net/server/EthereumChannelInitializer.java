@@ -35,15 +35,15 @@ public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChan
 
     String remoteId;
 
-    @Inject
     Provider<Channel> channelProvider;
 
     @Inject
-    public EthereumChannelInitializer(Blockchain blockchain, ChannelManager channelManager, String remoteId) {
+    public EthereumChannelInitializer(Blockchain blockchain, ChannelManager channelManager, Provider<Channel> channelProvider) {
 		logger.info("Channel initializer instantiated");
         this.blockchain = blockchain;
         this.channelManager = channelManager;
-        this.remoteId = remoteId;
+        this.channelProvider = channelProvider;
+        this.remoteId = "";
     }
 
     @Override

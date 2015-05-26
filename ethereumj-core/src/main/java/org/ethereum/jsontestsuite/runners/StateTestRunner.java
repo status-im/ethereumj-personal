@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 public class StateTestRunner {
@@ -37,7 +36,7 @@ public class StateTestRunner {
         Transaction transaction = TransactionBuilder.build(stateTestCase2.getTransaction());
         logger.info("transaction: {}", transaction.toString());
 
-        BlockchainImpl blockchain = new BlockchainImpl(new HashSet<Transaction>());
+        BlockchainImpl blockchain = new BlockchainImpl();
         blockchain.setRepository(repository);
 
         Env env = EnvBuilder.build(stateTestCase2.getEnv());

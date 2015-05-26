@@ -10,7 +10,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Stack;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.crypto.HashUtil.sha3;
@@ -86,7 +85,7 @@ public class VM {
             long oldMemSize = program.getMemSize();
             BigInteger newMemSize = BigInteger.ZERO;
             long copySize = 0;
-            Stack<DataWord> stack = program.getStack();
+            Stack stack = program.getStack();
 
             String hint = "";
             long callGas = 0, memWords = 0; // parameters for logging
@@ -829,11 +828,8 @@ public class VM {
                 case SWAP13: case SWAP14: case SWAP15: case SWAP16:{
 
                     int n = op.val() - OpCode.SWAP1.val() + 2;
-                    DataWord word_1 = stack.peek();
-                    stack.set(stack.size() - 1, stack.get(stack.size() - n));
-                    stack.set(stack.size() - n, word_1);
+                    stack.swap(stack.size() - 1, stack.size() - n);
                     program.step();
-
                 }
                 break;
                 case LOG0:
@@ -1037,13 +1033,13 @@ public class VM {
                     DataWord value = program.stackPop();
                     DataWord inOffset = program.stackPop();
                     DataWord inSize = program.stackPop();
-/*
+
                     if (logger.isInfoEnabled())
                         logger.info(logString, program.getPC(),
                                 String.format("%-12s", op.name()),
                                 program.getGas().value(),
                                 program.invokeData.getCallDeep(), hint);
-*/
+
                     program.createContract(value, inOffset, inSize);
 
                     program.step();
@@ -1069,12 +1065,10 @@ public class VM {
                                 + " gas: " + gas.shortHex()
                                 + " inOff: " + inDataOffs.shortHex()
                                 + " inSize: " + inDataSize.shortHex();
-/*
                         logger.info(logString, program.getPC(),
                                 String.format("%-12s", op.name()),
                                 program.getGas().value(),
                                 program.invokeData.getCallDeep(), hint);
-*/
                     }
 
                     program.memoryExpand(outDataOffs, outDataSize);
@@ -1126,13 +1120,13 @@ public class VM {
             }
 
             program.setPreviouslyExecutedOp(op.val());
-/*
+
             if (logger.isInfoEnabled() && !op.equals(CALL)
                     && !op.equals(CREATE))
                 logger.info(logString, stepBefore, String.format("%-12s",
                                 op.name()), program.getGas().longValue(),
                         program.invokeData.getCallDeep(), hint);
-*/
+
             vmCounter++;
         } catch (RuntimeException e) {
             logger.warn("VM halted: [{}]", e.toString());
@@ -1218,7 +1212,7 @@ public class VM {
             String opString = Hex.toHexString(new byte[]{op.val()});
             String gasString = Hex.toHexString(program.getGas().getNoLeadZeroesData());
 
-            //dumpLogger.trace("{} {} {} {}", addressString, pcString, opString, gasString);
+            dumpLogger.trace("{} {} {} {}", addressString, pcString, opString, gasString);
         } else if (CONFIG.dumpStyle().equals("pretty")) {
             dumpLogger.trace("    STACK");
             for (DataWord item : program.getStack()) {
@@ -1244,9 +1238,9 @@ public class VM {
             int level = program.invokeData.getCallDeep();
             String contract = Hex.toHexString(program.getOwnerAddress().getLast20Bytes());
             String internalSteps = String.format("%4s", Integer.toHexString(program.getPC())).replace(' ', '0').toUpperCase();
-            //dumpLogger.trace("{} | {} | #{} | {} : {} | {} | -{} | {}x32",
-            //        level, contract, vmCounter, internalSteps, op,
-             //       gasBefore, gasCost, memWords);
+            dumpLogger.trace("{} | {} | #{} | {} : {} | {} | -{} | {}x32",
+                    level, contract, vmCounter, internalSteps, op,
+                    gasBefore, gasCost, memWords);
         }
     }
 }

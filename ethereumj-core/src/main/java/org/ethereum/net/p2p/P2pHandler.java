@@ -64,7 +64,7 @@ import static org.ethereum.net.message.StaticMessages.*;
 //@Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
-    public final static byte VERSION = 3;
+    public final static byte VERSION = 4;
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
@@ -77,16 +77,17 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     private HelloMessage handshakeHelloMessage = null;
     private Set<PeerInfo> lastPeersSent;
-	
-	@Inject
+
     EthereumListener listener;
-	
-	@Inject
+
     PeerDiscovery peerDiscovery;
+
     private Channel channel;
 
-    public P2pHandler() {
-
+    @Inject
+    public P2pHandler(PeerDiscovery peerDiscovery, EthereumListener listener) {
+        this.peerDiscovery = peerDiscovery;
+        this.listener = listener;
         this.peerDiscoveryMode = false;
     }
 

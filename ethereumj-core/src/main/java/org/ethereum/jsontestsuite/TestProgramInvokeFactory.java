@@ -3,6 +3,7 @@ package org.ethereum.jsontestsuite;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.db.BlockStore;
+import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Repository;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.DataWord;
@@ -20,6 +21,8 @@ import java.math.BigInteger;
 public class TestProgramInvokeFactory implements ProgramInvokeFactory {
 
     private final Env env;
+
+    private Blockchain blockchain;
 
     public TestProgramInvokeFactory(Env env) {
         this.env = env;
@@ -92,5 +95,7 @@ public class TestProgramInvokeFactory implements ProgramInvokeFactory {
                 gasPrice, gas, callValue, data, lastHash, coinbase,
                 timestamp, number, difficulty, gaslimit, repository, blockStore);
     }
+
+    public void setBlockchain(Blockchain blockchain) { this.blockchain = blockchain; }
 
 }

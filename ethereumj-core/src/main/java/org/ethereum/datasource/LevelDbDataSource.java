@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import org.iq80.leveldb.impl.Iq80DBFactory;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 import android.content.Context;
@@ -71,8 +70,7 @@ public class LevelDbDataSource implements KeyValueDataSource {
             logger.debug("Initializing new or existing database: '{}'", fileLocation.getAbsolutePath());
             db = factory.open(fileLocation, options);
 
-        } catch (Exception ioe) {
-            logger.debug("x");
+        } catch (IOException ioe) {
             logger.error(ioe.getMessage(), ioe);
             throw new RuntimeException("Can't initialize database");
         }

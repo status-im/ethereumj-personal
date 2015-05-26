@@ -43,10 +43,8 @@ public class DiscoveryChannel {
 
     private boolean peerDiscoveryMode = false;
 
-    @Inject
     EthereumListener listener;
 
-	@Inject
 	Provider<MessageCodec> messageCodecProvider;
 
     MessageQueue messageQueue;
@@ -59,11 +57,14 @@ public class DiscoveryChannel {
 
     @Inject
     public DiscoveryChannel(MessageQueue messageQueue, P2pHandler p2pHandler
-                            , EthHandler ethHandler, ShhHandler shhHandler) {
+                            , EthHandler ethHandler, ShhHandler shhHandler,
+                            EthereumListener listener, Provider<MessageCodec> messageCodecProvider) {
         this.messageQueue = messageQueue;
         this.p2pHandler = p2pHandler;
         this.ethHandler = ethHandler;
         this.shhHandler = shhHandler;
+        this.listener = listener;
+        this.messageCodecProvider = messageCodecProvider;
     }
 
     public void connect(String host, int port) {
@@ -90,7 +91,7 @@ public class DiscoveryChannel {
 
             shhHandler.setMsgQueue(messageQueue);
 
-            final MessageCodec decoder = messageCodecProvider.get();//ctx.getBean(MessageCodec.class);
+            final MessageCodec decoder = messageCodecProvider.get();
 
             b.handler(
 

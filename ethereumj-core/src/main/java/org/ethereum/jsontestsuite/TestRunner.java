@@ -1,5 +1,6 @@
 package org.ethereum.jsontestsuite;
 
+import org.ethereum.core.Account;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.TransactionReceipt;
@@ -12,8 +13,6 @@ import org.ethereum.jsontestsuite.model.BlockTck;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
-import org.ethereum.manager.WorldManager;
-import org.ethereum.net.BlockQueue;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.*;
@@ -26,6 +25,7 @@ import java.math.BigInteger;
 import java.util.*;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 import static org.ethereum.jsontestsuite.Utils.parseData;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -41,17 +41,12 @@ public class TestRunner {
     private boolean setNewStateRoot;
     private String bestStateRoot;
 
-    @Inject
-    public WorldManager worldManager;
-
-    @Inject
     public ChannelManager channelManager;
 
     @Inject
-    public ProgramInvokeFactory programInvokeFactory;
-
-    @Inject
-    public BlockQueue blockqueue;
+    public TestRunner(ChannelManager channelManager) {
+        this.channelManager = channelManager;
+    }
 
     public List<String> runTestSuite(TestSuite testSuite) {
 
@@ -62,7 +57,7 @@ public class TestRunner {
 
             TestCase testCase = testIterator.next();
 
-            TestRunner runner = new TestRunner();
+            TestRunner runner = new TestRunner(channelManager);
             List<String> result = runner.runTestCase(testCase);
             resultCollector.addAll(result);
         }
@@ -76,20 +71,28 @@ public class TestRunner {
 
         /* 1 */ // Create genesis + init pre state
         Block genesis = BlockBuilder.build(testCase.getGenesisBlockHeader(), null, null);
-        Repository repository = RepositoryBuilder.build(testCase.getPre());
+        final Repository repository = RepositoryBuilder.build(testCase.getPre());
 
         BlockStore blockStore = new InMemoryBlockStore();
         blockStore.saveBlock(genesis, new ArrayList<TransactionReceipt>());
 
-        Wallet wallet = new Wallet(repository);
+        Provider<Account> accountProvider = new Provider<Account>() {
+            @Override
+            public Account get() {
+                return new Account(repository);
+            }
+        };
+        Wallet wallet = new Wallet(repository, accountProvider);
         AdminInfo adminInfo = new AdminInfo();
         EthereumListener listener = new CompositeEthereumListener();
+        ProgramInvokeFactoryImpl programInvokeFactory = new ProgramInvokeFactoryImpl();
 
         BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener, channelManager);
 
         blockchain.setBestBlock(genesis);
         blockchain.setTotalDifficulty(BigInteger.ZERO);
         blockchain.setProgramInvokeFactory(programInvokeFactory);
+        programInvokeFactory.setBlockchain(blockchain);
 
 
         // todo: validate root of the genesis   *!!!*
@@ -212,7 +215,8 @@ public class TestRunner {
                 vmDidThrowAnEception = true;
                 e = ex;
             }
-            program.saveProgramTraceToFile(testCase.getName());
+            String content = program.getProgramTrace().asJsonString(true);
+            //program.saveProgramTraceToFile(testCase.getName(), content);
 
             if (testCase.getPost().size() == 0) {
                 if (vmDidThrowAnEception != true) {
@@ -233,7 +237,8 @@ public class TestRunner {
 
                 this.trace = program.getProgramTrace();
 
-                System.out.println("--------- POST --------");
+                logger.info("--------- POST --------");
+
                 /* 5. Assert Post values */
                 for (ByteArrayWrapper key : testCase.getPost().keySet()) {
 

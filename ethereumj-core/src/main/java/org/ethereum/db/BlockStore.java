@@ -3,7 +3,6 @@ package org.ethereum.db;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 
-//import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 

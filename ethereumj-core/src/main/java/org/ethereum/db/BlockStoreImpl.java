@@ -4,13 +4,13 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.util.ByteUtil;
 
-import org.hibernate.SessionFactory;
+//import org.hibernate.SessionFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.context.ApplicationContext;
+//import org.springframework.stereotype.Repository;
+//import org.springframework.transaction.annotation.Propagation;
+//import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 
@@ -21,6 +21,7 @@ import java.util.List;
  * @author Roman Mandeleil
  * @since 12.11.2014
  */
+/*
 public class BlockStoreImpl implements BlockStore {
 
     private SessionFactory sessionFactory;
@@ -192,3 +193,4 @@ public class BlockStoreImpl implements BlockStore {
 
     }
 }
+*/

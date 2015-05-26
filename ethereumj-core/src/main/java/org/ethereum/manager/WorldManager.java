@@ -28,9 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-//import javax.annotation.PostConstruct;
-//import javax.annotation.PreDestroy;
-
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 import javax.annotation.PostConstruct;
@@ -78,9 +75,11 @@ public class WorldManager {
         this.blockStore = blockStore;
         this.channelManager = channelManager;
         this.listener = listener;
+
+        this.init();
     }
 
-    @PostConstruct
+    //@PostConstruct
     public void init() {
         byte[] cowAddr = HashUtil.sha3("cow".getBytes());
         wallet.importKey(cowAddr);
@@ -174,10 +173,10 @@ public class WorldManager {
             BigInteger totalDifficulty = blockStore.getTotalDifficulty();
             blockchain.setTotalDifficulty(totalDifficulty);
 
-            //logger.info("*** Loaded up to block [{}] totalDifficulty [{}] with stateRoot [{}]",
-             //       blockchain.getBestBlock().getNumber(),
-             //       blockchain.getTotalDifficulty().toString(),
-             //       Hex.toHexString(blockchain.getBestBlock().getStateRoot()));
+            logger.info("*** Loaded up to block [{}] totalDifficulty [{}] with stateRoot [{}]",
+                    blockchain.getBestBlock().getNumber(),
+                    blockchain.getTotalDifficulty().toString(),
+                    Hex.toHexString(blockchain.getBestBlock().getStateRoot()));
         }
 
         if (CONFIG.rootHashStart() != null) {

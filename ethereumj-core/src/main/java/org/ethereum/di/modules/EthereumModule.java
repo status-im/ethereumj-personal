@@ -23,12 +23,15 @@ import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.EthHandler;
 import org.ethereum.net.p2p.P2pHandler;
+import org.ethereum.net.peerdiscovery.DiscoveryChannel;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
+import org.ethereum.net.peerdiscovery.WorkerThread;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.wire.MessageCodec;
 import org.ethereum.vm.ProgramInvokeFactory;
+import org.ethereum.vm.ProgramInvokeFactoryImpl;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -48,8 +51,8 @@ public class EthereumModule {
     @Provides
     @Singleton
     Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider) {
-        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider);
+                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener) {
+        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener);
     }
 
     @Provides
@@ -103,34 +106,40 @@ public class EthereumModule {
 
     @Provides
     @Singleton
-    ChannelManager provideChannelManager() {
-        return new ChannelManager();
+    ChannelManager provideChannelManager(EthereumListener listener) {
+        return new ChannelManager(listener);
     }
 
     @Provides
     @Singleton
-    BlockLoader provideBlockLoader() {
-        return new BlockLoader();
+    BlockLoader provideBlockLoader(Blockchain blockchain) {
+        return new BlockLoader(blockchain);
     }
 
     @Provides
-    EthHandler provideEthHandler() {
-        return new EthHandler();
+    @Singleton
+    ProgramInvokeFactory provideProgramInvokeFactory() {
+        return new ProgramInvokeFactoryImpl();
     }
 
     @Provides
-    ShhHandler provideShhHandler() {
-        return new ShhHandler();
+    EthHandler provideEthHandler(Blockchain blockchain, EthereumListener listener, Wallet wallet) {
+        return new EthHandler(blockchain, listener, wallet);
     }
 
     @Provides
-    P2pHandler provideP2pHandler() {
-        return new P2pHandler();
+    ShhHandler provideShhHandler(EthereumListener listener) {
+        return new ShhHandler(listener);
     }
 
     @Provides
-    MessageCodec provideMessageCodec() {
-        return new MessageCodec();
+    P2pHandler provideP2pHandler(PeerDiscovery peerDiscovery, EthereumListener listener) {
+        return new P2pHandler(peerDiscovery, listener);
+    }
+
+    @Provides
+    MessageCodec provideMessageCodec(EthereumListener listener) {
+        return new MessageCodec(listener);
     }
 
     @Provides
@@ -140,8 +149,13 @@ public class EthereumModule {
     }
 
     @Provides
-    MessageQueue provideMessageQueue() {
-        return new MessageQueue();
+    MessageQueue provideMessageQueue(EthereumListener listener) {
+        return new MessageQueue(listener);
+    }
+
+    @Provides
+    WorkerThread provideWorkerThread(Provider<DiscoveryChannel> discoveryChannelProvider) {
+        return new WorkerThread(discoveryChannelProvider);
     }
 
     @Provides
@@ -151,11 +165,11 @@ public class EthereumModule {
     }
 
 
-
+/*
     @Provides
     String provideRemoteId() {
         return "bf01b54b6bc7faa203286dfb8359ce11d7b1fe822968fb4991f508d6f5a36ab7d9ae8af9b0d61c0467fb08567e0fb71cfb9925a370b69f9ede97927db473d1f5";
     }
-
+*/
 
 }

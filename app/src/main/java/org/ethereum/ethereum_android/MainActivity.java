@@ -66,7 +66,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         text1 = (TextView) findViewById(R.id.text1);
         text1.setMovementMethod(new ScrollingMovementMethod());
 
-        StrictMode.enableDefaults();
+        //StrictMode.enableDefaults();
 
 
         new PostTask().execute(ethereum);
@@ -87,6 +87,7 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
                             }
                         });
                     }
+                    text1.append("XXXXENDXXXX");
                     quit = 1;
                 } catch (InterruptedException e) {
                 }
@@ -176,18 +177,21 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
             Log.v(TAG, "222");
             ethereumManager.connect();
             Log.v(TAG, "333");
+            //ethereumManager.startPeerDiscovery();
             while(true) {
+                /*
                 try {
-                    Thread.sleep(100);
+                    Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                */
                 if (quit == 1) {
                     return "All Done!";
                 }
+
                 //publishProgress(1111);
             }
-
         }
 
         @Override

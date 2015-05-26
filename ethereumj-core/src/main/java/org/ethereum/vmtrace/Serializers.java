@@ -15,7 +15,7 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
 
-final class Serializers {
+public final class Serializers {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("vmtrace");
 
@@ -48,7 +48,7 @@ final class Serializers {
         try {
             ObjectMapper mapper = createMapper(pretty);
             mapper.setVisibilityChecker(fieldsOnlyVisibilityChecker(mapper));
-                    
+
             return mapper.writeValueAsString(value);
         } catch (Exception e) {
             LOGGER.error("JSON serialization error: ", e);

@@ -24,8 +24,6 @@ import java.util.TimerTask;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-//import javax.annotation.PostConstruct;
-
 /**
  * @author Roman Mandeleil
  * @since 11.11.2014
@@ -39,15 +37,18 @@ public class ChannelManager {
     List<Channel> channels = Collections.synchronizedList(new ArrayList<Channel>());
 
     Map<ByteArrayWrapper, Block> blockCache = new HashMap<>();
-	
-	@Inject
+
     EthereumListener listener;
 
-    public ChannelManager() {
+    @Inject
+    public ChannelManager(EthereumListener listener) {
+        this.listener = listener;
+
+        this.init();
     }
 
 
-    @PostConstruct
+    //@PostConstruct
     public void init() {
         scheduleChannelCollector();
     }

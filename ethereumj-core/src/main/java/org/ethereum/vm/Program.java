@@ -6,26 +6,22 @@ import org.ethereum.facade.Repository;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.vm.MessageCall.MsgType;
 import org.ethereum.vm.PrecompiledContracts.PrecompiledContract;
-import org.ethereum.vmtrace.Op;
 import org.ethereum.vmtrace.ProgramTrace;
+import org.ethereum.vmtrace.ProgramTraceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import static java.lang.String.format;
+import static java.lang.System.getProperty;
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.util.BIUtil.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 //import static org.springframework.util.StringUtils.isEmpty;
-//import static org.springframework.util.StringUtils.hasLength;
 
 /**
  * @author Roman Mandeleil
@@ -51,9 +47,10 @@ public class Program {
 
     private int invokeHash;
     private ProgramListener listener;
+    private ProgramTraceListener traceListener = new ProgramTraceListener();
 
-    Stack<DataWord> stack = new Stack<>();
-    MemoryBuffer memory = new MemoryBuffer();
+    Stack stack = new Stack();
+    Memory memory = new Memory();
     DataWord programAddress;
 
     ProgramResult result = new ProgramResult();
@@ -70,17 +67,27 @@ public class Program {
     ProgramInvoke invokeData;
 
     public Program(byte[] ops, ProgramInvoke invokeData) {
+        setupTraceListener(this.memory);
+        setupTraceListener(this.stack);
 
-        if (ops == null) ops = EMPTY_BYTE_ARRAY;
-        this.ops = ops;
+        this.ops = (ops == null) ? EMPTY_BYTE_ARRAY : ops;
 
         if (invokeData != null) {
-            this.invokeData = invokeData;
             this.programAddress = invokeData.getOwnerAddress();
+            this.invokeData = invokeData;
             this.invokeHash = invokeData.hashCode();
-            this.result.setRepository(invokeData.getRepository());
+
+            Repository repository = invokeData.getRepository();
+            this.result.setRepository(setupTraceListener(new Storage(this.programAddress, repository)));
+            this.programTrace.initStorage(repository.getContractDetails(this.programAddress.getLast20Bytes()));
+
             precompile();
         }
+    }
+    
+    private <T extends ProgramTraceListenerAware> T setupTraceListener(T traceListenerAware) {
+        traceListenerAware.setTraceListener(traceListener);
+        return traceListenerAware;
     }
 
     public byte getOp(int pc) {
@@ -136,7 +143,7 @@ public class Program {
         stack.push(stackWord);
     }
 
-    public Stack<DataWord> getStack() {
+    public Stack getStack() {
         return this.stack;
     }
 
@@ -193,7 +200,7 @@ public class Program {
      *
      * @param stackSize int
      * @throws StackTooSmallException If the stack is
-     *      smaller than <code>stackSize</code>
+     *                                smaller than <code>stackSize</code>
      */
     public void stackRequire(int stackSize) {
         if (stack.size() < stackSize) {
@@ -202,53 +209,53 @@ public class Program {
     }
 
     public void stackMax(int argsReqs, int returnReqs) {
-        if ( (stack.size() - argsReqs + returnReqs) > MAX_STACKSIZE) {
+        if ((stack.size() - argsReqs + returnReqs) > MAX_STACKSIZE) {
             throw new StackTooLargeException("Expected: overflow 1024 elements stack limit");
         }
     }
 
     public int getMemSize() {
-        return memory.getSize();
+        return memory.size();
     }
 
     public void memorySave(DataWord addrB, DataWord value) {
-        memory.memorySave(addrB.intValue(), value.getData());
+        memory.write(addrB.intValue(), value.getData());
     }
 
     public void memorySave(int addr, byte[] value) {
-        memory.memorySave(addr, value);
+        memory.write(addr, value);
     }
 
     public void memoryExpand(DataWord outDataOffs, DataWord outDataSize) {
 
         if (outDataSize.isZero())
-            return ;
+            return;
 
-        memory.memoryExpand(outDataOffs.intValue(), outDataSize.intValue());
+        memory.extend(outDataOffs.intValue(), outDataSize.intValue());
     }
 
     /**
      * Allocates a piece of memory and stores value at given offset address
      *
-     * @param addr is the offset address
+     * @param addr      is the offset address
      * @param allocSize size of memory needed to write
-     * @param value the data to write to memory
+     * @param value     the data to write to memory
      */
     public void memorySave(int addr, int allocSize, byte[] value) {
-        memory.memorySave(addr, allocSize, value);
+        memory.extendAndWrite(addr, allocSize, value);
     }
 
     public DataWord memoryLoad(DataWord addr) {
-        return memory.memoryLoad(addr.intValue());
+        return memory.readWord(addr.intValue());
     }
 
     public DataWord memoryLoad(int address) {
 
-        return memory.memoryLoad(address);
+        return memory.readWord(address);
     }
 
     public byte[] memoryChunk(int offset, int size) {
-        return memory.memoryChunk(offset, size);
+        return memory.read(offset, size);
     }
 
     /**
@@ -256,10 +263,10 @@ public class Program {
      * a specified size, calculated from a given offset
      *
      * @param offset the memory address offset
-     * @param size the number of bytes to allocate
+     * @param size   the number of bytes to allocate
      */
     public void allocateMemory(int offset, int size) {
-        memory.memoryExpand(offset, size);
+        memory.extend(offset, size);
     }
 
 
@@ -278,6 +285,7 @@ public class Program {
         result.addDeleteAccount(this.getOwnerAddress());
     }
 
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     public void createContract(DataWord value, DataWord memStart, DataWord memSize) {
 
         if (invokeData.getCallDeep() == MAX_DEPTH) {
@@ -326,7 +334,7 @@ public class Program {
         //In case of hashing collisions, check for any balance before createAccount()
         BigInteger oldBalance = result.getRepository().getBalance(newAddress);
         track.createAccount(newAddress);
-        track.addBalance(newAddress,oldBalance);
+        track.addBalance(newAddress, oldBalance);
 
         // [4] TRANSFER THE BALANCE
         track.addBalance(senderAddress, endowment.negate());
@@ -341,7 +349,7 @@ public class Program {
                 this, new DataWord(newAddress), DataWord.ZERO, gasLimit,
                 newBalance, null, track, this.invokeData.getBlockStore(), invokeData.byTestingSuite());
 
-        ProgramResult result = null;
+        ProgramResult result = new ProgramResult();
 
         if (programCode.length != 0) {
             VM vm = new VM();
@@ -352,8 +360,7 @@ public class Program {
             this.result.addLogInfos(result.getLogInfoList());
         }
 
-        if (result != null &&
-                result.getException() != null) {
+        if (result.getException() != null) {
             logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
                     Hex.toHexString(newAddress),
                     result.getException());
@@ -365,8 +372,8 @@ public class Program {
         }
 
         if (programCode.length == 0) {
-           result = new ProgramResult();
-           result.setHReturn(new byte[] {});
+            result = new ProgramResult();
+            result.setHReturn(new byte[]{});
         }
 
         // 4. CREATE THE CONTRACT OUT OF RETURN
@@ -402,7 +409,6 @@ public class Program {
 
     /**
      * That method is for internal code invocations
-     *
      * - Normal calls invoke a specified contract which updates itself
      * - Stateless calls invoke code from another contract, within the context of the caller
      *
@@ -425,10 +431,10 @@ public class Program {
         // FETCH THE CODE
         byte[] programCode = this.result.getRepository().getCode(codeAddress);
 
-/*        if (logger.isInfoEnabled())
+        if (logger.isInfoEnabled())
             logger.info(msg.getType().name() + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
                     Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(), msg.getOutDataSize().longValue());
-*/
+
         Repository trackRepository = result.getRepository().startTracking();
 
         // 2.1 PERFORM THE VALUE (endowment) PART
@@ -440,7 +446,7 @@ public class Program {
             return;
         }
 
-        trackRepository .addBalance(senderAddress, endowment.negate());
+        trackRepository.addBalance(senderAddress, endowment.negate());
 
         BigInteger contextBalance = BigInteger.ZERO;
         if (!invokeData.byTestingSuite()) {
@@ -512,12 +518,12 @@ public class Program {
                             refundGas.toString());
             }
         } else {
-                this.refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
+            this.refundGas(msg.getGas().longValue(), "remaining gas from the internal call");
         }
     }
 
     public void spendGas(long gasValue, String cause) {
-        //gasLogger.info("[{}] Spent for cause: [{}], gas: [{}]", invokeHash, cause, gasValue);
+        gasLogger.info("[{}] Spent for cause: [{}], gas: [{}]", invokeHash, cause, gasValue);
 
         long afterSpend = invokeData.getGas().longValue() - gasValue - result.getGasUsed();
         if (afterSpend < 0) {
@@ -531,7 +537,7 @@ public class Program {
     }
 
     public void refundGas(long gasValue, String cause) {
-        //gasLogger.info("[{}] Refund for cause: [{}], gas: [{}]", invokeHash, cause, gasValue);
+        gasLogger.info("[{}] Refund for cause: [{}], gas: [{}]", invokeHash, cause, gasValue);
         result.refundGas(gasValue);
     }
 
@@ -666,7 +672,7 @@ public class Program {
     }
 
     public String memoryToString() {
-        return memory.memoryToString();
+        return memory.toString();
     }
 
     public void fullTrace() {
@@ -696,15 +702,15 @@ public class Program {
 
             StringBuilder memoryData = new StringBuilder();
             StringBuilder oneLine = new StringBuilder();
-            if (memory.getSize() > 32)
+            if (memory.size() > 32)
                 memoryData.append("... Memory Folded.... ")
                         .append("(")
-                        .append(memory.getSize())
+                        .append(memory.size())
                         .append(") bytes");
             else
-                for (int i = 0; i < memory.getSize(); ++i) {
+                for (int i = 0; i < memory.size(); ++i) {
 
-                    byte value = memory.getByte(i);
+                    byte value = memory.readByte(i);
                     oneLine.append(ByteUtil.oneByteToHexString(value)).append(" ");
 
                     if ((i + 1) % 16 == 0) {
@@ -712,7 +718,7 @@ public class Program {
                                 Integer.toString(i, 16)).replace(" ", "0");
                         memoryData.append("").append(tmp).append(" ");
                         memoryData.append(oneLine);
-                        if (i < memory.getSize()) memoryData.append("\n");
+                        if (i < memory.size()) memoryData.append("\n");
                         oneLine.setLength(0);
                     }
                 }
@@ -737,11 +743,11 @@ public class Program {
             logger.trace(" -- STACK --   {}", stackData);
             logger.trace(" -- MEMORY --  {}", memoryData);
             logger.trace(" -- STORAGE -- {}\n", storageData);
-            /*logger.trace("\n  Spent Gas: [{}]/[{}]\n  Left Gas:  [{}]\n",
+            logger.trace("\n  Spent Gas: [{}]/[{}]\n  Left Gas:  [{}]\n",
                     result.getGasUsed(),
                     invokeData.getGas().longValue(),
                     getGas().longValue());
-*/
+
             StringBuilder globalOutput = new StringBuilder("\n");
             if (stackData.length() > 0) stackData.append("\n");
 
@@ -770,50 +776,8 @@ public class Program {
     }
 
     public void saveOpTrace() {
-
-        if (pc >= ops.length) return;
-
-        Op op = new Op();
-        op.setPc(pc);
-        op.setDeep(invokeData.getCallDeep());
-        op.setOp(ops[pc]);
-        op.saveGas(getGas());
-
-        ContractDetails contractDetails = this.result.getRepository().
-                getContractDetails(this.programAddress.getLast20Bytes());
-        op.saveStorageMap(contractDetails.getStorage());
-        op.saveMemory(memory.memoryChunk(0, memory.getSize()));
-        op.saveStack(stack);
-
-        programTrace.addOp(op);
-    }
-
-    public void saveProgramTraceToFile(String fileName) {
-
-        if (!CONFIG.vmTrace() || CONFIG.vmTraceDir().isEmpty()) return;
-
-        String dir = CONFIG.databaseDir() + "/" + CONFIG.vmTraceDir() + "/";
-
-        File dumpFile = new File(System.getProperty("user.dir") + "/" + dir + fileName + ".json");
-        FileWriter fw = null;
-        BufferedWriter bw = null;
-
-        try {
-            dumpFile.getParentFile().mkdirs();
-            dumpFile.createNewFile();
-
-            fw = new FileWriter(dumpFile.getAbsoluteFile());
-            bw = new BufferedWriter(fw);
-            bw.write(programTrace.asJsonString());
-        } catch (IOException e) {
-            logger.error(e.getMessage(), e);
-        } finally {
-            try {
-                if (bw != null) bw.close();
-                if (fw != null) fw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (this.pc < ops.length) {
+            programTrace.addOp(ops[pc], pc, invokeData.getCallDeep(), getGas(), traceListener.resetActions());
         }
     }
 
@@ -836,7 +800,7 @@ public class Program {
     }
 
 
-    public static String stringify(byte[] code, int index, String result){
+    public static String stringify(byte[] code, int index, String result) {
         if (code == null || code.length == 0)
             return result;
 
@@ -851,11 +815,39 @@ public class Program {
         if (op == null) throw new IllegalOperationException("Invalid operation: " +
                 Hex.toHexString(code, index, 1));
 
-        switch(op) {
-            case PUSH1:  case PUSH2:  case PUSH3:  case PUSH4:  case PUSH5:  case PUSH6:  case PUSH7:  case PUSH8:
-            case PUSH9:  case PUSH10: case PUSH11: case PUSH12: case PUSH13: case PUSH14: case PUSH15: case PUSH16:
-            case PUSH17: case PUSH18: case PUSH19: case PUSH20: case PUSH21: case PUSH22: case PUSH23: case PUSH24:
-            case PUSH25: case PUSH26: case PUSH27: case PUSH28: case PUSH29: case PUSH30: case PUSH31: case PUSH32:
+        switch (op) {
+            case PUSH1:
+            case PUSH2:
+            case PUSH3:
+            case PUSH4:
+            case PUSH5:
+            case PUSH6:
+            case PUSH7:
+            case PUSH8:
+            case PUSH9:
+            case PUSH10:
+            case PUSH11:
+            case PUSH12:
+            case PUSH13:
+            case PUSH14:
+            case PUSH15:
+            case PUSH16:
+            case PUSH17:
+            case PUSH18:
+            case PUSH19:
+            case PUSH20:
+            case PUSH21:
+            case PUSH22:
+            case PUSH23:
+            case PUSH24:
+            case PUSH25:
+            case PUSH26:
+            case PUSH27:
+            case PUSH28:
+            case PUSH29:
+            case PUSH30:
+            case PUSH31:
+            case PUSH32:
                 result += ' ' + op.name() + ' ';
 
                 int nPush = op.val() - OpCode.PUSH1.val() + 1;
@@ -972,9 +964,11 @@ public class Program {
         public static OutOfGasException notEnoughOpGas(OpCode op, long opGas, long programGas) {
             return new OutOfGasException("Not enough gas for '%s' operation executing: opGas[%d], programGas[%d];", op, opGas, programGas);
         }
+
         public static OutOfGasException notEnoughOpGas(OpCode op, DataWord opGas, DataWord programGas) {
             return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());
         }
+
         public static OutOfGasException notEnoughOpGas(OpCode op, BigInteger opGas, BigInteger programGas) {
             return notEnoughOpGas(op, opGas.longValue(), programGas.longValue());
         }
@@ -1012,14 +1006,14 @@ public class Program {
      * used mostly for testing reasons
      */
     public byte[] getMemory() {
-        return memory.memoryChunk(0, memory.getSize());
+        return memory.read(0, memory.size());
     }
 
     /**
      * used mostly for testing reasons
      */
     public void initMem(byte[] data) {
-        this.memory.memorySave(0, data);
+        this.memory.write(0, data);
     }
 
 

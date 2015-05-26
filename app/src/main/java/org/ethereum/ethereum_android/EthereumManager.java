@@ -8,11 +8,15 @@ import org.ethereum.core.AccountState;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import java.util.Set;
 
 public class EthereumManager {
+
+    private static final Logger logger = LoggerFactory.getLogger("manager");
 
     public static Ethereum ethereum = null;
 
@@ -31,6 +35,7 @@ public class EthereumManager {
         ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
                 SystemProperties.CONFIG.activePeerPort(),
                 SystemProperties.CONFIG.activePeerNodeid());
+        //ethereum.getBlockchain();
     }
 
     public void loadAccounts() {
@@ -59,6 +64,7 @@ public class EthereumManager {
             @Override
             public void trace(final String output) {
 
+                logger.info(output);
                 log += output;
                 log += "\n\n";
             }
