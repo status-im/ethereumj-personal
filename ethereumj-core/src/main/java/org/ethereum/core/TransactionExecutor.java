@@ -499,10 +499,11 @@ public class TransactionExecutor {
     }
 
     */
-    /**
+/**
      * After any contract code finish the run the certain result should take place,
      * according to the given circumstances.
      *//*
+
     private long applyProgramResult(ProgramResult result, BigInteger gasDebit,
                                     BigInteger gasPrice, Repository repository, byte[] senderAddress,
                                     byte[] contractAddress, byte[] coinbase, boolean initResults) {

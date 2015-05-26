@@ -29,6 +29,7 @@ import javax.inject.Provider;
 
 import static org.ethereum.jsontestsuite.Utils.parseData;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.ethereum.vm.VMUtils.saveProgramTraceFile;
 
 /**
  * @author Roman Mandeleil
@@ -216,7 +217,7 @@ public class TestRunner {
                 e = ex;
             }
             String content = program.getProgramTrace().asJsonString(true);
-            //program.saveProgramTraceToFile(testCase.getName(), content);
+            saveProgramTraceFile(testCase.getName(), content);
 
             if (testCase.getPost().size() == 0) {
                 if (vmDidThrowAnEception != true) {

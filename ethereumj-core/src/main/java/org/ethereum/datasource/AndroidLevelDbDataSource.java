@@ -19,23 +19,29 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+import android.content.Context;
 
 /**
  * @author Roman Mandeleil
  * @since 18.01.2015
  */
-public class LevelDbDataSource implements KeyValueDataSource {
+public class AndroidLevelDbDataSource implements KeyValueDataSource {
 
     private static final Logger logger = LoggerFactory.getLogger("db");
 
     String name;
     private DB db;
+    private Context context;
 
-    public LevelDbDataSource() {
+    public AndroidLevelDbDataSource() {
     }
 
-    public LevelDbDataSource(String name) {
+    public AndroidLevelDbDataSource(String name) {
         this.name = name;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     @Override
@@ -46,17 +52,22 @@ public class LevelDbDataSource implements KeyValueDataSource {
         Options options = new Options();
         options.createIfMissing(true);
         options.compressionType(CompressionType.NONE);
+        org.iq80.leveldb.Logger logger1 = new org.iq80.leveldb.Logger() {
+            public void log(String message) {
+                logger.debug(message);
+            }
+        };
+        options.logger(logger1);
         try {
             logger.debug("Opening database");
-            File dbLocation = new File(System.getProperty("user.dir") + "/" +
-                    SystemProperties.CONFIG.databaseDir() + "/");
+            File dbLocation = context.getDir(SystemProperties.CONFIG.databaseDir(), 0);
             File fileLocation = new File(dbLocation, name);
 
             if (SystemProperties.CONFIG.databaseReset()) {
                 destroyDB(fileLocation);
             }
 
-            logger.debug("Initializing new or existing database: '{}'", name);
+            logger.debug("Initializing new or existing database: '{}'", fileLocation.getAbsolutePath());
             db = factory.open(fileLocation, options);
 
         } catch (IOException ioe) {

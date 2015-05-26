@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 //import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
 //import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Properties;
@@ -88,9 +87,7 @@ public class CommonConfig {
 
         Properties prop = new Properties();
 
-        if (SystemProperties.CONFIG.databaseReset())
-            prop.put("hibernate.hbm2ddl.auto", "create");
-
+        prop.put("hibernate.hbm2ddl.auto", "update");
         prop.put("hibernate.format_sql", "true");
 
 // todo: useful but annoying consider define by system.properties
@@ -116,16 +113,14 @@ public class CommonConfig {
 
         String url =
                 String.format("jdbc:hsqldb:file:./%s/blockchain/blockchain.db;" +
-                                "create=%s;hsqldb.default_table_type=cached",
+                                "create=true;hsqldb.default_table_type=cached",
 
-                        SystemProperties.CONFIG.databaseDir(),
-                        SystemProperties.CONFIG.databaseReset());
+                        SystemProperties.CONFIG.databaseDir());
 
         DriverManagerDataSource ds = new DriverManagerDataSource();
         ds.setDriverClassName("org.hsqldb.jdbcDriver");
         ds.setUrl(url);
         ds.setUsername("sa");
-
 
 
         return ds;

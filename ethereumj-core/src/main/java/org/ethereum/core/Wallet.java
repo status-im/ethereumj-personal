@@ -84,9 +84,8 @@ public class Wallet {
         this.accountProvider = accountProvider;
     }
 
-
     public void addNewAccount() {
-        Account account = accountProvider.get();
+        Account account = new Account(this.repository);
         account.init();
         String address = Hex.toHexString(account.getEcKey().getAddress());
         rows.put(address, account);

@@ -104,7 +104,7 @@ dependencies {
     //compile "com.octo.android.robospice:robospice-spring-android:1.4.14"
 
     //compile 'com.octo.android.robospice:robospice-ormlite:1.4.14'
-    compile('io.netty:netty-all:4.0.26.Final') {
+    compile('io.netty:netty-all:4.1.0.Beta5') {
         exclude group: 'commons-logging', module: 'commons-logging'
     }
     compile "com.madgag.spongycastle:core:${scastleVersion}"
@@ -129,6 +129,7 @@ dependencies {
 
     //compile 'org.javassist:javassist:3.15.0-GA'
     compile 'org.slf4j:slf4j-android:1.7.12'
+    compile 'de.mindpipe.android:android-logging-log4j:1.0.3'
     //compile "org.slf4j:slf4j-api:${slf4jVersion}"
 
     //compile "log4j:log4j:${log4jVersion}"

@@ -179,15 +179,15 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
             Log.v(TAG, "333");
             //ethereumManager.startPeerDiscovery();
             while(true) {
-                /*
+
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                */
+
                 if (quit == 1) {
-                    return "All Done!";
+                    //return "All Done!";
                 }
 
                 //publishProgress(1111);

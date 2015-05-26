@@ -59,14 +59,14 @@ public class WorldManager {
 
     private ChannelManager channelManager;
 
-    // TODO: What is this doing here ?
     private AdminInfo adminInfo;
+
 
     private EthereumListener listener;
 
     @Inject
 	public WorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-                        ,BlockStore blockStore, ChannelManager channelManager, EthereumListener listener) {
+                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
         logger.info("World manager instantiated");
         this.blockchain = blockchain;
         this.repository = repository;
@@ -74,6 +74,7 @@ public class WorldManager {
         this.peerDiscovery = peerDiscovery;
         this.blockStore = blockStore;
         this.channelManager = channelManager;
+		this.adminInfo = adminInfo;
         this.listener = listener;
 
         this.init();

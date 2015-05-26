@@ -250,10 +250,11 @@ public class BlockchainImpl implements Blockchain {
     @Override
     public void add(Block block) {
 
-        if (exitOn < block.getNumber()) {
+        if (exitOn < block.getNumber()){
             System.out.print("Exiting after block.number: " + getBestBlock().getNumber());
             System.exit(-1);
         }
+
 
         if(!isValid(block)){
             logger.warn("Invalid block with number: {}", block.getNumber());
@@ -298,6 +299,7 @@ public class BlockchainImpl implements Blockchain {
 
         track.commit();
         repository.flush(); // saving to the disc
+
 
         storeBlock(block, receipts);
 
@@ -473,7 +475,6 @@ public class BlockchainImpl implements Blockchain {
                 wallet.processBlock(block);
             }
         }
-
 
         return receipts;
     }
@@ -740,5 +741,4 @@ public class BlockchainImpl implements Blockchain {
     public void setExitOn(long exitOn) {
         this.exitOn = exitOn;
     }
-
 }

@@ -15,7 +15,7 @@ import java.util.List;
 public class AdminInfo {
 
 
-    private long startupTimeStamp = System.currentTimeMillis();;
+    private long startupTimeStamp;
     private boolean consensus = true;
     private List<Long> blockExecTime = new LinkedList<>();
 

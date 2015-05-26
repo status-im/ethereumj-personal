@@ -2,8 +2,10 @@ package org.ethereum.di.modules;
 
 import android.content.Context;
 
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;
+import org.ethereum.datasource.AndroidLevelDbDataSource;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
 import org.ethereum.db.BlockStore;
@@ -58,8 +60,8 @@ public class EthereumModule {
     @Provides
     @Singleton
     WorldManager provideWorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-            ,BlockStore blockStore, ChannelManager channelManager, EthereumListener listener) {
-        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, listener);
+            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
+        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener);
     }
 
     @Provides
@@ -79,9 +81,9 @@ public class EthereumModule {
     @Provides
     @Singleton
     Repository provideRepository() {
-        LevelDbDataSource detailsDS = new LevelDbDataSource();
+        AndroidLevelDbDataSource detailsDS = new AndroidLevelDbDataSource();
         detailsDS.setContext(context);
-        LevelDbDataSource stateDS = new LevelDbDataSource();
+        AndroidLevelDbDataSource stateDS = new AndroidLevelDbDataSource();
         stateDS.setContext(context);
         return new RepositoryImpl(detailsDS, stateDS);
     }
@@ -139,7 +141,7 @@ public class EthereumModule {
 
     @Provides
     MessageCodec provideMessageCodec(EthereumListener listener) {
-        return new MessageCodec(listener);
+        return new MessageCodec();
     }
 
     @Provides
@@ -165,11 +167,11 @@ public class EthereumModule {
     }
 
 
-/*
+
     @Provides
     String provideRemoteId() {
-        return "bf01b54b6bc7faa203286dfb8359ce11d7b1fe822968fb4991f508d6f5a36ab7d9ae8af9b0d61c0467fb08567e0fb71cfb9925a370b69f9ede97927db473d1f5";
+        return SystemProperties.CONFIG.activePeerNodeid();
     }
-*/
+
 
 }

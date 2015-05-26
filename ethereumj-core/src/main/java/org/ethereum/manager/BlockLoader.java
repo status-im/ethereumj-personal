@@ -21,7 +21,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 //@Component
 public class BlockLoader {
 
-    Blockchain blockchain;
+    private Blockchain blockchain;
 
     Scanner scanner = null;
 
@@ -63,6 +63,8 @@ public class BlockLoader {
             e.printStackTrace();
         }
     }
+
+
 
 
 }

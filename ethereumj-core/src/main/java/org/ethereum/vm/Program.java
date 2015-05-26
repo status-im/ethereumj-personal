@@ -84,7 +84,7 @@ public class Program {
             precompile();
         }
     }
-    
+
     private <T extends ProgramTraceListenerAware> T setupTraceListener(T traceListenerAware) {
         traceListenerAware.setTraceListener(traceListener);
         return traceListenerAware;
@@ -350,7 +350,6 @@ public class Program {
                 newBalance, null, track, this.invokeData.getBlockStore(), invokeData.byTestingSuite());
 
         ProgramResult result = new ProgramResult();
-
         if (programCode.length != 0) {
             VM vm = new VM();
             Program program = new Program(programCode, programInvoke);
@@ -409,6 +408,7 @@ public class Program {
 
     /**
      * That method is for internal code invocations
+     *
      * - Normal calls invoke a specified contract which updates itself
      * - Stateless calls invoke code from another contract, within the context of the caller
      *
@@ -798,7 +798,6 @@ public class Program {
             }
         }
     }
-
 
     public static String stringify(byte[] code, int index, String result) {
         if (code == null || code.length == 0)
