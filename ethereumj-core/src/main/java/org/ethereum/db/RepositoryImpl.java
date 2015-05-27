@@ -118,6 +118,8 @@ public class RepositoryImpl implements Repository {
     public void updateBatch(HashMap<ByteArrayWrapper, AccountState> stateCache,
                             HashMap<ByteArrayWrapper, ContractDetails> detailsCache) {
 
+        logger.info("updatingBatch: detailsCache.size: {}", detailsCache.size());
+
         for (ByteArrayWrapper hash : stateCache.keySet()) {
 
             AccountState accountState = stateCache.get(hash);
@@ -149,6 +151,9 @@ public class RepositoryImpl implements Repository {
 
             }
         }
+
+
+        logger.info("updated: detailsCache.size: {}", detailsCache.size());
 
         stateCache.clear();
         detailsCache.clear();
@@ -418,7 +423,7 @@ public class RepositoryImpl implements Repository {
         byte[] detailsData = detailsDB.get(addr);
 
         if (detailsData != null)
-            result = new ContractDetails(detailsData);
+            result = new ContractDetailsImpl(detailsData);
 
         return result;
     }
@@ -441,7 +446,7 @@ public class RepositoryImpl implements Repository {
         AccountState accountState = new AccountState();
         worldState.update(addr, accountState.getEncoded());
 
-        ContractDetails contractDetails = new ContractDetails();
+        ContractDetails contractDetails = new ContractDetailsImpl();
         detailsDB.put(addr, contractDetails.getEncoded());
 
         return accountState;
@@ -466,9 +471,9 @@ public class RepositoryImpl implements Repository {
             account = account.clone();
 
         if (details == null)
-            details = new ContractDetails();
+            details = new ContractDetailsCacheImpl();
         else
-            details = details.clone();
+            details = new ContractDetailsCacheImpl(details.getEncoded());
 
         cacheAccounts.put(wrap(addr), account);
         cacheDetails.put(wrap(addr), details);
