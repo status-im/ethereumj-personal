@@ -1,7 +1,6 @@
 package org.ethereum.net.shh;
 
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -12,17 +11,11 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
-
 /**
  * Process the messages between peers with 'shh' capability on the network.
  *
  * Peers with 'shh' capability can send/receive:
  */
-//@Component
-//@Scope("prototype")
 public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     public final static byte VERSION = 1;

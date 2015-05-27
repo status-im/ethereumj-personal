@@ -1,7 +1,5 @@
 package org.ethereum.di.modules;
 
-import android.content.Context;
-
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;

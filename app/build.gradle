@@ -67,6 +67,7 @@ dependencies {
     provided 'org.glassfish:javax.annotation:10.0-b28'
     compile project(':ethereumj-core')
     compile fileTree(include: ['*.jar'], dir: '../libraries')
+    compile 'com.j256.ormlite:ormlite-android:4.48'
     compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile 'com.android.support:recyclerview-v7:22.1.1'
