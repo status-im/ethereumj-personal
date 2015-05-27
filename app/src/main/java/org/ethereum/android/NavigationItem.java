@@ -1,4 +1,4 @@
-package org.ethereum.ethereum_android;
+package org.ethereum.android;
 
 
 import android.graphics.drawable.Drawable;

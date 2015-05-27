@@ -1,8 +1,9 @@
-package org.ethereum.di.components;
+package org.ethereum.android.di.components;
 
-import org.ethereum.di.modules.EthereumModule;
+import android.content.Context;
+
+import org.ethereum.android.di.modules.EthereumModule;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.listener.EthereumListener;
 
 import javax.inject.Singleton;
 
@@ -12,6 +13,6 @@ import dagger.Component;
 @Component(modules = EthereumModule.class)
 public interface EthereumComponent {
 
+    Context context();
     Ethereum ethereum();
-    EthereumListener listener();
 }

@@ -51,7 +51,14 @@ android {
     sourceSets {
         main {
             java {
+                exclude '**/BlockStoreImpl.java'
+                exclude '**/CommonConfig.java'
+                exclude '**/DefaultConfig.java'
+                exclude '**/RemoteConfig.java'
+                exclude '**/EthereumFactory.java'
+                exclude '**/Start.java'
                 srcDirs += generatedSrcDir
+
             }
         }
     }
@@ -74,7 +81,7 @@ ext {
     leveldbVersion = '0.7'
     scastleVersion = '1.51.0.0'
     log4jVersion = '1.2.17'
-    hibernateVersion = '4.3.7.Final'
+    hibernateVersion = '4.3.10.Final'
     junitVersion = '4.11'
 }
 
@@ -88,7 +95,7 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
     }
 
-    compile('io.netty:netty-all:4.1.0.Beta5') {
+    compile('io.netty:netty-all:4.0.28.Final') {
         exclude group: 'commons-logging', module: 'commons-logging'
     }
     compile "com.madgag.spongycastle:core:${scastleVersion}"
@@ -120,6 +127,7 @@ dependencies {
     compile 'org.hsqldb:hsqldb:1.8.0.10' // best performance - do not upgrade!
 
     compile 'javax.persistence:persistence-api:1.0.2'
+    compile 'com.j256.ormlite:ormlite-android:4.48'
 
     compile('redis.clients:jedis:2.6.0') {
         exclude group: 'org.apache.commons', module: 'commons-pool2'

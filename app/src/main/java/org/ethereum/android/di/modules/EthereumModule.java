@@ -1,12 +1,11 @@
-package org.ethereum.di.modules;
+package org.ethereum.android.di.modules;
 
 import android.content.Context;
 
+import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;
-import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.datasource.LevelDbDataSource;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
 import org.ethereum.db.RepositoryImpl;
@@ -19,7 +18,6 @@ import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.manager.BlockLoader;
 import org.ethereum.manager.WorldManager;
-import org.ethereum.net.BlockQueue;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.EthHandler;
@@ -43,8 +41,10 @@ import dagger.Provides;
 @Module
 public class EthereumModule {
 
-    public EthereumModule() {
+    private Context context;
 
+    public EthereumModule(Context context) {
+        this.context = context;
     }
 
     @Provides
@@ -79,7 +79,9 @@ public class EthereumModule {
     @Singleton
     Repository provideRepository() {
         LevelDbDataSource detailsDS = new LevelDbDataSource();
+        detailsDS.setContext(context);
         LevelDbDataSource stateDS = new LevelDbDataSource();
+        stateDS.setContext(context);
         return new RepositoryImpl(detailsDS, stateDS);
     }
 
@@ -160,5 +162,9 @@ public class EthereumModule {
         return SystemProperties.CONFIG.activePeerNodeid();
     }
 
-
+    @Provides
+    @Singleton
+    Context provideContext() {
+        return context;
+    }
 }

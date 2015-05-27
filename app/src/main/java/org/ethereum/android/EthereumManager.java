@@ -1,8 +1,5 @@
-package org.ethereum.ethereum_android;
+package org.ethereum.android;
 
-import android.content.Context;
-
-import org.ethereum.EthereumFactory;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.AccountState;
 import org.ethereum.facade.Ethereum;
@@ -28,6 +25,10 @@ public class EthereumManager {
 
         this.ethereum = ethereum;
         this.addListener();
+    }
+
+    public void start() {
+
     }
 
     public void connect() {

@@ -1,7 +1,6 @@
-package org.ethereum.ethereum_android;
+package org.ethereum.android;
 
 import android.os.AsyncTask;
-import android.os.StrictMode;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -16,20 +15,13 @@ import android.widget.TextView;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
-//import org.springframework.context.ApplicationContext;
-import org.ethereum.di.components.DaggerEthereumComponent;
-import org.ethereum.di.components.EthereumComponent;
-import org.ethereum.di.modules.EthereumModule;
-import org.ethereum.ethereum_android.di.components.ApplicationComponent;
-import org.ethereum.ethereum_android.di.modules.ActivityModule;
+import org.ethereum.android.di.components.DaggerEthereumComponent;
+import org.ethereum.android.di.modules.EthereumModule;
 import org.ethereum.facade.Ethereum;
-
-import javax.inject.Inject;
 
 
 public class MainActivity extends ActionBarActivity implements OnClickListener, NavigationDrawerCallbacks {
 
-//    public static ApplicationContext context = null;
     private static final String TAG = "MyActivity";
     private static Integer quit = 0;
     private TextView text1;
@@ -95,14 +87,6 @@ public class MainActivity extends ActionBarActivity implements OnClickListener, 
         };
 
         t.start();
-    }
-
-    protected ApplicationComponent getApplicationComponent() {
-        return ((EthereumApplication)getApplication()).getApplicationComponent();
-    }
-
-    protected ActivityModule getActivityModule() {
-        return new ActivityModule(this);
     }
 
     public void onClick(View v) {

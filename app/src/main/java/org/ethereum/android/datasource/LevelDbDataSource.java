@@ -1,7 +1,8 @@
-package org.ethereum.datasource;
+package org.ethereum.android.datasource;
 
 import org.ethereum.config.SystemProperties;
 
+import org.ethereum.datasource.KeyValueDataSource;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -25,7 +26,7 @@ import android.content.Context;
  * @author Roman Mandeleil
  * @since 18.01.2015
  */
-public class AndroidLevelDbDataSource implements KeyValueDataSource {
+public class LevelDbDataSource implements KeyValueDataSource {
 
     private static final Logger logger = LoggerFactory.getLogger("db");
 
@@ -33,10 +34,10 @@ public class AndroidLevelDbDataSource implements KeyValueDataSource {
     private DB db;
     private Context context;
 
-    public AndroidLevelDbDataSource() {
+    public LevelDbDataSource() {
     }
 
-    public AndroidLevelDbDataSource(String name) {
+    public LevelDbDataSource(String name) {
         this.name = name;
     }
 

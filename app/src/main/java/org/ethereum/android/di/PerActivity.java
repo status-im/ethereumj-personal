@@ -1,4 +1,4 @@
-package org.ethereum.ethereum_android.di;
+package org.ethereum.android.di;
 
 import java.lang.annotation.Retention;
 
