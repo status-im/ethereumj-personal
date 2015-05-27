@@ -1,7 +1,6 @@
 package org.ethereum.net.server;
 
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
@@ -15,9 +14,8 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -28,7 +26,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
-//@Component
+@Singleton
 public class PeerServer {
 
     private static final Logger logger = LoggerFactory.getLogger("net");

@@ -7,15 +7,13 @@ import org.ethereum.facade.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import static java.lang.Thread.sleep;
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -30,7 +28,7 @@ import static org.ethereum.core.ImportResult.SUCCESS;
  * @author Roman Mandeleil
  * @since 27.07.2014
  */
-//@Component
+@Singleton
 public class BlockQueue {
 
     private static final Logger logger = LoggerFactory.getLogger("blockqueue");
@@ -60,6 +58,7 @@ public class BlockQueue {
 
     Blockchain blockchain;
 
+    @Inject
     public BlockQueue(Blockchain blockchain) {
 
         this.blockchain = blockchain;

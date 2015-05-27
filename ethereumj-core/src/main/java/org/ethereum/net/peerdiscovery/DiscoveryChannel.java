@@ -7,7 +7,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.Capability;
 import org.ethereum.net.eth.EthHandler;
@@ -18,10 +17,6 @@ import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.wire.MessageCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
@@ -35,8 +30,6 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  *
  * @see <a href="http://netty.io">http://netty.io</a>
  */
-//@Component
-//@Scope("prototype")
 public class DiscoveryChannel {
 
     private static final Logger logger = LoggerFactory.getLogger("net");

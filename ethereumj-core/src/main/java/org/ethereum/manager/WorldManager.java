@@ -17,22 +17,15 @@ import org.slf4j.LoggerFactory;
 
 import org.spongycastle.util.encoders.Hex;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
-
 import java.math.BigInteger;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * WorldManager is a singleton containing references to different parts of the system.
@@ -40,7 +33,7 @@ import javax.inject.Inject;
  * @author Roman Mandeleil
  * @since 01.06.2014
  */
-//@Component
+@Singleton
 public class WorldManager {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
@@ -80,7 +73,6 @@ public class WorldManager {
         this.init();
     }
 
-    //@PostConstruct
     public void init() {
         byte[] cowAddr = HashUtil.sha3("cow".getBytes());
         wallet.importKey(cowAddr);

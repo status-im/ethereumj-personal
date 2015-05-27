@@ -8,7 +8,6 @@ import io.netty.handler.codec.ByteToMessageCodec;
 import org.ethereum.crypto.ECIESCoder;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.eth.EthMessageCodes;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.message.MessageFactory;
@@ -21,9 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.List;
@@ -35,8 +31,6 @@ import static org.ethereum.net.rlpx.FrameCodec.Frame;
 /**
  * The PacketDecoder parses every valid Ethereum packet to a Message object
  */
-//@Component
-//@Scope("prototype")
 public class MessageCodec extends ByteToMessageCodec<Message> {
 
     private static final Logger loggerWire = LoggerFactory.getLogger("wire");
@@ -82,7 +76,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
             super.userEventTriggered(ctx, evt);
         }
     }
-    /*
+
     EthereumListener listener;
 
     @Inject
@@ -90,7 +84,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         super();
         this.listener = listener;
     }
-*/
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         if (!isHandshakeDone)

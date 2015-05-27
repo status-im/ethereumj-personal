@@ -8,8 +8,6 @@ import org.ethereum.util.RLPList;
 
 import com.google.common.base.Joiner;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
@@ -29,9 +27,6 @@ public class HelloMessage extends P2pMessage {
      * The implemented version of the P2P protocol.
      */
     private byte p2pVersion;
-
-    private final static Logger logger = LoggerFactory.getLogger("net");
-
     /**
      * The underlying client. A user-readable string.
      */
@@ -62,11 +57,9 @@ public class HelloMessage extends P2pMessage {
         this.listenPort = listenPort;
         this.peerId = peerId;
         this.parsed = true;
-        logger.info("Hello Message");
     }
 
     private void parse() {
-        logger.info("Hello message parse");
         RLPList paramsList = (RLPList) RLP.decode2(encoded).get(0);
 
         byte[] p2pVersionBytes = paramsList.get(0).getRLPData();

@@ -14,9 +14,6 @@ import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.wire.MessageCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -30,8 +27,6 @@ import static org.ethereum.net.message.StaticMessages.HELLO_MESSAGE;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
-//@Component
-//@Scope("prototype")
 public class Channel {
 
     private final static Logger logger = LoggerFactory.getLogger("net");

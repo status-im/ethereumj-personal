@@ -1,17 +1,16 @@
 package org.ethereum.manager;
 
-//import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.inject.Singleton;
 
 /**
  * @author Roman Mandeleil
  * @since 11.12.2014
  */
-//@Component
+@Singleton
 public class AdminInfo {
 
 
@@ -23,7 +22,6 @@ public class AdminInfo {
         this.init();
     }
 
-    //@PostConstruct
     public void init() {
         startupTimeStamp = System.currentTimeMillis();
     }

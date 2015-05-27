@@ -3,7 +3,6 @@ package org.ethereum.core;
 import org.ethereum.config.Constants;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
-import org.ethereum.db.RepositoryImpl;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
@@ -18,10 +17,6 @@ import org.ethereum.vm.ProgramInvokeFactoryImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Qualifier;
-//import org.springframework.stereotype.Component;
-//import org.springframework.util.FileSystemUtils;
 import org.apache.commons.io.FileUtils;
 
 import javax.annotation.Resource;
@@ -34,7 +29,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import javax.inject.Inject;
-import javax.inject.Qualifier;
+import javax.inject.Singleton;
 
 import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -72,7 +67,7 @@ import static org.ethereum.core.ImportResult.SUCCESS;
  * @author Nick Savers
  * @since 20.05.2014
  */
-//@Component
+@Singleton
 public class BlockchainImpl implements Blockchain {
 
 
@@ -83,7 +78,6 @@ public class BlockchainImpl implements Blockchain {
     private static final long INITIAL_MIN_GAS_PRICE = 10 * SZABO.longValue();
 
     @Resource
-    //@Qualifier("pendingTransactions")
     private Set<Transaction> pendingTransactions = new HashSet<>();
 
     private Repository repository;

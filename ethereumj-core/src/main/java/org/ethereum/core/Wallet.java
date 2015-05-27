@@ -3,18 +3,12 @@ package org.ethereum.core;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.facade.Repository;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.submit.WalletTransaction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.spongycastle.util.encoders.Hex;
-
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.annotation.DependsOn;
-//import org.springframework.stereotype.Component;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -36,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.inject.Provider;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -47,13 +41,14 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * The Wallet handles the management of accounts with addresses and private keys.
  * New accounts can be generated and added to the wallet and existing accounts can be queried.
  */
-//@Component
-//@DependsOn("worldManager")
+@Singleton
 public class Wallet {
 
     private Logger logger = LoggerFactory.getLogger("wallet");

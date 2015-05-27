@@ -1,7 +1,6 @@
 package org.ethereum.net.client;
 
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 
@@ -19,11 +18,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
-
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -31,8 +25,6 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  *
  * @see <a href="http://netty.io">http://netty.io</a>
  */
-//@Component
-//@Scope("prototype")
 public class PeerClient {
 
     private static final Logger logger = LoggerFactory.getLogger("net");

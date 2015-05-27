@@ -5,10 +5,6 @@ import org.ethereum.net.p2p.Peer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.stereotype.Component;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -30,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -37,7 +34,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 22.05.2014
  */
-//@Component
+@Singleton
 public class PeerDiscovery {
 
     private static final Logger logger = LoggerFactory.getLogger("peerdiscovery");

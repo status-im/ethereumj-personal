@@ -141,7 +141,7 @@ public class EthereumModule {
 
     @Provides
     MessageCodec provideMessageCodec(EthereumListener listener) {
-        return new MessageCodec();
+        return new MessageCodec(listener);
     }
 
     @Provides

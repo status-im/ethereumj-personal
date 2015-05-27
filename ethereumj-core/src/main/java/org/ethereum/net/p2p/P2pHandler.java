@@ -1,10 +1,8 @@
 package org.ethereum.net.p2p;
 
-import io.netty.buffer.ByteBuf;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.Capability;
 import org.ethereum.net.eth.EthHandler;
@@ -15,7 +13,6 @@ import org.ethereum.net.message.ReasonCode;
 import org.ethereum.net.message.StaticMessages;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.PeerInfo;
-import org.ethereum.net.rlpx.FrameCodec;
 import org.ethereum.net.server.Channel;
 import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.shh.ShhMessageCodes;
@@ -26,12 +23,6 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.spongycastle.util.encoders.Hex;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -60,8 +51,6 @@ import static org.ethereum.net.message.StaticMessages.*;
  *  <li>PONG        :   Confirm that they themselves are still alive</li>
  * </ul>
  */
-//@Component
-//@Scope("prototype")
 public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
     public final static byte VERSION = 4;

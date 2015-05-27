@@ -15,11 +15,7 @@ import org.ethereum.net.submit.TransactionTask;
 import org.ethereum.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -29,6 +25,7 @@ import java.util.concurrent.Future;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -36,7 +33,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 27.07.2014
  */
-//@Component
+@Singleton
 public class EthereumImpl implements Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
@@ -48,7 +45,6 @@ public class EthereumImpl implements Ethereum {
     AdminInfo adminInfo;
 
     ChannelManager channelManager;
-
 
     PeerServer peerServer;
 
@@ -72,7 +68,6 @@ public class EthereumImpl implements Ethereum {
         this.init();
     }
 
-    //@PostConstruct
     public void init() {
         worldManager.loadBlockchain();
         if (CONFIG.listenPort() > 0) {

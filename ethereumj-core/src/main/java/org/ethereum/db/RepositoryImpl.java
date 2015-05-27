@@ -3,7 +3,6 @@ package org.ethereum.db;
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
 import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.datasource.HashMapDB;
 import org.ethereum.facade.Repository;
 import org.ethereum.json.EtherObjectMapper;
 import org.ethereum.json.JSONHelper;
@@ -21,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import org.apache.commons.io.FileUtils;
-//import org.springframework.util.FileSystemUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;

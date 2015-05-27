@@ -21,7 +21,6 @@ import static java.lang.System.getProperty;
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.util.BIUtil.*;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
-//import static org.springframework.util.StringUtils.isEmpty;
 
 /**
  * @author Roman Mandeleil

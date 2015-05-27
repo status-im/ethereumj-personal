@@ -8,10 +8,6 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.ethereum.facade.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.annotation.Scope;
-//import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
@@ -23,8 +19,6 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 01.11.2014
  */
-//@Component
-//@Scope("prototype")
 public class EthereumChannelInitializer extends ChannelInitializer<NioSocketChannel> {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
