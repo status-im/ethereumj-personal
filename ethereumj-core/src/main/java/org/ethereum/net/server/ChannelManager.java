@@ -44,8 +44,6 @@ public class ChannelManager {
         this.init();
     }
 
-
-    //@PostConstruct
     public void init() {
         scheduleChannelCollector();
     }
