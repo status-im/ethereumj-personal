@@ -1,8 +1,9 @@
-# Welcome to ethereumj for android
+# Welcome to EthereumJ for Android
 
 # About
-ethereumj is a pure-Java implementation of the Ethereum protocol. For high-level information about Ethereum and its goals, visit [ethereum.org](https://ethereum.org). The [ethereum white paper](https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper) provides a complete conceptual overview, and the [yellow paper](http://gavwood.com/Paper.pdf) provides a formal definition of the protocol.
-This is an android version of ethereumj (https://github.com/ethereum/ethereumj).
+EthereumJ is a pure-Java implementation of the Ethereum protocol. For high-level information about Ethereum and its goals, visit [ethereum.org](https://ethereum.org). The [ethereum white paper](https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-White-Paper) provides a complete conceptual overview, and the [yellow paper](http://gavwood.com/Paper.pdf) provides a formal definition of the protocol.
+
+This is an Android-optimized fork of [EthereumJ](https://github.com/ethereum/ethereumj).
 
 This repository consists of:
  * [ethereum-core](ethereumj-core): a android compatible library of ethereumj-core .
@@ -13,8 +14,10 @@ This is a work in progress.
 
 # Building from source
 
- - Clone this repository and run `./gradlew build` (or at least `./gradlew antlr4` to generate sources).
- - Import gradle.build from the root folder into Android Studio.
+ - Clone this repository and run
+ `./gradlew antlr4; ./gradlew build -x test`
+ - Install onto Android Device 
+ `adb install -r app/build/outputs/apk/app-debug.apk`
 
 # License
-ethereumj is released under the [MIT license](LICENSE).
+EthereumJ is released under the [MIT license](LICENSE).

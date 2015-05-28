@@ -35,6 +35,11 @@ android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
 
+    // TODO remove this later
+    lintOptions {
+      abortOnError false
+    }
+
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 21
