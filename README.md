@@ -12,6 +12,9 @@ This repository consists of:
 # Todo
 This is a work in progress.
 
+# Gotchas
+Old devices will fail to auth in time and will be rejected by peers, please use modern devices.
+
 # Building from source
 
  - Clone this repository and run
