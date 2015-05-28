@@ -15,7 +15,8 @@ import static java.lang.System.getProperty;
 //import static java.util.Base64.getDecoder;
 //import static java.util.Base64.getEncoder;
 //import static org.springframework.util.StringUtils.isEmpty;
-import static android.util.Base64.*;
+import static org.apache.commons.codec.binary.Base64.decodeBase64;
+import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
 public final class VMUtils {
 
@@ -120,7 +121,7 @@ public final class VMUtils {
 
     public static String zipAndEncode(String content) {
         try {
-            return encodeToString(compress(content), DEFAULT);//getEncoder().encodeToString(compress(content));
+            return encodeBase64String(compress(content));
         } catch (Exception e) {
             LOGGER.error("Cannot zip or encode: ", e);
             return content;
@@ -129,7 +130,7 @@ public final class VMUtils {
 
     public static String unzipAndDecode(String content) {
         try {
-            return decompress(decode(content, DEFAULT));//decompress(getDecoder().decode(content));
+            return decompress(decodeBase64(content));
         } catch (Exception e) {
             LOGGER.error("Cannot unzip or decode: ", e);
             return content;
