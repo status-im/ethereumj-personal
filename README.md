@@ -37,7 +37,6 @@ This repository consists of:
 
 # Todo
 - Android-specific BlockStore Implementation
-- Seperate APP from core repo
 - Unit Tests
 
 This is a work in progress.
