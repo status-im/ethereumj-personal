@@ -9,6 +9,7 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 
+import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 import android.content.Context;
 
 /**
@@ -69,7 +69,7 @@ public class LevelDbDataSource implements KeyValueDataSource {
             }
 
             logger.debug("Initializing new or existing database: '{}'", fileLocation.getAbsolutePath());
-            db = factory.open(fileLocation, options);
+            db = Iq80DBFactory.factory.open(fileLocation, options);
 
         } catch (IOException ioe) {
             logger.error(ioe.getMessage(), ioe);
@@ -82,7 +82,7 @@ public class LevelDbDataSource implements KeyValueDataSource {
         logger.debug("Destroying existing database");
         Options options = new Options();
         try {
-            factory.destroy(fileLocation, options);
+            Iq80DBFactory.factory.destroy(fileLocation, options);
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
         }

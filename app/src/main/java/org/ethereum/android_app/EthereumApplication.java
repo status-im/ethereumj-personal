@@ -1,4 +1,4 @@
-package org.ethereum.android;
+package org.ethereum.android_app;
 
 
 import android.support.multidex.MultiDexApplication;
