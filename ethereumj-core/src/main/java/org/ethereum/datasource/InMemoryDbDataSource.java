@@ -1,7 +1,5 @@
 package org.ethereum.datasource;
 
-import android.content.Context;
-
 import org.ethereum.config.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,17 +25,12 @@ public class InMemoryDbDataSource implements KeyValueDataSource {
 
     String name;
     HashMap<ByteBuffer, byte[]> db;
-    private Context context;
 
     public InMemoryDbDataSource() {
     }
 
     public InMemoryDbDataSource(String name) {
         this.name = name;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
     }
 
     @Override

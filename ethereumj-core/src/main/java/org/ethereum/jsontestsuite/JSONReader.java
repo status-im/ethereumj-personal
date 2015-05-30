@@ -21,8 +21,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-//import org.apache.commons.codec.binary.Base64;
-import android.util.Base64;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +105,7 @@ public class JSONReader {
 
                     testSuiteObj = (JSONObject) parser.parse(blobresult);
                     String blob  = (String) testSuiteObj.get("content");
-                    //byte[] valueDecoded= Base64.decodeBase64(blob.getBytes() );
-                    byte[] valueDecoded= Base64.decode(blob.getBytes(), Base64.DEFAULT);
+                    byte[] valueDecoded= Base64.decodeBase64(blob.getBytes() );
                     //System.out.println("Decoded value is " + new String(valueDecoded));
                     return new String(valueDecoded);
                 }

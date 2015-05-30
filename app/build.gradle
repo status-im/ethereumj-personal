@@ -1,22 +1,11 @@
 apply plugin: 'com.android.application'
-apply plugin: 'com.neenbedankt.android-apt'
 
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
-        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'
-    }
-}
-
-repositories {
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
-
-    mavenCentral()
-
-    flatDir {
-        dirs "../libraries", "../ethereum-core/libs"
+        classpath 'com.android.tools.build:gradle:1.2.3'
     }
 }
 
@@ -43,6 +32,7 @@ android {
         exclude 'META-INF/ASL2.0'
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
     }
     dexOptions {
         javaMaxHeapSize "4g"
@@ -61,13 +51,9 @@ android {
 }
 
 dependencies {
-    apt 'com.google.dagger:dagger-compiler:2.0'
-    compile 'com.google.dagger:dagger:2.0'
+    compile project(':ethereumj-core-android')
     compile 'com.android.support:multidex:1.0.0'
-    provided 'org.glassfish:javax.annotation:10.0-b28'
-    compile project(':ethereumj-core')
     compile fileTree(include: ['*.jar'], dir: '../libraries')
-    compile 'com.j256.ormlite:ormlite-android:4.48'
     compile 'com.android.support:support-v4:22.1.1'
     compile 'com.android.support:appcompat-v7:22.1.1'
     compile 'com.android.support:recyclerview-v7:22.1.1'
