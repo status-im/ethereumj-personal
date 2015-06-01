@@ -4,6 +4,8 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;
 import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.datasource.redis.RedisConnection;
+import org.ethereum.datasource.redis.RedisConnectionImpl;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
 import org.ethereum.db.RepositoryImpl;
@@ -116,6 +118,13 @@ public class TestEthereumModule {
     }
 
     @Provides
+    @Singleton
+    RedisConnection provideRedisConnection() {
+        return new RedisConnectionImpl();
+    }
+
+
+    @Provides
     EthHandler provideEthHandler(Blockchain blockchain, EthereumListener listener, Wallet wallet) {
         return new EthHandler(blockchain, listener, wallet);
     }
@@ -150,6 +159,8 @@ public class TestEthereumModule {
     WorkerThread provideWorkerThread(Provider<DiscoveryChannel> discoveryChannelProvider) {
         return new WorkerThread(discoveryChannelProvider);
     }
+
+
 
     @Provides
     String provideRemoteId() {

@@ -5,10 +5,6 @@ import org.ethereum.facade.Ethereum;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
 
 import java.sql.SQLException;
 import java.util.Properties;
@@ -19,6 +15,7 @@ import java.util.Properties;
  */
 public class TestContext {
 
+    /*
     private static final Logger logger = LoggerFactory.getLogger("test");
 
 
@@ -56,11 +53,11 @@ public class TestContext {
     }
 
 
-/*
-    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
-        <property name="entityManagerFactory" ref="entityManagerFactory" />
-    </bean>
-*/
+
+//    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+//        <property name="entityManagerFactory" ref="entityManagerFactory" />
+//    </bean>
+
 
 
     @Bean(name = "dataSource")
@@ -88,5 +85,5 @@ public class TestContext {
 
     @Autowired
     Ethereum eth;
-
+*/
 }

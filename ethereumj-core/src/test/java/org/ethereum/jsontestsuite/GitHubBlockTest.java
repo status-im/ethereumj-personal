@@ -1,6 +1,10 @@
 package org.ethereum.jsontestsuite;
 
+import org.ethereum.di.modules.TestEthereumModule;
+import org.ethereum.di.components.DaggerTestEthereumComponent;
+import org.ethereum.facade.Ethereum;
 import org.json.simple.parser.ParseException;
+import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,6 +19,13 @@ public class GitHubBlockTest {
 
     //SHACOMMIT of tested commit, ethereum/tests.git
     public String shacommit = "d2ba02fe0507da205e3d17d79612ae15282b35a2";
+
+    @Before
+    public void setup() {
+        DaggerTestEthereumComponent.builder()
+                .testEthereumModule(new TestEthereumModule())
+                .build();
+    }
 
     @Ignore
     @Test

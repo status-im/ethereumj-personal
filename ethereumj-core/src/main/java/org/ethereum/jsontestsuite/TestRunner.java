@@ -6,6 +6,9 @@ import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.core.Wallet;
 import org.ethereum.db.*;
+import org.ethereum.di.components.DaggerEthereumComponent;
+import org.ethereum.di.modules.EthereumModule;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.Repository;
 import org.ethereum.jsontestsuite.builder.BlockBuilder;
 import org.ethereum.jsontestsuite.builder.RepositoryBuilder;
@@ -47,6 +50,10 @@ public class TestRunner {
 
     @Inject
     public TestRunner() {
+
+        channelManager  = DaggerEthereumComponent.builder()
+                .ethereumModule(new EthereumModule())
+                .build().channelManager();
     }
 
     public List<String> runTestSuite(TestSuite testSuite) {

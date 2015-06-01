@@ -4,23 +4,18 @@ package org.ethereum.core;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
+import org.ethereum.di.modules.TestEthereumModule;
+import org.ethereum.di.components.DaggerTestEthereumComponent;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.WorldManager;
 import org.hibernate.SessionFactory;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.ethereum.TestContext;
 
 import java.io.File;
@@ -31,31 +26,39 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static org.junit.Assert.assertEquals;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 public class ImportTest {
 
     private static final Logger logger = LoggerFactory.getLogger("test");
 
-    @Configuration
-    @ComponentScan(basePackages = "org.ethereum")
     static class ContextConfiguration extends TestContext {
         static {
             SystemProperties.CONFIG.setDataBaseDir("test_db/" + ImportTest.class);
             SystemProperties.CONFIG.setDatabaseReset(true);
         }
 
-        @Bean
-        @Transactional(propagation = Propagation.SUPPORTS)
         public BlockStore blockStore(SessionFactory sessionFactory){
             return new InMemoryBlockStore();
         }
     }
 
-    @Autowired
+    @Inject
     WorldManager worldManager;
+
+    @Inject
+    public ImportTest() {
+
+    }
+
+    @Before
+    public void setup() {
+        worldManager = DaggerTestEthereumComponent.builder()
+                .testEthereumModule(new TestEthereumModule())
+                .build().worldManager();
+    }
 
     @After
     public void close(){

@@ -1,10 +1,12 @@
 package org.ethereum.net.wire;
 
+import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.net.client.Capability;
 import org.ethereum.net.eth.EthHandler;
 import org.ethereum.net.eth.EthMessageCodes;
 import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.p2p.P2pMessageCodes;
+import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.shh.ShhMessageCodes;
 
@@ -97,7 +99,7 @@ public class AdaptiveMessageIdsTest {
     @Test
     public void test4() {
 
-        P2pHandler p2pHandler = new P2pHandler();
+        P2pHandler p2pHandler = new P2pHandler(new PeerDiscovery(), new CompositeEthereumListener());
 
         List<Capability> capabilities = Arrays.asList(
                 new Capability(Capability.ETH, EthHandler.VERSION),
@@ -124,7 +126,7 @@ public class AdaptiveMessageIdsTest {
     @Test // Capabilities should be read in alphabetical order
     public void test5() {
 
-        P2pHandler p2pHandler = new P2pHandler();
+        P2pHandler p2pHandler = new P2pHandler(new PeerDiscovery(), new CompositeEthereumListener());
 
         List<Capability> capabilities = Arrays.asList(
                 new Capability(Capability.SHH, ShhHandler.VERSION),

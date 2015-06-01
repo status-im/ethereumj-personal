@@ -9,15 +9,6 @@ import org.ethereum.db.RepositoryImpl;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.hibernate4.HibernateTransactionManager;
-import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,23 +17,16 @@ import java.util.Set;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
-@Configuration
-@EnableTransactionManagement
-@ComponentScan(basePackages = "org.ethereum")
 public class CommonConfig {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
 
-    @Autowired
     private RedisConnection redisConnection;
 
-    @Bean
     Repository repository() {
         return new RepositoryImpl(keyValueDataSource(), keyValueDataSource());
     }
 
-    @Bean
-    @Scope("prototype")
     public KeyValueDataSource keyValueDataSource() {
         String dataSource = CONFIG.getKeyValueDataSource();
         try {
@@ -58,7 +42,6 @@ public class CommonConfig {
         }
     }
 
-    @Bean
     public Set<Transaction> pendingTransactions() {
         String storage = "Redis";
         try {
@@ -73,7 +56,7 @@ public class CommonConfig {
         }
     }
 
-    @Bean
+    /*
     public SessionFactory sessionFactory() {
         LocalSessionFactoryBuilder builder =
                 new LocalSessionFactoryBuilder(dataSource());
@@ -82,6 +65,7 @@ public class CommonConfig {
 
         return builder.buildSessionFactory();
     }
+    */
 
     private Properties getHibernateProperties() {
 
@@ -96,13 +80,11 @@ public class CommonConfig {
                 "org.hibernate.dialect.HSQLDialect");
         return prop;
     }
-
-    @Bean
+    /*
     public HibernateTransactionManager txManager() {
         return new HibernateTransactionManager(sessionFactory());
     }
 
-    @Bean(name = "dataSource")
     public DriverManagerDataSource dataSource() {
 
         logger.info("Connecting to the block store");
@@ -123,5 +105,5 @@ public class CommonConfig {
 
         return ds;
     }
-
+    */
 }

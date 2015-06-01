@@ -7,6 +7,7 @@ import org.ethereum.listener.EthereumListener;
 import javax.inject.Singleton;
 
 import dagger.Component;
+import org.ethereum.net.server.ChannelManager;
 
 @Singleton
 @Component(modules = EthereumModule.class)
@@ -14,4 +15,5 @@ public interface EthereumComponent {
 
     Ethereum ethereum();
     EthereumListener listener();
+    ChannelManager channelManager();
 }
