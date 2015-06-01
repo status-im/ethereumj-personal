@@ -7,6 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.ethereum.android.EthereumManager;
+
 public class TestsFragment extends Fragment {
 
     EthereumManager ethereumManager;

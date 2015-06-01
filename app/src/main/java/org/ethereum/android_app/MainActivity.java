@@ -10,6 +10,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import org.ethereum.android.EthereumManager;
+
 
 public class MainActivity extends ActionBarActivity {
 

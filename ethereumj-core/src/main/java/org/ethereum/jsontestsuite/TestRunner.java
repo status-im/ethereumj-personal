@@ -42,11 +42,11 @@ public class TestRunner {
     private boolean setNewStateRoot;
     private String bestStateRoot;
 
+    @Inject
     public ChannelManager channelManager;
 
     @Inject
-    public TestRunner(ChannelManager channelManager) {
-        this.channelManager = channelManager;
+    public TestRunner() {
     }
 
     public List<String> runTestSuite(TestSuite testSuite) {
@@ -58,7 +58,7 @@ public class TestRunner {
 
             TestCase testCase = testIterator.next();
 
-            TestRunner runner = new TestRunner(channelManager);
+            TestRunner runner = new TestRunner();
             List<String> result = runner.runTestCase(testCase);
             resultCollector.addAll(result);
         }
