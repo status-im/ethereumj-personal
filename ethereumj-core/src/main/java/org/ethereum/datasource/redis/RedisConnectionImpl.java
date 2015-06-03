@@ -59,7 +59,6 @@ public class RedisConnectionImpl implements RedisConnection {
                 redisUri.getHost(),
                 redisUri.getPort(),
                 Protocol.DEFAULT_TIMEOUT);
-        return null;
     }
 
     @PreDestroy
