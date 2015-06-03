@@ -55,26 +55,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             initiate(ctx);
         }
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-            super.channelRead(ctx, msg);
-        }
-
-        @Override
-        public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-            super.channelReadComplete(ctx);
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            super.exceptionCaught(ctx, cause);
-        }
-
-        @Override
-        public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            super.userEventTriggered(ctx, evt);
-        }
     }
 
     EthereumListener listener;
@@ -112,7 +92,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         if (loggerNet.isInfoEnabled())
             loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), msg);
 
-        //listener.onRecvMessage(msg);
+        listener.onRecvMessage(msg);
 
         out.add(msg);
     }
@@ -121,7 +101,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
 
         String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
-        //listener.trace(output);
+        listener.trace(output);
 
         if (loggerNet.isInfoEnabled())
             loggerNet.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), msg);

@@ -45,8 +45,7 @@ public class WorkerThread implements Runnable {
 
         try {
 
-            // TODO: check if this works
-            DiscoveryChannel discoveryChannel = discoveryChannelProvider.get();//ctx.getBean(DiscoveryChannel.class);
+            DiscoveryChannel discoveryChannel = discoveryChannelProvider.get();
             discoveryChannel.connect(peerInfo.getAddress().getHostAddress(), peerInfo.getPort());
             peerInfo.setOnline(true);
 

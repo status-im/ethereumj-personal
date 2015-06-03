@@ -12,9 +12,6 @@ import java.util.zip.InflaterOutputStream;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
-//import static java.util.Base64.getDecoder;
-//import static java.util.Base64.getEncoder;
-//import static org.springframework.util.StringUtils.isEmpty;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 

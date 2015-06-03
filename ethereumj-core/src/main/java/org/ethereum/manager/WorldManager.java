@@ -21,11 +21,11 @@ import java.math.BigInteger;
 
 import java.util.ArrayList;
 
-import static org.ethereum.config.SystemProperties.CONFIG;
-
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
  * WorldManager is a singleton containing references to different parts of the system.

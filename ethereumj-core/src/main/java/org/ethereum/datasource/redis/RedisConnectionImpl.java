@@ -55,6 +55,7 @@ public class RedisConnectionImpl implements RedisConnection {
                     Protocol.DEFAULT_TIMEOUT,
                     userInfo.split(":", 2)[1]);
         }
+
         return new JedisPool(new JedisPoolConfig(),
                 redisUri.getHost(),
                 redisUri.getPort(),

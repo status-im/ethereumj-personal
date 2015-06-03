@@ -10,8 +10,6 @@ import org.spongycastle.util.encoders.Hex;
  */
 public class RedisDataSourceTest extends AbstractRedisTest {
 
-    
-    
     @Test
     public void testSet1() {
         if (!isConnected()) return;

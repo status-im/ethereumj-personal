@@ -14,16 +14,12 @@ import javax.inject.Inject;
 
 import org.spongycastle.util.encoders.Hex;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
-
 import java.math.BigInteger;
 
 /**
  * @author Roman Mandeleil
  * @since 08.06.2014
  */
-//@Component("ProgramInvokeFactory")
 public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
 
     private static final Logger logger = LoggerFactory.getLogger("VM");

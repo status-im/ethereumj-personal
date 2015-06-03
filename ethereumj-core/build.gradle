@@ -1,11 +1,10 @@
-
 buildscript {
     repositories {
+		jcenter()
         maven {
             name 'JFrog OSS snapshot repo'
             url  'https://oss.jfrog.org/oss-snapshot-local/'
         }
-        jcenter()
     }
     dependencies {
         classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
@@ -16,7 +15,7 @@ buildscript {
 
 plugins {
     id 'java'
-    // id "com.ewerk.gradle.plugins.dagger" version "1.0.0"
+   // id "com.ewerk.gradle.plugins.dagger" version "1.0.0"
     id 'application'
     id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '1.2.1'
@@ -25,25 +24,28 @@ plugins {
     id 'com.jfrog.bintray' version '1.0'
 }
 
-sourceCompatibility = 1.7
-mainClassName = 'org.ethereum.Start'
-
-configurations {
-    compile.extendsFrom antlr4
-    provided
-}
-
 repositories {
     maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-    mavenCentral()
-
-    flatDir {
-        dirs "libs"
-    }
+    jcenter()
 }
+
+sourceCompatibility = 1.7
+
+mainClassName = 'org.ethereum.Start'
+applicationDefaultJvmArgs = ["-server", "-Xms2g"]
 
 ext.generatedSrcDir = file('src/gen/java')
 
+sourceSets {
+    main {
+        java {
+            exclude '**/CommonConfig.java'
+            exclude '**/DefaultConfig.java'
+            exclude '**/RemoteConfig.java'
+            srcDirs += generatedSrcDir
+        }
+    }
+}
 
 antlr4 {
     extraArgs = ['-package', 'org.ethereum.serpent']
@@ -57,7 +59,6 @@ if (isJavaProject(project)) {
 } else {
     throw new GradleException('unknown plugin type')
 }
-
 public static boolean isJavaProject(Project project) {
     project.plugins.findPlugin('java')
 }
@@ -65,7 +66,53 @@ public static boolean isAndroidProject(Project project) {
     project.plugins.findPlugin('com.android.application') || project.plugins.findPlugin('com.android.library')
 }
 
+tasks.withType(JavaCompile){
+    options.warnings = false
+}
 
+/**
+ *  This is TCK test command line option,
+ *  to run the test:
+ *     gradle tckRun -PfilePath=[ file path]
+ *      e.g: gradle tckRun -PfilePath=E:\temp\test-case.json
+ */
+task tckRun(type:JavaExec){
+
+    if (project.hasProperty("filePath")) {
+        args = ["filerun", "$filePath"]
+        jvmArgs = ["-Xss32M"]
+    }
+
+    if (project.hasProperty("content")) {
+        args = ["content", "$content"]
+        jvmArgs = ["-Xss32M"]
+    }
+
+    main = "org.ethereum.tck.RunTck"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+
+
+test {
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: ${descriptor}")
+    }
+
+    jvmArgs '-Xss32m'
+
+    testLogging {
+        events "failed"
+        exceptionFormat "short"
+    }
+
+    systemProperty "file.encoding", "UTF-8"
+}
+
+configurations {
+    compile.extendsFrom antlr4
+}
 
 ext {
     slf4jVersion = '1.7.7'
@@ -74,20 +121,6 @@ ext {
     log4jVersion = '1.2.17'
     hibernateVersion = '4.3.10.Final'
     junitVersion = '4.11'
-}
-
-sourceSets {
-    main {
-        java {
-            exclude '**/BlockStoreImpl.java'
-            exclude '**/CommonConfig.java'
-            exclude '**/DefaultConfig.java'
-            exclude '**/RemoteConfig.java'
-            exclude '**/EthereumFactory.java'
-            exclude '**/Start.java'
-            srcDirs += generatedSrcDir
-        }
-    }
 }
 
 dependencies {
@@ -110,7 +143,7 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
     } // for deep equals
 
-    //compile 'org.antlr:antlr4-runtime:4.5' // for serpent compilation
+    compile 'org.antlr:antlr4-runtime:4.5' // for serpent compilation
 
     compile 'com.yuvalshavit:antlr-denter:1.1'
 
@@ -120,6 +153,7 @@ dependencies {
     compile 'com.google.code.findbugs:jsr305:3.0.0'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.2.0'
     compile 'org.apache.commons:commons-collections4:4.0'
+    compile 'commons-io:commons-io:2.4'
     compile "commons-codec:commons-codec:1.10"
     compile 'org.hsqldb:hsqldb:1.8.0.10' // best performance - do not upgrade!
     compile "org.hibernate:hibernate-core:${hibernateVersion}"

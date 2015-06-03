@@ -1,6 +1,6 @@
 package org.ethereum.util;
 
-//import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.PropertyConfigurator;
 
 import java.net.URL;
 
@@ -16,7 +16,7 @@ public class AdvancedDeviceUtils {
         // here we can turn on the detail tracing in the middle of the chain
         if (blockNum >= CONFIG.traceStartBlock() && CONFIG.traceStartBlock() != -1) {
             URL configFile = ClassLoader.getSystemResource("log4j-detailed.properties");
-            //PropertyConfigurator.configure(configFile);
+            PropertyConfigurator.configure(configFile);
         }
     }
 }

@@ -59,8 +59,9 @@ public class ImportTest {
         TestEthereumComponent component = DaggerTestEthereumComponent.builder()
                 .testEthereumModule(new TestEthereumModule())
                 .build();
+        //Ethereum ethereum = component.ethereum();
         worldManager = component.worldManager();
-        // TODO: load blockchain, otherwise bestblock error occurs (why error does not occur in develop branch without this ??)
+        // TODO: load blockchain, otherwise bestblock error occurs ??
         worldManager.loadBlockchain();
     }
 

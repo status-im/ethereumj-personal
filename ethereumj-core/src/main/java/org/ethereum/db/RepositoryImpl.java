@@ -198,12 +198,10 @@ public class RepositoryImpl implements Repository {
         if (block.getNumber() == 0 && txNumber == 0)
             if (CONFIG.dumpCleanOnRestart()) {
                 try{
-                  FileUtils.forceDelete(new File(CONFIG.dumpDir()));
+                	FileUtils.forceDelete(new File(CONFIG.dumpDir()));
                 }catch(IOException e){
-                  e.printStackTrace();
+                	logger.error(e.getMessage(), e);
                 }
-                
-                //FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
             }
 
         String dir = CONFIG.dumpDir() + "/";

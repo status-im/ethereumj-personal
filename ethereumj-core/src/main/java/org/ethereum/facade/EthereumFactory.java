@@ -1,5 +1,8 @@
 package org.ethereum.facade;
 
+import org.ethereum.di.components.EthereumComponent;
+import org.ethereum.di.modules.EthereumModule;
+import org.ethereum.di.components.DaggerEthereumComponent;
 import org.ethereum.net.eth.EthHandler;
 import org.ethereum.net.shh.ShhHandler;
 
@@ -15,16 +18,17 @@ public class EthereumFactory {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
 
-    public static Ethereum createEthereum() {
-        return createEthereum(DefaultConfig.class);
-    }
+    private static EthereumComponent ethereumComponent;
 
-    public static Ethereum createEthereum(Class clazz) {
+    public static Ethereum createEthereum() {
 
         logger.info("capability eth version: [{}]", EthHandler.VERSION);
         logger.info("capability shh version: [{}]", ShhHandler.VERSION);
 
-        return null;
+        ethereumComponent = DaggerEthereumComponent.builder()
+                .ethereumModule(new EthereumModule())
+                .build();
+        return ethereumComponent.ethereum();
     }
 
 }

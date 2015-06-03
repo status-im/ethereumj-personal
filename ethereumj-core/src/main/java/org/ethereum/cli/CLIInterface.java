@@ -2,7 +2,6 @@ package org.ethereum.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.stereotype.Component;
 
 import java.net.URI;
 
@@ -12,7 +11,6 @@ import static org.ethereum.config.SystemProperties.CONFIG;
  * @author Roman Mandeleil
  * @since 13.11.2014
  */
-//@Component
 public class CLIInterface {
 
     private static final Logger logger = LoggerFactory.getLogger("cli");

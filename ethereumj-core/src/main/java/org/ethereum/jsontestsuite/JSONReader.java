@@ -15,7 +15,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-//import java.nio.file.Files;
 import org.apache.commons.io.FileUtils;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -52,7 +51,6 @@ public class JSONReader {
                 System.out.println(" Error: no file: " +filename);
                 System.exit(1);
             }
-            //return new String(Files.readAllBytes(vmTestFile.toPath()));
             return new String(FileUtils.readFileToByteArray(vmTestFile));
         } catch (IOException e) {
             e.printStackTrace();
