@@ -4,6 +4,7 @@ package org.ethereum.core;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
+import org.ethereum.di.components.TestEthereumComponent;
 import org.ethereum.di.modules.TestEthereumModule;
 import org.ethereum.di.components.DaggerTestEthereumComponent;
 import org.ethereum.facade.Ethereum;
@@ -55,9 +56,12 @@ public class ImportTest {
 
     @Before
     public void setup() {
-        worldManager = DaggerTestEthereumComponent.builder()
+        TestEthereumComponent component = DaggerTestEthereumComponent.builder()
                 .testEthereumModule(new TestEthereumModule())
-                .build().worldManager();
+                .build();
+        worldManager = component.worldManager();
+        // TODO: load blockchain, otherwise bestblock error occurs (why error does not occur in develop branch without this ??)
+        worldManager.loadBlockchain();
     }
 
     @After
