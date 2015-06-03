@@ -10,13 +10,13 @@ buildscript {
     dependencies {
         classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1'
-        classpath "gradle.plugin.com.ewerk.gradle.plugins:dagger-plugin:1.0.0"
+        //classpath "gradle.plugin.com.ewerk.gradle.plugins:dagger-plugin:1.0.0"
     }
 }
 
 plugins {
     id 'java'
-    id "com.ewerk.gradle.plugins.dagger" version "1.0.0"
+    // id "com.ewerk.gradle.plugins.dagger" version "1.0.0"
     id 'application'
     id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '1.2.1'
@@ -91,7 +91,7 @@ sourceSets {
 }
 
 dependencies {
-    compile 'com.google.dagger:dagger:2.0'
+    compile 'com.google.dagger:dagger:2.1-SNAPSHOT'
     compile 'com.google.dagger:dagger-compiler:2.0'
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
@@ -132,6 +132,6 @@ dependencies {
     }
 
     testCompile "junit:junit:${junitVersion}"
-    testCompile 'com.google.dagger:dagger:2.0'
+    testCompile 'com.google.dagger:dagger:2.1-SNAPSHOT'
     testCompile 'com.google.dagger:dagger-compiler:2.0'
 }

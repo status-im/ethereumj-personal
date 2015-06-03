@@ -47,7 +47,7 @@ dependencies {
 
     }
 
-    compile "com.google.dagger:dagger:2.1-SNAPSHOT"
+    //compile "com.google.dagger:dagger:2.1-SNAPSHOT"
     compile "com.j256.ormlite:ormlite-android:4.48"
     compile "org.glassfish:javax.annotation:10.0-b28"
     compile "org.iq80.leveldb:leveldb:0.7"
