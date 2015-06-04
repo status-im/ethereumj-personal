@@ -2,6 +2,5 @@
 <android.support.v7.widget.Toolbar
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
-    android:elevation="2dp"
     android:theme="@style/Base.ThemeOverlay.AppCompat.Dark"
     xmlns:android="http://schemas.android.com/apk/res/android" />

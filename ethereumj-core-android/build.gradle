@@ -35,6 +35,10 @@ android {
     }
 }
 
+tasks.withType(JavaCompile){
+    options.warnings = false
+}
+
 dependencies {
     apt 'com.google.dagger:dagger-compiler:2.0'
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -52,4 +56,5 @@ dependencies {
     compile "org.glassfish:javax.annotation:10.0-b28"
     compile "org.iq80.leveldb:leveldb:0.7"
     compile 'org.slf4j:slf4j-android:1.7.12'
+    compile 'javax.persistence:persistence-api:1.0.2'
 }

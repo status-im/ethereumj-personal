@@ -5,7 +5,7 @@
     <TextView android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="EthereumJ Tests"
-        android:textSize="20dp"
+        android:text="@string/ethereumj_tests"
+        android:textSize="20sp"
         android:layout_centerInParent="true"/>
 </RelativeLayout>

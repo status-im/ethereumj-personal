@@ -1,18 +1,10 @@
 <resources>
     <string name="app_name">Ethereum-android</string>
 
-    <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_menu">MenuActivity</string>
 
-    <string name="menu_console">Console</string>
-    <string name="menu_wallet">Wallet</string>
-    <string name="title_section3">Section 3</string>
+    <string name="console_output">Console Output:</string>
 
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="ethereumj_tests">EthereumJ Tests</string>
 
-    <string name="action_example">Example action</string>
-    <string name="drawer_open">Menu opened</string>
-    <string name="drawer_close">Menu closed</string>
 </resources>
