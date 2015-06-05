@@ -46,8 +46,8 @@ Old devices will fail to auth in time and will be rejected by peers, please use 
 
 # Building from source
 
- - Clone this repository and run
- `./gradlew antlr4; ./gradlew build -x test`
+ - Clone this repository and run (make sure clean from previous builds)
+ `./gradlew build`
  - Install onto Android Device 
  `adb install -r app/build/outputs/apk/app-debug.apk`
 
