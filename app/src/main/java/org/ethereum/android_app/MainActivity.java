@@ -9,6 +9,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.os.Build;
 
 import org.ethereum.android.EthereumManager;
 
@@ -46,7 +47,15 @@ public class MainActivity extends ActionBarActivity {
 
         //StrictMode.enableDefaults();
 
-        new PostTask().execute();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            new PostTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        else
+            new PostTask().execute();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            new JsonRpcTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        else
+            new JsonRpcTask().execute();
     }
 
     @Override
@@ -102,6 +111,38 @@ public class MainActivity extends ActionBarActivity {
 
                 //publishProgress(1111);
             }
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+            Log.v(TAG, values[0].toString());
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+        }
+    }
+
+
+    // The definition of our task class
+    private class JsonRpcTask extends AsyncTask<Context, Integer, String> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(Context... params) {
+            Log.v(TAG, "444");
+            try {
+                ethereumManager.startJsonRpc();
+            } catch (Exception e) {
+            }
+            Log.v(TAG, "555");
+            return "done";
         }
 
         @Override

@@ -9,12 +9,15 @@ import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.ethereum.android.jsonrpc.JsonRpcServer;
 
 public class EthereumManager {
 
     private static final Logger logger = LoggerFactory.getLogger("manager");
 
     public static Ethereum ethereum = null;
+
+    private JsonRpcServer jsonRpcServer;
 
 
     public EthereumManager(Context context) {
@@ -23,6 +26,8 @@ public class EthereumManager {
         ethereum = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule(context))
                 .build().ethereum();
+
+        jsonRpcServer = new JsonRpcServer(ethereum);
     }
 
     public void start() {
@@ -45,6 +50,11 @@ public class EthereumManager {
     public void addListener(EthereumListenerAdapter listener) {
 
         ethereum.addListener(listener);
+    }
+
+    public void startJsonRpc() throws Exception {
+
+        jsonRpcServer.start();
     }
 
 }
