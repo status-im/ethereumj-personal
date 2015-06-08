@@ -37,7 +37,7 @@ This repository consists of:
 
 # Todo
 - Android-specific BlockStore Implementation
-- Unit Tests
+- JSON-RPC Server
 
 This is a work in progress.
 
