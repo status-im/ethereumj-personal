@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
+import android.text.Layout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,9 +24,20 @@ public class ConsoleFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_console, container, false);
         console = (TextView) view.findViewById(R.id.console);
         console.setMovementMethod(new ScrollingMovementMethod());
-        console.append("aaaa");
         return view;
 
+    }
+
+    private void appendTextAndScroll(String text) {
+        if (console != null) {
+            console.append(text + "\n");
+            final Layout layout = console.getLayout();
+            if (layout != null) {
+                int scrollDelta = layout.getLineBottom(console.getLineCount() - 1) - console.getScrollY() - console.getHeight();
+                if (scrollDelta > 0)
+                    console.scrollBy(0, scrollDelta);
+            }
+        }
     }
 
     public void setEthereumManager(EthereumManager ethereumManager) {
@@ -38,7 +50,7 @@ public class ConsoleFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        console.append(output);
+                        appendTextAndScroll(output);
                     }
                 });
 
