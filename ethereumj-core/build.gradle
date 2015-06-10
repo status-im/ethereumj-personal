@@ -100,7 +100,7 @@ test {
         logger.lifecycle("Running test: ${descriptor}")
     }
 
-    jvmArgs '-Xss32m'
+    jvmArgs += [ "-Xss32m", "-XX:MaxPermSize=256m" ]
 
     testLogging {
         events "failed"

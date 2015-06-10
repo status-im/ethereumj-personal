@@ -57,4 +57,6 @@ dependencies {
     compile "org.iq80.leveldb:leveldb:0.7"
     compile 'org.slf4j:slf4j-android:1.7.12'
     compile 'javax.persistence:persistence-api:1.0.2'
+
+    compile group: 'com.thetransactioncompany', name: 'jsonrpc2-server', version: '1.11'
 }
