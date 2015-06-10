@@ -6,17 +6,16 @@ import org.ethereum.db.BlockStore;
 import org.ethereum.util.ByteUtil;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BlockStoreImpl implements BlockStore {
 
-    private BlockDatabaseHelper blockDao;
-    private TransactionDatabaseHelper transactionDao;
+    private BlockStoreDatabase database;
 
-    public BlockStoreImpl(BlockDatabaseHelper blockDao, TransactionDatabaseHelper transactionDao) {
+    public BlockStoreImpl(BlockStoreDatabase database) {
 
-        this.blockDao = blockDao;
-        this.transactionDao = transactionDao;
+        this.database = database;
     }
 
     public byte[] getBlockHashByNumber(long blockNumber) {
@@ -29,65 +28,86 @@ public class BlockStoreImpl implements BlockStore {
 
     public Block getBlockByNumber(long blockNumber) {
 
-        /*
-        List result = sessionFactory.getCurrentSession().
-                createQuery("from BlockVO where number = :number").
-                setParameter("number", blockNumber).list();
+
+        List result = database.getByNumber(blockNumber);
+        if (result.size() == 0) return null;
+        BlockVO vo = (BlockVO) result.get(0);
+
+        return new Block(vo.rlp);
+    }
+
+    public Block getBlockByHash(byte[] hash) {
+
+        List result = database.getByHash(hash);
 
         if (result.size() == 0) return null;
         BlockVO vo = (BlockVO) result.get(0);
 
         return new Block(vo.rlp);
-        */
-        return null;
     }
 
-    public Block getBlockByHash(byte[] hash) {
-
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
     public List<byte[]> getListOfHashesStartFrom(byte[] hash, int qty) {
 
-        return null;
+        List<byte[]> hashes = new ArrayList<byte[]>();
+
+        // find block number of that block hash
+        Block block = getBlockByHash(hash);
+        if (block == null) return hashes;
+
+        hashes = database.getHashListByNumberLimit(block.getNumber(), block.getNumber() - qty);
+
+        return hashes;
     }
 
     public void deleteBlocksSince(long number) {
 
+        database.deleteBlocksSince(number);
     }
 
     public void saveBlock(Block block, List<TransactionReceipt> receipts) {
 
+        BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(),
+                block.getEncoded(), block.getCumulativeDifficulty());
+
+        for (TransactionReceipt receipt : receipts) {
+
+            byte[] hash = receipt.getTransaction().getHash();
+            byte[] rlp = receipt.getEncoded();
+
+            TransactionReceiptVO transactionReceiptVO = new TransactionReceiptVO(hash, rlp);
+            database.save(transactionReceiptVO);
+        }
+
+        database.save(blockVO);
     }
 
     public BigInteger getTotalDifficultySince(long number) {
 
-        return null;
+        return database.getTotalDifficultySince(number);
     }
 
     public BigInteger getTotalDifficulty() {
 
-        return null;
+        return database.getTotalDifficulty();
     }
 
     public Block getBestBlock() {
 
-        return null;
+        return database.getBestBlock();
     }
 
-    @SuppressWarnings("unchecked")
     public List<Block> getAllBlocks() {
 
-        return null;
+        return database.getAllBlocks();
     }
 
     public void reset() {
 
+        database.reset();
     }
 
     public TransactionReceipt getTransactionReceiptByHash(byte[] hash) {
 
-        return null;
+        return database.getTransactionReceiptByHash(hash);
     }
 }

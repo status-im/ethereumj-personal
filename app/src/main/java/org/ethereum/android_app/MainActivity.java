@@ -80,6 +80,12 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        ethereumManager.onDestroy();
+    }
+
     // The definition of our task class
     private class PostTask extends AsyncTask<Context, Integer, String> {
 
