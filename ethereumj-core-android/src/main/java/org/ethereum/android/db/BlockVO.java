@@ -9,7 +9,7 @@ import java.math.BigInteger;
 @DatabaseTable(tableName = "block")
 public class BlockVO {
 
-    @DatabaseField(index = true, dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(index = true, persisterClass = HashPersister.class)
     byte[] hash;
 
     @DatabaseField(index = true, dataType = DataType.LONG_OBJ)

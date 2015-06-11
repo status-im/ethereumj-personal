@@ -3,6 +3,8 @@ package org.ethereum.manager;
 
 import org.ethereum.core.Block;
 import org.ethereum.facade.Blockchain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.FileInputStream;
@@ -17,6 +19,8 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 @Singleton
 public class BlockLoader {
 
+    private static final Logger logger = LoggerFactory.getLogger("BlockLoader");
+
     private Blockchain blockchain;
 
     Scanner scanner = null;
@@ -26,11 +30,11 @@ public class BlockLoader {
         this.blockchain = blockchain;
     }
 
-    public void loadBlocks(){
+    public long loadBlocks(){
 
         String fileSrc = CONFIG.blocksLoader();
         try {
-
+            long startTime = System.currentTimeMillis();
             FileInputStream inputStream = null;
             inputStream = new FileInputStream(fileSrc);
             scanner = new Scanner(inputStream, "UTF-8");
@@ -58,9 +62,16 @@ public class BlockLoader {
 
 
             }
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("Finished loading blocks in " + (duration / 1000) + " seconds (" + (duration / 60000) + " minutes)");
+            return duration;
         } catch (IOException e) {
             e.printStackTrace();
+            logger.error(e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
+        return 0;
     }
 
 

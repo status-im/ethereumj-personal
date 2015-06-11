@@ -38,15 +38,17 @@ public class EthereumManager {
 
     }
 
-    public void connect() {
+    public long connect() {
 
+        long duration = 0;
         if (CONFIG.blocksLoader().equals("")) {
             ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
                     SystemProperties.CONFIG.activePeerPort(),
                     SystemProperties.CONFIG.activePeerNodeid());
         } else {
-            ethereum.getBlockLoader().loadBlocks();
+            duration = ethereum.getBlockLoader().loadBlocks();
         }
+        return duration;
     }
 
     public void startPeerDiscovery() {

@@ -4,8 +4,8 @@ import org.ethereum.config.SystemProperties;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
+//import org.springframework.jdbc.datasource.DriverManagerDataSource;
+//import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
 
 import java.util.Properties;
 
@@ -13,7 +13,7 @@ public class AbstractInMemoryBlockStoreTest {
 
     private static final Logger logger = LoggerFactory.getLogger("test");
 
-
+    /*
     public SessionFactory sessionFactory() {
         LocalSessionFactoryBuilder builder =
                 new LocalSessionFactoryBuilder(dataSource());
@@ -60,6 +60,6 @@ public class AbstractInMemoryBlockStoreTest {
 
         return ds;
     }
-
+*/
 
 }

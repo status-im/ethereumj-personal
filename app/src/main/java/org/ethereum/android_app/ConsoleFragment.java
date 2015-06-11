@@ -31,6 +31,7 @@ public class ConsoleFragment extends Fragment {
     public void setEthereumManager(EthereumManager ethereumManager) {
 
         this.ethereumManager = ethereumManager;
+        /*
         ethereumManager.addListener(new EthereumListenerAdapter() {
 
             @Override
@@ -38,12 +39,18 @@ public class ConsoleFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        console.append(output);
+                        //console.append(output);
                     }
                 });
 
             }
         });
+        */
     }
+
+    public void updateDuration(long duration) {
+        console.append(String.valueOf(duration/1000) + "seconds");
+    }
+
 
 }
