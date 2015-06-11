@@ -32,7 +32,7 @@ repositories {
 sourceCompatibility = 1.7
 
 mainClassName = 'org.ethereum.Start'
-applicationDefaultJvmArgs = ["-server", "-Xms2g"]
+applicationDefaultJvmArgs = ["-server", "-Xms3g", "-Xss32m"]
 
 ext.generatedSrcDir = file('src/gen/java')
 
@@ -155,7 +155,7 @@ dependencies {
     compile 'org.apache.commons:commons-collections4:4.0'
     compile 'commons-io:commons-io:2.4'
     compile "commons-codec:commons-codec:1.10"
-    compile 'org.hsqldb:hsqldb:1.8.0.10' // best performance - do not upgrade!
+    compile "com.h2database:h2:1.4.187"
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
     compile "org.hibernate:hibernate-entitymanager:${hibernateVersion}"
 

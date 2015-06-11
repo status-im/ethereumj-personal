@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
 
+import static org.ethereum.config.SystemProperties.CONFIG;
+
 public class EthereumManager {
 
     private static final Logger logger = LoggerFactory.getLogger("manager");
@@ -38,10 +40,13 @@ public class EthereumManager {
 
     public void connect() {
 
-        ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
-                SystemProperties.CONFIG.activePeerPort(),
-                SystemProperties.CONFIG.activePeerNodeid());
-        //ethereum.getBlockchain();
+        if (CONFIG.blocksLoader().equals("")) {
+            ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
+                    SystemProperties.CONFIG.activePeerPort(),
+                    SystemProperties.CONFIG.activePeerNodeid());
+        } else {
+            ethereum.getBlockLoader().loadBlocks();
+        }
     }
 
     public void startPeerDiscovery() {

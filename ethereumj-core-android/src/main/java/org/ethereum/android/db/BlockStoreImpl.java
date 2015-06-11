@@ -110,4 +110,14 @@ public class BlockStoreImpl implements BlockStore {
 
         return database.getTransactionReceiptByHash(hash);
     }
+
+    @Override
+    public void load() {
+
+    }
+
+    @Override
+    public void flush() {
+
+    }
 }

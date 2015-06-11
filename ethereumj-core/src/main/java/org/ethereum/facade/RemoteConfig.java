@@ -13,6 +13,9 @@ public class RemoteConfig {
 
 
     public BlockStore blockStore(SessionFactory sessionFactory){
-        return new InMemoryBlockStore();
+
+        BlockStore blockStore = new InMemoryBlockStore();
+        blockStore.setSessionFactory(sessionFactory);
+        return blockStore;
     }
 }

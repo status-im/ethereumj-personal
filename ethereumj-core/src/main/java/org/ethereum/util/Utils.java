@@ -16,23 +16,26 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-//import javax.swing.*;
+import javax.swing.*;
 
 public class Utils {
 
     private static SecureRandom random = new SecureRandom();
 
     /**
-     * @param hexNum should be in form '0x34fabd34....'
+     * @param number should be in form '0x34fabd34....'
      * @return String
      */
-    public static String hexStringToDecimalString(String hexNum) {
+    public static BigInteger unifiedNumericToBigInteger(String number) {
 
-        boolean match = Pattern.matches("0[xX][0-9a-fA-F]+", hexNum);
-        if (!match) throw new Error("The string doesn't contains hex num in form 0x.. : [" + hexNum + "]");
+        boolean match = Pattern.matches("0[xX][0-9a-fA-F]+", number);
+        if (!match)
+            return (new BigInteger(number));
+        else{
 
-        byte[] numberBytes = Hex.decode(hexNum.substring(2));
-        return (new BigInteger(1, numberBytes)).toString();
+            byte[] numberBytes = Hex.decode(number.substring(2));
+            return (new BigInteger(1, numberBytes));
+        }
     }
 
     /**
@@ -48,11 +51,11 @@ public class Utils {
         return formatter.format(date);
     }
 
-/*    public static ImageIcon getImageIcon(String resource) {
+    public static ImageIcon getImageIcon(String resource) {
         URL imageURL = ClassLoader.getSystemResource(resource);
         ImageIcon image = new ImageIcon(imageURL);
         return image;
-    }*/
+    }
 
     static BigInteger _1000_ = new BigInteger("1000");
 
