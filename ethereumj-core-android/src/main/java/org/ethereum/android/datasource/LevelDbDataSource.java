@@ -61,7 +61,7 @@ public class LevelDbDataSource implements KeyValueDataSource {
         options.logger(logger1);
         try {
             logger.debug("Opening database");
-            File dbLocation = context.getDir(SystemProperties.CONFIG.databaseDir(), 0);
+            File dbLocation = new File(SystemProperties.CONFIG.databaseDir());
             File fileLocation = new File(dbLocation, name);
 
             if (SystemProperties.CONFIG.databaseReset()) {

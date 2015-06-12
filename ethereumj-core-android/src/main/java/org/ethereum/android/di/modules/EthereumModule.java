@@ -5,6 +5,7 @@ import android.content.Context;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 
 import org.ethereum.android.datasource.LevelDbDataSource;
+import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.android.db.BlockStoreImpl;
 import org.ethereum.config.SystemProperties;
@@ -76,7 +77,7 @@ public class EthereumModule {
     @Singleton
     BlockStore provideBlockStore() {
         OrmLiteBlockStoreDatabase database = OpenHelperManager.getHelper(context, OrmLiteBlockStoreDatabase.class);
-        return new BlockStoreImpl(database);
+        return new InMemoryBlockStore(database);
     }
 
     @Provides

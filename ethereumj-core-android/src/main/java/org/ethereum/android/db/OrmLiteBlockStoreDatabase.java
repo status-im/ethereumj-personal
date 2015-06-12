@@ -2,11 +2,13 @@ package org.ethereum.android.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.GenericRawResults;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
@@ -14,10 +16,12 @@ import com.j256.ormlite.table.TableUtils;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implements BlockStoreDatabase {
 
@@ -28,7 +32,8 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
     private Dao<TransactionReceiptVO, Integer> transactionDao = null;
 
     public OrmLiteBlockStoreDatabase(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, Environment.getExternalStorageDirectory().getAbsolutePath()
+                + File.separator + DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     /**
@@ -251,5 +256,28 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
         return new TransactionReceipt(vo.rlp);
 
+    }
+
+    public boolean flush(final List<Block> blocks) {
+
+        try {
+            TransactionManager.callInTransaction(getBlockDao().getConnectionSource(),
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            for (Block block : blocks) {
+                                BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
+                                save(blockVO);
+                            }
+                            // you could pass back an object here
+                            return null;
+                        }
+                    });
+
+
+            return true;
+        } catch(java.sql.SQLException e) {
+            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error querying for hash", e);
+            return false;
+        }
     }
 }

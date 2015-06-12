@@ -28,7 +28,6 @@ public class BlockStoreImpl implements BlockStore {
 
     public Block getBlockByNumber(long blockNumber) {
 
-
         List result = database.getByNumber(blockNumber);
         if (result.size() == 0) return null;
         BlockVO vo = (BlockVO) result.get(0);
