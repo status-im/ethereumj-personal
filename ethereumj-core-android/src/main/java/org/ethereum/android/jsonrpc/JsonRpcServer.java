@@ -48,11 +48,31 @@ public final class JsonRpcServer {
         this.ethereum = ethereum;
 
         this.dispatcher = new Dispatcher();
+        this.dispatcher.register(new web3_clientVersion(this.ethereum));
+        this.dispatcher.register(new web3_sha3(this.ethereum));
+        this.dispatcher.register(new net_version(this.ethereum));
+        this.dispatcher.register(new net_listening(this.ethereum));
+        this.dispatcher.register(new net_peerCount(this.ethereum));
+        this.dispatcher.register(new eth_protocolVersion(this.ethereum));
         this.dispatcher.register(new eth_coinbase(this.ethereum));
+        this.dispatcher.register(new eth_mining(this.ethereum));
+        this.dispatcher.register(new eth_hashrate(this.ethereum));
+        this.dispatcher.register(new eth_gasPrice(this.ethereum));
+        this.dispatcher.register(new eth_accounts(this.ethereum));
+        this.dispatcher.register(new eth_blockNumber(this.ethereum));
+        this.dispatcher.register(new eth_getBalance(this.ethereum));
+        this.dispatcher.register(new eth_getStorageAt(this.ethereum));
+        this.dispatcher.register(new eth_getTransactionCount(this.ethereum));
+        this.dispatcher.register(new eth_getBlockTransactionCountByHash(this.ethereum));
+        this.dispatcher.register(new eth_getBlockTransactionCountByNumber(this.ethereum));
+        this.dispatcher.register(new eth_getUncleCountByBlockHash(this.ethereum));
+        this.dispatcher.register(new eth_getUncleCountByBlockNumber(this.ethereum));
+        this.dispatcher.register(new eth_getCode(this.ethereum));
+        this.dispatcher.register(new eth_sign(this.ethereum));
+        this.dispatcher.register(new eth_sendTransaction(this.ethereum));
     }
 
     public void start() throws Exception {
-
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
