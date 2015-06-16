@@ -28,6 +28,7 @@ import io.netty.util.CharsetUtil;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.channel.ChannelFuture;
+import org.ethereum.android.jsonrpc.filter.FilterManager;
 import org.ethereum.facade.Ethereum;
 import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
@@ -48,11 +49,14 @@ public final class JsonRpcServer {
         this.ethereum = ethereum;
 
         this.dispatcher = new Dispatcher();
+
         this.dispatcher.register(new web3_clientVersion(this.ethereum));
         this.dispatcher.register(new web3_sha3(this.ethereum));
+
         this.dispatcher.register(new net_version(this.ethereum));
         this.dispatcher.register(new net_listening(this.ethereum));
         this.dispatcher.register(new net_peerCount(this.ethereum));
+
         this.dispatcher.register(new eth_protocolVersion(this.ethereum));
         this.dispatcher.register(new eth_coinbase(this.ethereum));
         this.dispatcher.register(new eth_mining(this.ethereum));
@@ -70,6 +74,47 @@ public final class JsonRpcServer {
         this.dispatcher.register(new eth_getCode(this.ethereum));
         this.dispatcher.register(new eth_sign(this.ethereum));
         this.dispatcher.register(new eth_sendTransaction(this.ethereum));
+        this.dispatcher.register(new eth_call(this.ethereum));
+        this.dispatcher.register(new eth_estimateGas(this.ethereum));
+        this.dispatcher.register(new eth_getBlockByHash(this.ethereum));
+        this.dispatcher.register(new eth_getBlockByNumber(this.ethereum));
+        this.dispatcher.register(new eth_getTransactionByHash(this.ethereum));
+        this.dispatcher.register(new eth_getTransactionByBlockHashAndIndex(this.ethereum));
+        this.dispatcher.register(new eth_getTransactionByBlockNumberAndIndex(this.ethereum));
+        this.dispatcher.register(new eth_getUncleByBlockHashAndIndex(this.ethereum));
+        this.dispatcher.register(new eth_getUncleByBlockNumberAndIndex(this.ethereum));
+        this.dispatcher.register(new eth_getCompilers(this.ethereum));
+        this.dispatcher.register(new eth_compileSolidity(this.ethereum));
+        this.dispatcher.register(new eth_compileLLL(this.ethereum));
+        this.dispatcher.register(new eth_compileSerpent(this.ethereum));
+        this.dispatcher.register(new eth_newFilter(this.ethereum));
+        this.dispatcher.register(new eth_newBlockFilter(this.ethereum));
+        this.dispatcher.register(new eth_newPendingTransactionFilter(this.ethereum));
+        this.dispatcher.register(new eth_uninstallFilter(this.ethereum));
+        this.dispatcher.register(new eth_getFilterChanges(this.ethereum));
+        this.dispatcher.register(new eth_getFilterLogs(this.ethereum));
+        this.dispatcher.register(new eth_getLogs(this.ethereum));
+        this.dispatcher.register(new eth_getWork(this.ethereum));
+        this.dispatcher.register(new eth_submitWork(this.ethereum));
+
+        this.dispatcher.register(new db_putString(this.ethereum));
+        this.dispatcher.register(new db_getString(this.ethereum));
+        this.dispatcher.register(new db_putHex(this.ethereum));
+        this.dispatcher.register(new db_getHex(this.ethereum));
+
+        this.dispatcher.register(new shh_version(this.ethereum));
+        this.dispatcher.register(new shh_post(this.ethereum));
+        this.dispatcher.register(new shh_newIdentity(this.ethereum));
+        this.dispatcher.register(new shh_hasIdentity(this.ethereum));
+        this.dispatcher.register(new shh_newGroup(this.ethereum));
+        this.dispatcher.register(new shh_addToGroup(this.ethereum));
+        this.dispatcher.register(new shh_newFilter(this.ethereum));
+        this.dispatcher.register(new shh_uninstallFilter(this.ethereum));
+        this.dispatcher.register(new shh_getFilterChanges(this.ethereum));
+        this.dispatcher.register(new shh_getMessages(this.ethereum));
+
+        FilterManager.getInstance();
+        org.ethereum.android.jsonrpc.whisper.FilterManager.getInstance();
     }
 
     public void start() throws Exception {

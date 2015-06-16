@@ -22,7 +22,7 @@ public class eth_getUncleCountByBlockNumber extends JsonRpcServerMethod {
         if (params.size() != 1) {
             return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
         } else {
-            String height = (String)params.get(1);
+            String height = (String)params.get(0);
 
             long blockNumber = getBlockNumber(height);
             if (blockNumber == -1)

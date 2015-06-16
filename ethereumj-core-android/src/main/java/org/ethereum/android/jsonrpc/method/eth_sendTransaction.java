@@ -32,66 +32,12 @@ public class eth_sendTransaction extends JsonRpcServerMethod {
             return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
         } else {
             JSONObject obj = (JSONObject)params.get(0);
-            if (!obj.containsKey("from") || (!obj.containsKey("to") && !obj.containsKey("data"))) {
+            Transaction tx;
+            try {
+                tx = jsToTransaction(obj);
+            } catch (Exception e) {
                 return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
             }
-
-            byte[] from = jsToAddress((String)obj.get("from"));
-            Account acc = null;
-            for (Account ac : ethereum.getWallet().getAccountCollection()) {
-                if (Arrays.equals(ac.getAddress(), from)) {
-                    acc = ac;
-                    break;
-                }
-            }
-            if (acc == null) {
-                return new JSONRPC2Response(JSONRPC2Error.INTERNAL_ERROR, req.getID());
-            }
-
-            byte[] senderPrivKey = acc.getEcKey().getPrivKeyBytes();
-
-            // default - from ethereumj-studio
-            byte[] to = null;
-            if (obj.containsKey("to") && !((String)obj.get("to")).equals("")) {
-                to = jsToAddress((String) obj.get("to"));
-            }
-
-            // default - from ethereumj-studio
-            BigInteger gasPrice = SZABO.value().multiply(BigInteger.TEN);
-            if (obj.containsKey("gasPrice") && !((String)obj.get("gasPrice")).equals("")) {
-                gasPrice = jsToBigInteger((String) obj.get("gasPrice"));
-            }
-
-            // default - from cpp-ethereum
-            BigInteger gas = acc.getBalance().divide(gasPrice);
-            BigInteger gasBBLimit = new BigInteger(Long.toString(ethereum.getBlockchain().getBestBlock().getGasLimit() / 5));
-            if (gasBBLimit.compareTo(gas) < 0)
-                gas = gasBBLimit;
-            if (obj.containsKey("gas") && !((String)obj.get("gas")).equals("")) {
-                gas = jsToBigInteger((String) obj.get("gas"));
-            }
-
-            // default - from ethereumj-studio
-            BigInteger value = new BigInteger("1000");
-            if (obj.containsKey("value") && !((String)obj.get("value")).equals("")) {
-                value = jsToBigInteger((String) obj.get("value"));
-            }
-
-            // default - from ethereumj-studio
-            BigInteger nonce = ethereum.getRepository().getNonce(acc.getAddress());
-            if (obj.containsKey("nonce") && !((String)obj.get("nonce")).equals("")) {
-                nonce = jsToBigInteger((String) obj.get("nonce"));
-            }
-
-            // default - from ethereumj-studio
-            byte[] data = new byte[]{};
-            if (obj.containsKey("data") && !((String)obj.get("data")).equals("")) {
-                data = jsToAddress((String) obj.get("data"));
-            }
-
-            Transaction tx = ethereum.createTransaction(nonce, gasPrice, gas, to, value, data);
-
-            tx.sign(senderPrivKey);
 
             try {
                 ethereum.submitTransaction(tx).get(CONFIG.transactionApproveTimeout(), TimeUnit.SECONDS);
