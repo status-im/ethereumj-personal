@@ -189,10 +189,19 @@ public class InMemoryBlockStore implements BlockStore{
         long t_ = System.nanoTime();
 
         Session s = sessionFactory.openSession();
+
+        // clear old blocks
         s.beginTransaction();
-        for (Block block : blocks){
+        s.createQuery("delete from BlockVO").executeUpdate();
+        s.getTransaction().commit();
+
+        s.beginTransaction();
+
+        int lastIndex = blocks.size() - 1;
+        for (int i = 0; i < 1000; ++i){
+            Block block = blocks.get(lastIndex - i);
             BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
-            s.saveOrUpdate(blockVO);
+            s.save(blockVO);
         }
 
         s.getTransaction().commit();

@@ -260,11 +260,14 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
     public boolean flush(final List<Block> blocks) {
 
+        reset();
         try {
             TransactionManager.callInTransaction(getBlockDao().getConnectionSource(),
                     new Callable<Void>() {
                         public Void call() throws Exception {
-                            for (Block block : blocks) {
+                            int lastIndex = blocks.size() - 1;
+                            for (int i = 0; i < 1000; ++i){
+                                Block block = blocks.get(lastIndex - i);
                                 BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
                                 save(blockVO);
                             }

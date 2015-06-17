@@ -46,7 +46,7 @@ public class EthereumManager {
                     SystemProperties.CONFIG.activePeerPort(),
                     SystemProperties.CONFIG.activePeerNodeid());
         } else {
-            duration = ethereum.getBlockLoader().loadBlocks();
+            ethereum.getBlockLoader().loadBlocks();
         }
         return duration;
     }

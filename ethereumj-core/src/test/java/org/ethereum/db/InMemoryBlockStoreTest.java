@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  * @author: Roman Mandeleil
  * Created on: 30/01/2015 11:04
  */
-
+@Ignore
 public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
 
     private static final Logger logger = LoggerFactory.getLogger("test");
@@ -64,7 +64,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         logger.info("total difficulty: {}", cumDifficulty);
     }
 
-    @Ignore
     @Test
     public void testEmpty(){
         BlockStore blockStore = new InMemoryBlockStore();
@@ -72,7 +71,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         assertNull(blockStore.getBestBlock());
     }
 
-    @Ignore
     @Test
     public void testFlush(){
         BlockStore blockStore = new InMemoryBlockStore();
@@ -85,7 +83,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         blockStore.flush();
     }
 
-    @Ignore
     @Test
     public void testSimpleLoad(){
 
@@ -107,7 +104,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         assertTrue(blockStore.getBestBlock().getNumber() == 8003);
     }
 
-    @Ignore
     @Test
     public void testFlushEach1000(){
 
@@ -125,7 +121,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         }
     }
 
-    @Ignore
+
     @Test
     public void testBlockHashByNumber(){
 
@@ -158,7 +154,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         assertTrue(hash.startsWith("820aa7"));
     }
 
-    @Ignore
     @Test
     public void testBlockByNumber(){
 
@@ -191,7 +186,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         assertTrue(hash.startsWith("820aa7"));
     }
 
-    @Ignore
+
     @Test
     public void testGetBlockByNumber() {
 
@@ -209,7 +204,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         assertEquals("4312750101",  blockStore.getTotalDifficulty().toString());
     }
 
-    @Ignore
+
     @Test
     public void testDbGetBlockByHash(){
 
