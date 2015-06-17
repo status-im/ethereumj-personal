@@ -9,11 +9,10 @@ import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.android.manager.BlockLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
-
-import static org.ethereum.config.SystemProperties.CONFIG;
 
 public class EthereumManager {
 
@@ -24,9 +23,16 @@ public class EthereumManager {
     private JsonRpcServer jsonRpcServer;
 
 
-    public EthereumManager(Context context) {
+    public EthereumManager(Context context, String databaseFolder) {
+
         System.setProperty("sun.arch.data.model", "32");
         System.setProperty("leveldb.mmap", "false");
+
+        if (databaseFolder != null) {
+            System.out.println("Database folder: " + databaseFolder);
+            SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
+        }
+
         ethereum = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule(context))
                 .build().ethereum();
@@ -38,15 +44,16 @@ public class EthereumManager {
 
     }
 
-    public long connect() {
+    public long connect(String dumpFile) {
 
         long duration = 0;
-        if (CONFIG.blocksLoader().equals("")) {
+        if (dumpFile == null) {
             ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
                     SystemProperties.CONFIG.activePeerPort(),
                     SystemProperties.CONFIG.activePeerNodeid());
         } else {
-            ethereum.getBlockLoader().loadBlocks();
+            BlockLoader blockLoader = (BlockLoader)ethereum.getBlockLoader();
+            blockLoader.loadBlocks(dumpFile);
         }
         return duration;
     }

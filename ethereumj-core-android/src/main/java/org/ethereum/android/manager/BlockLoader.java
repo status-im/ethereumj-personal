@@ -29,16 +29,15 @@ public class BlockLoader extends org.ethereum.manager.BlockLoader {
         super(blockchain);
     }
 
-    public void loadBlocks(){
+    public void loadBlocks(String dumpFile){
 
-        String fileSrc = CONFIG.blocksLoader();
         try {
             long startTime = System.currentTimeMillis();
             FileInputStream inputStream = null;
-            inputStream = new FileInputStream(fileSrc);
+            inputStream = new FileInputStream(dumpFile);
             scanner = new Scanner(inputStream);
 
-            System.out.println("Loading blocks: " + fileSrc);
+            System.out.println("Loading blocks: " + dumpFile);
 
             while (scanner.hasNext()) {
 

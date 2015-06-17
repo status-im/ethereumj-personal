@@ -2,6 +2,7 @@ package org.ethereum.android_app;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -12,6 +13,9 @@ import android.view.MenuItem;
 import android.os.Build;
 
 import org.ethereum.android.EthereumManager;
+import org.ethereum.config.SystemProperties;
+
+import java.io.File;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -35,7 +39,15 @@ public class MainActivity extends ActionBarActivity {
         toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
 
-        ethereumManager = new EthereumManager(this);
+        String databaseFolder = null;
+        File extStore = Environment.getExternalStorageDirectory();
+        if (extStore.exists()) {
+            databaseFolder = extStore.getAbsolutePath();
+        } else {
+            databaseFolder = getApplicationInfo().dataDir;
+        }
+
+        ethereumManager = new EthereumManager(this, databaseFolder);
 
         adapter = new TabsPagerAdapter(getSupportFragmentManager(), ethereumManager);
         viewPager = (ViewPager) findViewById(R.id.pager);
@@ -100,7 +112,7 @@ public class MainActivity extends ActionBarActivity {
             Log.v(TAG, "111");
 
             Log.v(TAG, "222");
-            long duration = ethereumManager.connect();
+            long duration = ethereumManager.connect(SystemProperties.CONFIG.databaseDir() + File.separator + "poc-9-492k.dmp");
             //ConsoleFragment consoleeFrag = (ConsoleFragment)getSupportFragmentManager().findFragmentById(R.id.console);
             //consoleeFrag.updateDuration(duration);
             Log.v(TAG, "333");

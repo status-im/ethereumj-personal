@@ -13,6 +13,7 @@ import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 
@@ -32,7 +33,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
     private Dao<TransactionReceiptVO, Integer> transactionDao = null;
 
     public OrmLiteBlockStoreDatabase(Context context) {
-        super(context, Environment.getExternalStorageDirectory().getAbsolutePath()
+        super(context, SystemProperties.CONFIG.databaseDir()
                 + File.separator + DATABASE_NAME, null, DATABASE_VERSION);
     }
 
