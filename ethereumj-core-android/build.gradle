@@ -49,6 +49,7 @@ dependencies {
         exclude group: 'commons-logging', module: 'commons-logging'
         exclude group: "org.apache.commons", module: "commons-pool2"
         exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "apache-log4j-extras"
         exclude group: "org.hibernate", module: "hibernate-core"
         exclude group: "org.hibernate", module: "hibernate-entitymanager"
         exclude group: "redis.clients", module: "jedis"

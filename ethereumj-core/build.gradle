@@ -113,7 +113,7 @@ configurations {
 }
 
 ext {
-    slf4jVersion = '1.7.7'
+    slf4jVersion = '1.7.12'
     leveldbVersion = '0.7'
     scastleVersion = '1.51.0.0'
     log4jVersion = '1.2.17'
