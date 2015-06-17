@@ -196,7 +196,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
         try {
             GenericRawResults<String[]> rawResults = getBlockDao().queryRaw("select max(number) from block");
             List<String[]> results = rawResults.getResults();
-            if (results.size() > 0 && results.get(0).length > 0) {
+            if (results.get(0)[0] != null) {
                 bestNumber = Long.valueOf(results.get(0)[0]);
             }
         } catch(java.sql.SQLException e) {

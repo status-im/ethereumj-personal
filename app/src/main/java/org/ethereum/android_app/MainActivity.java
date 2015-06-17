@@ -101,8 +101,8 @@ public class MainActivity extends ActionBarActivity {
 
             Log.v(TAG, "222");
             long duration = ethereumManager.connect();
-            ConsoleFragment consoleeFrag = (ConsoleFragment)getSupportFragmentManager().findFragmentById(R.id.console);
-            consoleeFrag.updateDuration(duration);
+            //ConsoleFragment consoleeFrag = (ConsoleFragment)getSupportFragmentManager().findFragmentById(R.id.console);
+            //consoleeFrag.updateDuration(duration);
             Log.v(TAG, "333");
             while(true) {
 
