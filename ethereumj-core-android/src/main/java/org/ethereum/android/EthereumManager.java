@@ -73,7 +73,13 @@ public class EthereumManager {
         jsonRpcServer.start();
     }
 
-    public void onDestroy() {
+	public void onDestroy() {
+        close();
+    }
+
+    public void close() {
+
+        ethereum.close();
         OpenHelperManager.releaseHelper();
     }
 

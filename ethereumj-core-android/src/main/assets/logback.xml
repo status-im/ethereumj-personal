@@ -13,7 +13,7 @@
         </encoder>
     </appender>
 
-    <!-- Create a file appender for TRACE-level messages -->
+    <!-- Create a file appender for TRACE-level messages
     <appender name="TraceLog" class="ch.qos.logback.core.FileAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>TRACE</level>
@@ -28,7 +28,7 @@
         </encoder>
     </appender>
 
-    <!-- Create a file appender for DEBUG-level messages -->
+    Create a file appender for DEBUG-level messages
     <appender name="DebugLog" class="ch.qos.logback.core.FileAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>DEBUG</level>
@@ -42,7 +42,7 @@
             <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-
+     -->
     <logger name="core" level="ERROR">
         <appender-ref ref="logcat" />
     </logger>
@@ -131,7 +131,11 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <root level="ERROR">
+    <logger name="test" level="INFO">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <root level="INFO">
         <appender-ref ref="logcat" />
     </root>
 
