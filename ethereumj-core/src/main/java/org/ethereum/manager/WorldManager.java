@@ -20,6 +20,10 @@ import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -140,6 +144,9 @@ public class WorldManager {
 
     public void loadBlockchain() {
 
+        if (!CONFIG.databaseReset())
+            blockStore.load();
+
         Block bestBlock = blockStore.getBestBlock();
         if (bestBlock == null) {
             logger.info("DB is empty - adding Genesis");
@@ -155,7 +162,7 @@ public class WorldManager {
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
 
-            listener.onBlock(Genesis.getInstance());
+            listener.onBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>() );
             repository.dumpState(Genesis.getInstance(), 0, 0, null);
 
             logger.info("Genesis block loaded");

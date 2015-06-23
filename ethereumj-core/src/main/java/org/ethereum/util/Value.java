@@ -2,6 +2,7 @@ package org.ethereum.util;
 
 import com.cedarsoftware.util.DeepEquals;
 
+import org.ethereum.crypto.HashUtil;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
@@ -15,6 +16,8 @@ import java.util.List;
 public class Value {
 
     private Object value;
+    private byte[] rlp;
+    private byte[] sha3;
 
     public static Value fromRlpEncoded(byte[] data) {
         if (data != null && data.length != 0) {
@@ -87,6 +90,15 @@ public class Value {
         return ByteUtil.EMPTY_BYTE_ARRAY;
     }
 
+    public String getHex(){
+        return Hex.toHexString(this.encode());
+    }
+
+    public byte[] getData(){
+        return this.encode();
+    }
+
+
     public int[] asSlice() {
         return (int[]) value;
     }
@@ -111,7 +123,15 @@ public class Value {
      * *****************/
 
     public byte[] encode() {
-        return RLP.encode(value);
+        if (rlp == null)
+            rlp = RLP.encode(value);
+        return rlp;
+    }
+
+    public byte[] hash(){
+        if (sha3 == null)
+            sha3 = HashUtil.sha3(encode());
+        return sha3;
     }
 
     public boolean cmp(Value o) {

@@ -3,6 +3,8 @@ package org.ethereum.android.datasource;
 import org.ethereum.config.SystemProperties;
 
 import org.ethereum.datasource.KeyValueDataSource;
+import org.fusesource.leveldbjni.JniDBFactory;
+import org.fusesource.leveldbjni.internal.JniDB;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBIterator;
@@ -53,23 +55,37 @@ public class LevelDbDataSource implements KeyValueDataSource {
         Options options = new Options();
         options.createIfMissing(true);
         options.compressionType(CompressionType.NONE);
-        org.iq80.leveldb.Logger logger1 = new org.iq80.leveldb.Logger() {
-            public void log(String message) {
-                logger.debug(message);
-            }
-        };
-        options.logger(logger1);
+        options.blockSize(10 * 1024);
+        options.writeBufferSize(10 * 1024);
+        options.cacheSize(0);
+
         try {
             logger.debug("Opening database");
-            File dbLocation = context.getDir(SystemProperties.CONFIG.databaseDir(), 0);
+            File dbLocation = new File(SystemProperties.CONFIG.databaseDir());
             File fileLocation = new File(dbLocation, name);
 
             if (SystemProperties.CONFIG.databaseReset()) {
                 destroyDB(fileLocation);
             }
 
-            logger.debug("Initializing new or existing database: '{}'", fileLocation.getAbsolutePath());
-            db = Iq80DBFactory.factory.open(fileLocation, options);
+            logger.debug("Initializing new or existing database: '{}'", name);
+
+            try {
+                db = JniDBFactory.factory.open(fileLocation, options);
+            } catch (Throwable e) {
+                System.out.println("No native version of LevelDB found");
+            }
+
+            String cpu = System.getProperty("sun.arch.data.model");
+            String os = System.getProperty("os.name");
+
+            if (db instanceof JniDB)
+                System.out.println("Native version of LevelDB loaded for: " + os + "." + cpu + "bit");
+            else{
+                System.out.println("Pure Java version of LevelDB loaded");
+                db = Iq80DBFactory.factory.open(fileLocation, options);
+            }
+
 
         } catch (IOException ioe) {
             logger.error(ioe.getMessage(), ioe);

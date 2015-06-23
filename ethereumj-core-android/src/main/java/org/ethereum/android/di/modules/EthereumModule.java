@@ -5,8 +5,8 @@ import android.content.Context;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 
 import org.ethereum.android.datasource.LevelDbDataSource;
+import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
-import org.ethereum.android.db.BlockStoreImpl;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;
@@ -19,7 +19,7 @@ import org.ethereum.facade.Repository;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
-import org.ethereum.manager.BlockLoader;
+import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
@@ -76,7 +76,7 @@ public class EthereumModule {
     @Singleton
     BlockStore provideBlockStore() {
         OrmLiteBlockStoreDatabase database = OpenHelperManager.getHelper(context, OrmLiteBlockStoreDatabase.class);
-        return new BlockStoreImpl(database);
+        return new InMemoryBlockStore(database);
     }
 
     @Provides

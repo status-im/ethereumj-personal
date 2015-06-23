@@ -9,13 +9,11 @@ buildscript {
     dependencies {
         classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1'
-        //classpath "gradle.plugin.com.ewerk.gradle.plugins:dagger-plugin:1.0.0"
     }
 }
 
 plugins {
     id 'java'
-   // id "com.ewerk.gradle.plugins.dagger" version "1.0.0"
     id 'application'
     id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '1.2.1'
@@ -32,7 +30,7 @@ repositories {
 sourceCompatibility = 1.7
 
 mainClassName = 'org.ethereum.Start'
-applicationDefaultJvmArgs = ["-server", "-Xms2g"]
+applicationDefaultJvmArgs = ["-server", "-Xss32m"]
 
 ext.generatedSrcDir = file('src/gen/java')
 
@@ -115,7 +113,7 @@ configurations {
 }
 
 ext {
-    slf4jVersion = '1.7.7'
+    slf4jVersion = '1.7.12'
     leveldbVersion = '0.7'
     scastleVersion = '1.51.0.0'
     log4jVersion = '1.2.17'
@@ -129,43 +127,41 @@ dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
-    compile('io.netty:netty-all:4.0.28.Final') {
-        exclude group: 'commons-logging', module: 'commons-logging'
-    }
-    compile "com.madgag.spongycastle:core:${scastleVersion}"
-    // for SHA3 and SECP256K1
-    compile "com.madgag.spongycastle:prov:${scastleVersion}"
-    // for SHA3 and SECP256K1
-
+    compile('io.netty:netty-all:4.0.28.Final')
+    compile "com.madgag.spongycastle:core:${scastleVersion}" // for SHA3 and SECP256K1
+    compile "com.madgag.spongycastle:prov:${scastleVersion}" // for SHA3 and SECP256K1
     compile "org.iq80.leveldb:leveldb:${leveldbVersion}"
 
-    compile('com.cedarsoftware:java-util:1.8.0') {
-        exclude group: 'commons-logging', module: 'commons-logging'
-    } // for deep equals
+    compile "org.fusesource.leveldbjni:leveldbjni:1.8"
 
-    compile 'org.antlr:antlr4-runtime:4.5' // for serpent compilation
-
-    compile 'com.yuvalshavit:antlr-denter:1.1'
-
-    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
-
-    compile 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
-    compile 'com.google.code.findbugs:jsr305:3.0.0'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.2.0'
-    compile 'org.apache.commons:commons-collections4:4.0'
-    compile 'commons-io:commons-io:2.4'
+    compile "com.cedarsoftware:java-util:1.8.0" // for deep equals
+    compile "org.antlr:antlr4-runtime:4.5" // for serpent compilation
+    compile "com.yuvalshavit:antlr-denter:1.1"
+    compile "org.javassist:javassist:3.15.0-GA"
+    compile "org.slf4j:slf4j-api:${slf4jVersion}"
+    compile "log4j:log4j:${log4jVersion}"
+    compile "org.codehaus.jackson:jackson-mapper-asl:1.9.13"
+    compile "com.google.code.findbugs:jsr305:3.0.0"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.5.1"
+    compile "org.apache.commons:commons-collections4:4.0"
     compile "commons-codec:commons-codec:1.10"
-    compile 'org.hsqldb:hsqldb:1.8.0.10' // best performance - do not upgrade!
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
     compile "org.hibernate:hibernate-entitymanager:${hibernateVersion}"
-
+    compile "commons-dbcp:commons-dbcp:1.4"
     compile "redis.clients:jedis:2.6.0"
-    compile('com.googlecode.json-simple:json-simple:1.1.1') {
+    compile "com.h2database:h2:1.4.187"
+
+    compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+    compile "log4j:apache-log4j-extras:${log4jVersion}"
+
+    compile("com.googlecode.json-simple:json-simple:1.1.1") {
         exclude group: 'junit', module: 'junit'
-        exclude group: 'xml-apis', module: 'xml-apis'
     }
+
+	compile 'commons-io:commons-io:2.4'
 
     testCompile "junit:junit:${junitVersion}"
     testCompile 'com.google.dagger:dagger:2.1-SNAPSHOT'
     testCompile 'com.google.dagger:dagger-compiler:2.0'
 }
+

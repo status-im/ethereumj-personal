@@ -2,22 +2,27 @@ package org.ethereum.android.db;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Environment;
 import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.GenericRawResults;
+import com.j256.ormlite.misc.TransactionManager;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implements BlockStoreDatabase {
 
@@ -28,7 +33,8 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
     private Dao<TransactionReceiptVO, Integer> transactionDao = null;
 
     public OrmLiteBlockStoreDatabase(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, SystemProperties.CONFIG.databaseDir()
+                + File.separator + DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     /**
@@ -191,7 +197,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
         try {
             GenericRawResults<String[]> rawResults = getBlockDao().queryRaw("select max(number) from block");
             List<String[]> results = rawResults.getResults();
-            if (results.size() > 0 && results.get(0).length > 0) {
+            if (results.get(0)[0] != null) {
                 bestNumber = Long.valueOf(results.get(0)[0]);
             }
         } catch(java.sql.SQLException e) {
@@ -251,5 +257,31 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
         return new TransactionReceipt(vo.rlp);
 
+    }
+
+    public boolean flush(final List<Block> blocks) {
+
+        reset();
+        try {
+            TransactionManager.callInTransaction(getBlockDao().getConnectionSource(),
+                    new Callable<Void>() {
+                        public Void call() throws Exception {
+                            int lastIndex = blocks.size() - 1;
+                            for (int i = 0; i < 1000; ++i){
+                                Block block = blocks.get(lastIndex - i);
+                                BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
+                                save(blockVO);
+                            }
+                            // you could pass back an object here
+                            return null;
+                        }
+                    });
+
+
+            return true;
+        } catch(java.sql.SQLException e) {
+            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error querying for hash", e);
+            return false;
+        }
     }
 }

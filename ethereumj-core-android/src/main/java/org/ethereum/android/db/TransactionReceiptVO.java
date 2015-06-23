@@ -16,7 +16,7 @@ import javax.persistence.Table;
 @DatabaseTable(tableName = "transaction_receipt")
 public class TransactionReceiptVO {
 
-    @DatabaseField(index = true, dataType = DataType.BYTE_ARRAY)
+    @DatabaseField(index = true, persisterClass = HashPersister.class)
     byte[] hash;
 
     @DatabaseField(dataType = DataType.BYTE_ARRAY)

@@ -1,5 +1,6 @@
 package org.ethereum.vm;
 
+import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.FastByteComparisons;
 
@@ -48,6 +49,10 @@ public class DataWord implements Comparable<DataWord> {
 
     public DataWord(String data) {
         this(Hex.decode(data));
+    }
+
+    public DataWord(ByteArrayWrapper wrappedData){
+        this(wrappedData.getData());
     }
 
     public DataWord(byte[] data) {
@@ -291,6 +296,17 @@ public class DataWord implements Comparable<DataWord> {
         return Hex.toHexString(data);
     }
 
+    public String toPrefixString() {
+
+        byte[] pref = getNoLeadZeroesData();
+        if (pref.length == 0) return "";
+
+        if (pref.length < 7)
+            return Hex.toHexString(pref);
+
+        return Hex.toHexString(pref).substring(0, 6);
+    }
+
     public String shortHex() {
         String hexValue = Hex.toHexString(getNoLeadZeroesData()).toUpperCase();
         return "0x" + hexValue.replaceFirst("^0+(?!$)", "");
@@ -343,5 +359,9 @@ public class DataWord implements Comparable<DataWord> {
 
     public boolean isHex(String hex) {
         return Hex.toHexString(data).equals(hex);
+    }
+
+    public String asString(){
+        return new String(getNoLeadZeroesData());
     }
 }

@@ -4,6 +4,7 @@ import org.ethereum.crypto.HashUtil;
 
 import com.cedarsoftware.util.DeepEquals;
 
+import org.ethereum.db.ByteArrayWrapper;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -19,11 +20,10 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.*;
 
 import static org.ethereum.util.ByteUtil.byteArrayToInt;
+import static org.ethereum.util.ByteUtil.wrap;
 import static org.junit.Assert.*;
 import static org.ethereum.util.RlpTestData.*;
 
@@ -128,7 +128,7 @@ public class RLPTest {
         data = RLP.encodeByte((byte) 120);
         assertArrayEquals(expected2, data);
 
-        byte[] expected3 = {(byte) 0x81, (byte) 0x7F};
+        byte[] expected3 = {(byte) 0x7F};
         data = RLP.encodeByte((byte) 127);
         assertArrayEquals(expected3, data);
     }
@@ -145,7 +145,7 @@ public class RLPTest {
         data = RLP.encodeShort((byte) 120);
         assertArrayEquals(expected2, data);
 
-        byte[] expected3 = {(byte) 0x81, (byte) 0x7F};
+        byte[] expected3 = { (byte) 0x7F};
         data = RLP.encodeShort((byte) 127);
         assertArrayEquals(expected3, data);
 
@@ -170,7 +170,7 @@ public class RLPTest {
         data = RLP.encodeInt(120);
         assertArrayEquals(expected2, data);
 
-        byte[] expected3 = {(byte) 0x81, (byte) 0x7F};
+        byte[] expected3 = {(byte) 0x7F};
         data = RLP.encodeInt(127);
         assertArrayEquals(expected3, data);
 
@@ -978,6 +978,72 @@ public class RLPTest {
         byte[] encodedData = RLP.encodeBigInteger(integer);
         System.out.println(Hex.toHexString(encodedData));
     }
+
+    @Test
+    public void testEncodeListHeader(){
+
+        byte[] header = RLP.encodeListHeader(10);
+        String expected_1 = "ca";
+        assertEquals(expected_1, Hex.toHexString(header));
+
+        header = RLP.encodeListHeader(1000);
+        String expected_2 = "f903e8";
+        assertEquals(expected_2, Hex.toHexString(header));
+
+        header = RLP.encodeListHeader(1000000000);
+        String expected_3 = "fb3b9aca00";
+        assertEquals(expected_3, Hex.toHexString(header));
+    }
+
+
+    @Test
+    public void testEncodeSet_1(){
+
+        Set<ByteArrayWrapper> data = new HashSet<>();
+
+        ByteArrayWrapper element1 =
+                new ByteArrayWrapper(Hex.decode("1111111111111111111111111111111111111111111111111111111111111111"));
+
+        ByteArrayWrapper element2 =
+                new ByteArrayWrapper(Hex.decode("2222222222222222222222222222222222222222222222222222222222222222"));
+
+        data.add(element1);
+        data.add(element2);
+
+        byte[] setEncoded = RLP.encodeSet(data);
+
+        RLPList list = (RLPList)RLP.decode2(setEncoded).get(0);
+
+        byte[] element1_ = list.get(0).getRLPData();
+        byte[] element2_ = list.get(1).getRLPData();
+
+        assertTrue(data.contains(wrap(element1_)));
+        assertTrue(data.contains(wrap(element2_)));
+    }
+
+    @Test
+    public void testEncodeSet_2(){
+
+        Set<ByteArrayWrapper> data = new HashSet<>();
+        byte[] setEncoded = RLP.encodeSet(data);
+        assertEquals("c0", Hex.toHexString(setEncoded));
+    }
+
+    @Test
+    public void testEncodeInt_7f(){
+        String result =  Hex.toHexString(RLP.encodeInt(0x7f));
+        String expected = "7f";
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testEncodeInt_80(){
+        String result =  Hex.toHexString(RLP.encodeInt(0x80));
+        String expected = "8180";
+        assertEquals(expected, result);
+    }
+
+
 
 
 }

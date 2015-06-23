@@ -1,6 +1,7 @@
 package org.ethereum.core;
 
 import org.ethereum.config.Constants;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
 import org.ethereum.facade.Blockchain;
@@ -24,8 +25,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 import javax.inject.Inject;
@@ -34,9 +35,7 @@ import javax.inject.Singleton;
 import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.core.Denomination.SZABO;
-import static org.ethereum.core.ImportResult.EXIST;
-import static org.ethereum.core.ImportResult.NO_PARENT;
-import static org.ethereum.core.ImportResult.SUCCESS;
+import static org.ethereum.core.ImportResult.*;
 
 /**
  * The Ethereum blockchain is in many ways similar to the Bitcoin blockchain,
@@ -110,6 +109,7 @@ public class BlockchainImpl implements Blockchain {
     public BlockchainImpl() {
     }
 
+
     //todo: autowire over constructor
     @Inject
     public BlockchainImpl(BlockStore blockStore, Repository repository,
@@ -172,14 +172,13 @@ public class BlockchainImpl implements Blockchain {
 
     public ImportResult tryToConnect(Block block) {
 
-        recordBlock(block);
-
         if (logger.isInfoEnabled())
             logger.info("Try connect block hash: {}, number: {}",
                     Hex.toHexString(block.getHash()).substring(0, 6),
                     block.getNumber());
 
-        if (blockStore.getBlockByHash(block.getHash()) != null) {
+        if (blockStore.getBestBlock().getNumber() >= block.getNumber() &&
+                blockStore.getBlockByHash(block.getHash()) != null) {
 
             if (logger.isDebugEnabled())
                 logger.debug("Block already exist hash: {}, number: {}",
@@ -194,6 +193,7 @@ public class BlockchainImpl implements Blockchain {
         // to connect to the main chain
         if (bestBlock.isParentOf(block)) {
             add(block);
+            recordBlock(block);
             return SUCCESS;
         } else {
             if (1 == 1) // FIXME: WORKARROUND
@@ -292,10 +292,14 @@ public class BlockchainImpl implements Blockchain {
         //System.out.println(" Receipts listroot is: " + receiptListHash + " logbloomlisthash is " + logBloomListHash);
 
         track.commit();
-        repository.flush(); // saving to the disc
-
-
         storeBlock(block, receipts);
+
+
+        if (adminInfo.isConsensus() &&
+                block.getNumber() % 5_000 == 0) {
+            repository.flush();
+            blockStore.flush();
+        }
 
         // Remove all wallet transactions as they already approved by the net
         wallet.removeTransactions(block.getTransactionsList());
@@ -304,13 +308,12 @@ public class BlockchainImpl implements Blockchain {
         clearPendingTransactions(block.getTransactionsList());
 
         listener.trace(String.format("Block chain size: [ %d ]", this.getSize()));
-        listener.onBlock(block);
-        listener.onBlockReciepts(receipts);
+        listener.onBlock(block, receipts);
 
         if (blockQueue != null &&
-                blockQueue.size() == 0 &&
-                !syncDoneCalled &&
-                channelManager.isAllSync()) {
+            blockQueue.size() == 0 &&
+            !syncDoneCalled &&
+            channelManager.isAllSync()) {
 
             logger.info("Sync done");
             syncDoneCalled = true;
@@ -489,7 +492,7 @@ public class BlockchainImpl implements Blockchain {
                     programInvokeFactory, block, listener, totalGasUsed);
 
             executor.init();
-            executor.execute2();
+            executor.execute();
             executor.go();
             executor.finalization();
 
@@ -567,18 +570,20 @@ public class BlockchainImpl implements Blockchain {
         /* Debug check to see if the state is still as expected */
         String blockStateRootHash = Hex.toHexString(block.getStateRoot());
         String worldStateRootHash = Hex.toHexString(repository.getRoot());
-        if (!blockStateRootHash.equals(worldStateRootHash)) {
 
-            stateLogger.error("BLOCK: STATE CONFLICT! block: {} worldstate {} mismatch", block.getNumber(), worldStateRootHash);
-            adminInfo.lostConsensus();
+        if(!SystemProperties.CONFIG.blockChainOnly())
+            if (!blockStateRootHash.equals(worldStateRootHash)) {
 
-            System.out.println("CONFLICT: BLOCK #" + block.getNumber() );
-            System.exit(1);
-            // in case of rollback hard move the root
-//                Block parentBlock = blockStore.getBlockByHash(block.getParentHash());
-//                repository.syncToRoot(parentBlock.getStateRoot());
-            // todo: after the rollback happens other block should be requested
-        }
+                stateLogger.error("BLOCK: STATE CONFLICT! block: {} worldstate {} mismatch", block.getNumber(), worldStateRootHash);
+                adminInfo.lostConsensus();
+
+                System.out.println("CONFLICT: BLOCK #" + block.getNumber() );
+//                System.exit(1);
+                // in case of rollback hard move the root
+    //                Block parentBlock = blockStore.getBlockByHash(block.getParentHash());
+    //                repository.syncToRoot(parentBlock.getStateRoot());
+                // todo: after the rollback happens other block should be requested
+            }
 
         blockStore.saveBlock(block, receipts);
         setBestBlock(block);
@@ -652,11 +657,10 @@ public class BlockchainImpl implements Blockchain {
         if (!CONFIG.recordBlocks()) return;
 
         if (block.getNumber() == 1) {
-            //FileSystemUtils.deleteRecursively(new File(CONFIG.dumpDir()));
             try {
-              FileUtils.forceDelete(new File(CONFIG.dumpDir()));
+                FileUtils.forceDelete(new File(CONFIG.dumpDir()));
             } catch (IOException e) {
-              e.printStackTrace();
+                logger.error(e.getMessage(), e);
             }
         }
 

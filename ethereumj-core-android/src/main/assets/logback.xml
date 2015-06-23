@@ -1,0 +1,142 @@
+<configuration>
+    <property name="LOG_DIR" value="/data/data/org.ethereum.android_app/files" />
+
+    <!-- Create a logcat appender -->
+    <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%msg</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Create a file appender for TRACE-level messages
+    <appender name="TraceLog" class="ch.qos.logback.core.FileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <file>${LOG_DIR}/trace.log</file>
+
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    Create a file appender for DEBUG-level messages
+    <appender name="DebugLog" class="ch.qos.logback.core.FileAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <file>${LOG_DIR}/debug.log</file>
+
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+     -->
+    <logger name="core" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="net" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="db" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="peerdiscovery" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="io.netty" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="wire" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="wallet" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="dump" level="OFF">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="trie" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="block" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="blockqueue" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="general" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="peermonitor" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="VM" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="main" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="state" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="repository" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="blockchain" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="txs" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="gas" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="execute" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="hsqldb.db" level="ERROR">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <logger name="test" level="INFO">
+        <appender-ref ref="logcat" />
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="logcat" />
+    </root>
+
+</configuration>

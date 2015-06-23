@@ -3,11 +3,9 @@ package org.ethereum.db;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.util.ByteUtil;
-
 import org.hibernate.SessionFactory;
 
 import java.math.BigInteger;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -173,4 +171,19 @@ public class BlockStoreImpl implements BlockStore {
         return new TransactionReceipt(vo.rlp);
 
     }
+
+    @Override
+    public void flush() {
+    }
+
+    @Override
+    public void load() {
+    }
+
+    /*
+    @Override
+    public void setSessionFactory(SessionFactory sessionFactory) {
+    }
+    */
+    
 }

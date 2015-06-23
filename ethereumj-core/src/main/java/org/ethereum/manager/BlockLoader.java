@@ -4,9 +4,11 @@ package org.ethereum.manager;
 import org.ethereum.core.Block;
 import org.ethereum.facade.Blockchain;
 import org.spongycastle.util.encoders.Hex;
-
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Scanner;
 
 import javax.inject.Inject;
@@ -17,7 +19,7 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 @Singleton
 public class BlockLoader {
 
-    private Blockchain blockchain;
+    protected Blockchain blockchain;
 
     Scanner scanner = null;
 
@@ -46,12 +48,20 @@ public class BlockLoader {
                 if (block.getNumber() > blockchain.getBestBlock().getNumber()){
                     blockchain.tryToConnect(block);
                     long t1_ = System.nanoTime();
-                    String result = String.format("Imported block #%d took: [%02.2f msec]",
-                            block.getNumber(), ((float)(t1_ - t1) / 1_000_000));
 
-                    System.out.println(result);
-                } else
-                    System.out.println("Skipping block #" + block.getNumber());
+                    float elapsed = ((float)(t1_ - t1) / 1_000_000);
+
+                    if (block.getNumber() % 1000 == 0 || elapsed > 10_000) {
+                        String result = String.format("Imported block #%d took: [%02.2f msec]",
+                                block.getNumber(), elapsed);
+
+                        System.out.println(result);
+                    }
+                } else{
+
+                    if (block.getNumber() % 10000 == 0)
+                        System.out.println("Skipping block #" + block.getNumber());
+                }
 
 
             }
