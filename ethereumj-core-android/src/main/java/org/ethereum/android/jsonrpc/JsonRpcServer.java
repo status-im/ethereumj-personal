@@ -113,7 +113,7 @@ public final class JsonRpcServer {
         this.dispatcher.register(new shh_getFilterChanges(this.ethereum));
         this.dispatcher.register(new shh_getMessages(this.ethereum));
 
-        FilterManager.getInstance();
+        ethereum.addListener(FilterManager.getInstance());
         org.ethereum.android.jsonrpc.whisper.FilterManager.getInstance();
     }
 

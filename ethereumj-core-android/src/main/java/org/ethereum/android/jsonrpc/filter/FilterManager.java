@@ -2,19 +2,21 @@ package org.ethereum.android.jsonrpc.filter;
 
 import net.minidev.json.JSONArray;
 
+import org.ethereum.core.Block;
+import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
+import org.ethereum.listener.EthereumListenerAdapter;
 
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
-/*
-This class must receive notification from -core about new log, Block, Transaction. Right now I not see the way todo that.
-TODO: ask advice from Roman about how to send notification to this class.
-*/
-public class FilterManager {
+public class FilterManager extends EthereumListenerAdapter {
 
     protected static FilterManager instance = null;
 
@@ -49,7 +51,19 @@ public class FilterManager {
         }, TimeUnit.MINUTES.toMillis(1));
     }
 
-    public void processEvent(Object data) {
+    @Override
+    public void onBlock(Block block, List<TransactionReceipt> receipts) {
+        processEvent(block);
+    }
+
+    @Override
+    public void onPendingTransactionsReceived(Set<Transaction> transactions) {
+        for(Transaction tx : transactions) {
+            processEvent(tx);
+        }
+    }
+
+    private void processEvent(Object data) {
         synchronized (filters) {
             for (Map.Entry<Integer, FilterBase> item : filters.entrySet()) {
                 item.getValue().processEvent(data);
