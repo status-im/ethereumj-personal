@@ -22,8 +22,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import android.content.Context;
-
 /**
  * @author Roman Mandeleil
  * @since 18.01.2015
@@ -34,17 +32,12 @@ public class LevelDbDataSource implements KeyValueDataSource {
 
     String name;
     private DB db;
-    private Context context;
 
     public LevelDbDataSource() {
     }
 
     public LevelDbDataSource(String name) {
         this.name = name;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
     }
 
     @Override

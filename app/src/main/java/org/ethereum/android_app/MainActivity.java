@@ -95,7 +95,9 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        ethereumManager.onDestroy();
+        if (ethereumManager != null) {
+            ethereumManager.onDestroy();
+        }
     }
 
     // The definition of our task class
@@ -112,7 +114,14 @@ public class MainActivity extends ActionBarActivity {
             Log.v(TAG, "111");
 
             Log.v(TAG, "222");
-            long duration = ethereumManager.connect(SystemProperties.CONFIG.databaseDir() + File.separator + "poc-9-492k.dmp");
+            ThreadGroup group = new ThreadGroup("threadGroup");
+            new Thread(group, new Runnable() {
+                @Override
+                public void run() {
+                    long duration = ethereumManager.connect(SystemProperties.CONFIG.databaseDir() + File.separator + "poc-9-492k.dmp");
+                }
+            }, "EthereumConnect", 32768000).start();
+
             //ConsoleFragment consoleeFrag = (ConsoleFragment)getSupportFragmentManager().findFragmentById(R.id.console);
             //consoleeFrag.updateDuration(duration);
             Log.v(TAG, "333");
@@ -158,7 +167,9 @@ public class MainActivity extends ActionBarActivity {
         protected String doInBackground(Context... params) {
             Log.v(TAG, "444");
             try {
-                ethereumManager.startJsonRpc();
+                if (ethereumManager != null) {
+                    ethereumManager.startJsonRpc();
+                }
             } catch (Exception e) {
             }
             Log.v(TAG, "555");

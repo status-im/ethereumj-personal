@@ -83,9 +83,7 @@ public class EthereumModule {
     @Singleton
     Repository provideRepository() {
         LevelDbDataSource detailsDS = new LevelDbDataSource();
-        detailsDS.setContext(context);
         LevelDbDataSource stateDS = new LevelDbDataSource();
-        stateDS.setContext(context);
         return new RepositoryImpl(detailsDS, stateDS);
     }
 
