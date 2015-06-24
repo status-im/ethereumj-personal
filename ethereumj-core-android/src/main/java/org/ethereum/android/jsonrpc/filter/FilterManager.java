@@ -54,6 +54,9 @@ public class FilterManager extends EthereumListenerAdapter {
     @Override
     public void onBlock(Block block, List<TransactionReceipt> receipts) {
         processEvent(block);
+        for(TransactionReceipt tx : receipts) {
+            processEvent(tx.getTransaction());
+        }
     }
 
     @Override
