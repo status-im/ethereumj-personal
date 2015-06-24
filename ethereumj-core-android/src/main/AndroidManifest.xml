@@ -1,7 +1,30 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.ethereum.android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.ethereum.android" >
 
-    <application android:allowBackup="true" android:label="@string/app_name">
-
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name" >
+        <service
+            android:name=".EthereumAidlService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_process" >
+            <intent-filter>
+                <action android:name="org.ethereum.android.IEthereumAidl" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".EthereumRemoteService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_process" >
+        </service>
+        <service
+            android:name=".EthereumService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
 
 </manifest>

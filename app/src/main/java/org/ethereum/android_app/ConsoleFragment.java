@@ -1,5 +1,6 @@
 package org.ethereum.android_app;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -12,10 +13,41 @@ import android.widget.TextView;
 import org.ethereum.android.EthereumManager;
 import org.ethereum.listener.EthereumListenerAdapter;
 
-public class ConsoleFragment extends Fragment {
+public class ConsoleFragment extends Fragment implements FragmentInterface {
 
     EthereumManager ethereumManager;
     private TextView console;
+
+    TextViewUpdater consoleUpdater = new TextViewUpdater();
+
+    private class TextViewUpdater implements Runnable {
+
+        private String txt;
+        @Override
+        public void run() {
+
+            console.setText(txt);
+        }
+        public void setText(String txt) {
+
+            this.txt = txt;
+        }
+
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+
+        super.onAttach(activity);
+        ActivityInterface activityInterface = (ActivityInterface) activity;
+        activityInterface.registerFragment(this);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -23,34 +55,12 @@ public class ConsoleFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_console, container, false);
         console = (TextView) view.findViewById(R.id.console);
         console.setMovementMethod(new ScrollingMovementMethod());
-        console.append("aaaa");
         return view;
-
     }
 
-    public void setEthereumManager(EthereumManager ethereumManager) {
+    public void onMessage(String message) {
 
-        this.ethereumManager = ethereumManager;
-        /*
-        ethereumManager.addListener(new EthereumListenerAdapter() {
-
-            @Override
-            public void trace(final String output) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //console.append(output);
-                    }
-                });
-
-            }
-        });
-        */
+        consoleUpdater.setText(message);
+        ConsoleFragment.this.console.post(consoleUpdater);
     }
-
-    public void updateDuration(long duration) {
-        console.append(String.valueOf(duration/1000) + "seconds");
-    }
-
-
 }

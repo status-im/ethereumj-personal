@@ -80,7 +80,6 @@ public class EthereumManager {
     public void close() {
 
         ethereum.close();
-        OpenHelperManager.releaseHelper();
     }
 
 }

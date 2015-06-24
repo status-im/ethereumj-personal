@@ -4,11 +4,14 @@
     android:orientation="vertical">
     <TextView android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:gravity="top"
-        android:text="@string/console_output"
         android:textSize="14sp"
         android:layout_centerInParent="true"
-        android:id="@+id/console"/>
+        android:id="@+id/console"
+        android:gravity="bottom"
+        android:scrollbars="vertical"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbarSize="25dip"
+        android:scrollbarFadeDuration="0"/>
 </RelativeLayout>
 
 

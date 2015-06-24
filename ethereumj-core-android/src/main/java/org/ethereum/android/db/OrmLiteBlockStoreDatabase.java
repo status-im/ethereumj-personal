@@ -26,11 +26,21 @@ import java.util.concurrent.Callable;
 
 public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implements BlockStoreDatabase {
 
+    private static OrmLiteBlockStoreDatabase instance;
+
     private static final String DATABASE_NAME = "blockchain.db";
     private static final int DATABASE_VERSION = 1;
 
     private Dao<BlockVO, Integer> blockDao = null;
     private Dao<TransactionReceiptVO, Integer> transactionDao = null;
+
+    public static synchronized OrmLiteBlockStoreDatabase getHelper(Context context)
+    {
+        if (instance == null)
+            instance = new OrmLiteBlockStoreDatabase(context);
+
+        return instance;
+    }
 
     public OrmLiteBlockStoreDatabase(Context context) {
         super(context, SystemProperties.CONFIG.databaseDir()

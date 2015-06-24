@@ -26,6 +26,16 @@
             android:name=".TestActivity"
             android:label="@string/title_activity_test" >
         </activity>
+
+        <service
+            android:name="org.ethereum.android_app.EthereumService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_process" >
+            <intent-filter>
+                <action android:name="org.ethereum.android_app.EthereumService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

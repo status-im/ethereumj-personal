@@ -110,7 +110,6 @@ public class LevelDbDataSourceTest extends ActivityInstrumentationTestCase2<Test
     private KeyValueDataSource createDataSource(String name) {
 
         LevelDbDataSource result = new LevelDbDataSource();
-        result.setContext(activity);
         result.setName(name);
         result.init();
         return result;

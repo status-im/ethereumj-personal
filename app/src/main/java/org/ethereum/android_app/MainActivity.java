@@ -1,8 +1,14 @@
 package org.ethereum.android_app;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.IBinder;
+import android.os.RemoteException;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -11,24 +17,96 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.os.Build;
+import android.widget.Toast;
 
 import org.ethereum.android.EthereumManager;
+import org.ethereum.android.interop.IEthereumService;
+import org.ethereum.android.interop.IListener;
 import org.ethereum.config.SystemProperties;
 
 import java.io.File;
+import java.util.ArrayList;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements ActivityInterface {
 
     private static final String TAG = "MyActivity";
-    private static Integer quit = 0;
 
     private Toolbar toolbar;
     private ViewPager viewPager;
     private SlidingTabLayout tabs;
     private TabsPagerAdapter adapter;
+    protected ArrayList<FragmentInterface> fragments = new ArrayList<>();
 
-    public EthereumManager ethereumManager = null;
+    protected static String consoleLog = "";
+
+    /** Ethereum Aidl Service. */
+    IEthereumService ethereumService = null;
+
+    IListener.Stub ethereumListener = new IListener.Stub() {
+
+        public void trace(String message) throws RemoteException {
+
+            logMessage(message);
+        }
+    };
+
+    /** Flag indicating whether we have called bind on the service. */
+    boolean isBound;
+
+    /**
+     * Class for interacting with the main interface of the service.
+     */
+    protected ServiceConnection serviceConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className, IBinder service) {
+
+            // This is called when the connection with the service has been
+            // established, giving us the service object we can use to
+            // interact with the service.  We are communicating with our
+            // service through an IDL interface, so get a client-side
+            // representation of that from the raw service object.
+            ethereumService = IEthereumService.Stub.asInterface(service);
+            Toast.makeText(MainActivity.this, "service attached", Toast.LENGTH_SHORT).show();
+
+            try {
+
+
+                // Try to load blocks dump file from /sdcard/poc-9-492k.dmp
+                String blocksDump = null;
+                File extStore = Environment.getExternalStorageDirectory();
+                if (extStore.exists()) {
+                    String sdcardPath = extStore.getAbsolutePath();
+                    File dumpFile = new File(extStore, "poc-9-492k.dmp");
+                    if (dumpFile.exists()) {
+                        blocksDump = dumpFile.getAbsolutePath();
+                    }
+                }
+                // Start json rpc server
+                ethereumService.startJsonRpcServer();
+                // If blocks dump not found, connect to peer
+                if (blocksDump != null) {
+                    ethereumService.loadBlocks(blocksDump);
+                } else {
+                    ethereumService.addListener(ethereumListener);
+                    ethereumService.connect(SystemProperties.CONFIG.activePeerIP(),
+                        SystemProperties.CONFIG.activePeerPort(),
+                        SystemProperties.CONFIG.activePeerNodeid());
+                }
+                Toast.makeText(MainActivity.this, "connected to service", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                logMessage("Error adding listener: " + e.getMessage());
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            ethereumService = null;
+            Toast.makeText(MainActivity.this, "service disconnected", Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,17 +117,7 @@ public class MainActivity extends ActionBarActivity {
         toolbar = (Toolbar) findViewById(R.id.tool_bar);
         setSupportActionBar(toolbar);
 
-        String databaseFolder = null;
-        File extStore = Environment.getExternalStorageDirectory();
-        if (extStore.exists()) {
-            databaseFolder = extStore.getAbsolutePath();
-        } else {
-            databaseFolder = getApplicationInfo().dataDir;
-        }
-
-        ethereumManager = new EthereumManager(this, databaseFolder);
-
-        adapter = new TabsPagerAdapter(getSupportFragmentManager(), ethereumManager);
+        adapter = new TabsPagerAdapter(getSupportFragmentManager());
         viewPager = (ViewPager) findViewById(R.id.pager);
         viewPager.setAdapter(adapter);;
 
@@ -57,21 +125,72 @@ public class MainActivity extends ActionBarActivity {
         tabs.setDistributeEvenly(true);
         tabs.setViewPager(viewPager);
 
+        ComponentName myService = startService(new Intent("org.ethereum.android_app.EthereumService"));
+        doBindService();
+
         //StrictMode.enableDefaults();
+    }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            new PostTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        else
-            new PostTask().execute();
+    protected void logMessage(String message) {
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            new JsonRpcTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        else
-            new JsonRpcTask().execute();
+        MainActivity.consoleLog += message + "\n";
+        int consoleLength = MainActivity.consoleLog.length();
+        if (consoleLength > 5000) {
+            MainActivity.consoleLog = MainActivity.consoleLog.substring(4000);
+        }
+
+        broadcastFragments(MainActivity.consoleLog);
+    }
+
+
+    protected void broadcastFragments(String message) {
+
+        for (FragmentInterface fragment : fragments) {
+            fragment.onMessage(message);
+        }
+    }
+
+    void doBindService() {
+
+        // Establish a connection with the service.  We use an explicit
+        // class name because there is no reason to be able to let other
+        // applications replace our component.
+        bindService(new Intent("org.ethereum.android_app.EthereumService"), serviceConnection, Context.BIND_AUTO_CREATE);
+        isBound = true;
+        Toast.makeText(MainActivity.this, "binding to service", Toast.LENGTH_SHORT).show();
+    }
+
+    void doUnbindService() {
+
+        if (isBound) {
+            // If we have received the service, and hence registered with
+            // it, then now is the time to unregister.
+            if (ethereumService != null) {
+                try {
+                    ethereumService.removeListener(ethereumListener);
+                } catch (RemoteException e) {
+                    // There is nothing special we need to do if the service
+                    // has crashed.
+                }
+            }
+
+            // Detach our existing connection.
+            unbindService(serviceConnection);
+            isBound = false;
+            Toast.makeText(MainActivity.this, "unbinding from service", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void registerFragment(FragmentInterface fragment) {
+
+        if (!fragments.contains(fragment)) {
+            fragments.add(fragment);
+        }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
         //return super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
@@ -79,6 +198,7 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
@@ -94,97 +214,13 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
-        if (ethereumManager != null) {
-            ethereumManager.onDestroy();
-        }
-    }
-
-    // The definition of our task class
-    private class PostTask extends AsyncTask<Context, Integer, String> {
-
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected String doInBackground(Context... params) {
-            Log.v(TAG, "111");
-
-            Log.v(TAG, "222");
-            ThreadGroup group = new ThreadGroup("threadGroup");
-            new Thread(group, new Runnable() {
-                @Override
-                public void run() {
-                    long duration = ethereumManager.connect(SystemProperties.CONFIG.databaseDir() + File.separator + "poc-9-492k.dmp");
-                }
-            }, "EthereumConnect", 32768000).start();
-
-            //ConsoleFragment consoleeFrag = (ConsoleFragment)getSupportFragmentManager().findFragmentById(R.id.console);
-            //consoleeFrag.updateDuration(duration);
-            Log.v(TAG, "333");
-            while(true) {
-
-                try {
-                    Thread.sleep(50);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                if (quit == 1) {
-                    Log.v(TAG, "Ending background process.");
-                    return "All Done!";
-                }
-
-                //publishProgress(1111);
-            }
-        }
-
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            Log.v(TAG, values[0].toString());
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-        }
+        doUnbindService();
     }
 
 
-    // The definition of our task class
-    private class JsonRpcTask extends AsyncTask<Context, Integer, String> {
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
 
-        @Override
-        protected String doInBackground(Context... params) {
-            Log.v(TAG, "444");
-            try {
-                if (ethereumManager != null) {
-                    ethereumManager.startJsonRpc();
-                }
-            } catch (Exception e) {
-            }
-            Log.v(TAG, "555");
-            return "done";
-        }
 
-        @Override
-        protected void onProgressUpdate(Integer... values) {
-            super.onProgressUpdate(values);
-            Log.v(TAG, values[0].toString());
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-        }
-    }
 }
