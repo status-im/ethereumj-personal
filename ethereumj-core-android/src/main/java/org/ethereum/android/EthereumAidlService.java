@@ -29,6 +29,10 @@ public class EthereumAidlService extends Service {
 
     public static String log = "";
 
+    boolean isConnected = false;
+
+    boolean isInitialized = false;
+
     public EthereumAidlService() {
     }
 
@@ -39,6 +43,7 @@ public class EthereumAidlService extends Service {
                 listener.trace(message);
             } catch (Exception e) {
                 // Remove listener
+                System.out.println("ERRORRRR: " + e.getMessage());
                 clientListeners.remove(listener);
             }
         }
@@ -53,17 +58,23 @@ public class EthereumAidlService extends Service {
 
     protected void initializeEthereum() {
 
-        System.setProperty("sun.arch.data.model", "32");
-        System.setProperty("leveldb.mmap", "false");
+        if (!isInitialized) {
+            System.setProperty("sun.arch.data.model", "32");
+            System.setProperty("leveldb.mmap", "false");
 
-        String databaseFolder = getApplicationInfo().dataDir;
-        System.out.println("Database folder: " + databaseFolder);
-        SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
+            String databaseFolder = getApplicationInfo().dataDir;
+            System.out.println("Database folder: " + databaseFolder);
+            SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
 
-        ethereum = DaggerEthereumComponent.builder()
-                .ethereumModule(new EthereumModule(this))
-                .build().ethereum();
-        ethereum.addListener(new EthereumListener());
+            ethereum = DaggerEthereumComponent.builder()
+                    .ethereumModule(new EthereumModule(this))
+                    .build().ethereum();
+            ethereum.addListener(new EthereumListener());
+            isInitialized = true;
+        } else {
+            System.out.println(" Already initialized");
+            System.out.println("x " + (ethereum != null));
+        }
     }
 
     @Override
@@ -88,20 +99,28 @@ public class EthereumAidlService extends Service {
 
         public void connect(String ip, int port, String remoteId) throws RemoteException {
 
-            ethereum.connect(ip, port, remoteId);
+            if (!isConnected) {
+                System.out.println("Connecting to : " + ip);
+                ethereum.connect(ip, port, remoteId);
+                isConnected = true;
+            } else {
+                System.out.println("Already connected");
+                System.out.println("x " + ethereum.isConnected());
+            }
         }
 
         public void addListener(IListener listener) throws RemoteException {
 
-            if (!clientListeners.contains(listener)) {
-                clientListeners.add(listener);
-            }
+            clientListeners.clear();
+            clientListeners.add(listener);
         }
 
         public void removeListener(IListener listener) throws RemoteException {
 
-            if (clientListeners.contains(listener)) {
+            try {
                 clientListeners.remove(listener);
+            } catch (Exception e) {
+                System.out.println("ERRORRRR: " + e.getMessage());
             }
         }
 
