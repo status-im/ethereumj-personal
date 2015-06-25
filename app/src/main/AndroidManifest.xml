@@ -32,9 +32,6 @@
             android:enabled="true"
             android:exported="true"
             android:process=":ethereum_process" >
-            <intent-filter>
-                <action android:name="org.ethereum.android_app.EthereumService" />
-            </intent-filter>
         </service>
     </application>
 

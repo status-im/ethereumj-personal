@@ -125,7 +125,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         tabs.setDistributeEvenly(true);
         tabs.setViewPager(viewPager);
 
-        ComponentName myService = startService(new Intent("org.ethereum.android_app.EthereumService"));
+        ComponentName myService = startService(new Intent(MainActivity.this, EthereumService.class));
         doBindService();
 
         //StrictMode.enableDefaults();
@@ -155,7 +155,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         // Establish a connection with the service.  We use an explicit
         // class name because there is no reason to be able to let other
         // applications replace our component.
-        bindService(new Intent("org.ethereum.android_app.EthereumService"), serviceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(MainActivity.this, EthereumService.class), serviceConnection, Context.BIND_AUTO_CREATE);
         isBound = true;
         Toast.makeText(MainActivity.this, "binding to service", Toast.LENGTH_SHORT).show();
     }
