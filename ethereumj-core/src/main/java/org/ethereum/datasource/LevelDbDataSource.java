@@ -8,7 +8,6 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 
-import org.iq80.leveldb.impl.Iq80DBFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
