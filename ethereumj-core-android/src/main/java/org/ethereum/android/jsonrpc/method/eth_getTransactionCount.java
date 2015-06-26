@@ -12,10 +12,6 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 
-/*
-Can't find correct way to get contracts' state for specified block number. Right now method return correct value only for "latest" parameter
-TODO: ask roman advice for this method.
-*/
 public class eth_getTransactionCount extends JsonRpcServerMethod {
 
     public eth_getTransactionCount(Ethereum ethereum) { super(ethereum); }

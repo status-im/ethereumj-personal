@@ -7,9 +7,6 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
-/*
-TODO: get advice from Roman about get block from transaction.
-*/
 public class eth_getTransactionByHash extends JsonRpcServerMethod {
 
     public eth_getTransactionByHash (Ethereum ethereum) {

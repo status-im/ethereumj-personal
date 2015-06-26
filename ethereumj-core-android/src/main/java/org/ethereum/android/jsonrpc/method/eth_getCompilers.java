@@ -6,9 +6,6 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 import java.util.ArrayList;
 
-/*
-As I see right now -core have only serpent compiler
-*/
 public class eth_getCompilers extends JsonRpcServerMethod {
 
     public eth_getCompilers (Ethereum ethereum) {

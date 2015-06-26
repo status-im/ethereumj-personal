@@ -11,10 +11,6 @@ import org.ethereum.vm.VM;
 import org.spongycastle.util.encoders.Hex;
 import java.util.List;
 
-/*
-It's magic here, not sure if -core have this possibility at all. I found this in test and studio. But not sure that getHReturn it's what specification mean.
-TODO: get advice from Roman
-*/
 public class eth_estimateGas extends JsonRpcServerMethod {
 
     public eth_estimateGas (Ethereum ethereum) {

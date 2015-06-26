@@ -15,10 +15,6 @@ import java.util.concurrent.TimeUnit;
 import static org.ethereum.core.Denomination.SZABO;
 import static org.ethereum.config.SystemProperties.CONFIG;
 
-/*
-Not sure if we must call submitTransaction from here but logically to do it. Also not clear how created transaction added to pending and to "from" account pending (in test - it didn't)
-TODO: get advice from Roman. By spec if created transaction (empty data param) - result must be 20 bytes hash, but I got 32 bytes for both contract and transaction create.
-*/
 public class eth_sendTransaction extends JsonRpcServerMethod {
 
     public eth_sendTransaction (Ethereum ethereum) {

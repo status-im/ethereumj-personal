@@ -8,9 +8,6 @@ import org.ethereum.facade.Ethereum;
 
 import java.util.List;
 
-/*
-TODO: done it when shh will be ready in -core
-*/
 public class shh_getFilterChanges extends JsonRpcServerMethod {
 
     public shh_getFilterChanges(Ethereum ethereum) {

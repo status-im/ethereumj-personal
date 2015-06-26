@@ -6,10 +6,6 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
-/*
-Not sure if pending transactions can have uncle.
-TODO: ask Roman about this
-*/
 public class eth_getUncleCountByBlockNumber extends JsonRpcServerMethod {
 
     public eth_getUncleCountByBlockNumber (Ethereum ethereum) {

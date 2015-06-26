@@ -9,9 +9,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.util.List;
 
-/*
-TODO: ask roman advice for this method.
-*/
 public class eth_getBalance extends JsonRpcServerMethod {
 
     public eth_getBalance (Ethereum ethereum) {

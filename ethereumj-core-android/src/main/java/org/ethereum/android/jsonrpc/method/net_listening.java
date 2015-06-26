@@ -5,9 +5,6 @@ import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 
-/*
-TODO: right now -core not mark fact of start listening, it do it automatically and only send Listening trace "string" message.
-*/
 public class net_listening extends JsonRpcServerMethod {
 
     public net_listening (Ethereum ethereum) {
