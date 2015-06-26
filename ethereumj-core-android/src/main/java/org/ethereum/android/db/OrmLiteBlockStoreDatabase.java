@@ -15,6 +15,7 @@ import com.j256.ormlite.table.TableUtils;
 
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
+import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
 
 import java.io.File;
@@ -33,6 +34,9 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
     private Dao<BlockVO, Integer> blockDao = null;
     private Dao<TransactionReceiptVO, Integer> transactionDao = null;
+    private Dao<BlockTransactionVO, Integer> blockTransactionDao = null;
+
+    protected boolean storeAllBLocks = false;
 
     public static synchronized OrmLiteBlockStoreDatabase getHelper(Context context)
     {
@@ -58,6 +62,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
             Log.i(OrmLiteBlockStoreDatabase.class.getName(), "onCreate");
             TableUtils.createTable(connectionSource, BlockVO.class);
             TableUtils.createTable(connectionSource, TransactionReceiptVO.class);
+            TableUtils.createTable(connectionSource, BlockTransactionVO.class);
         } catch (SQLException e) {
             Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Can't create database", e);
             throw new RuntimeException(e);
@@ -75,6 +80,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
             Log.i(OrmLiteBlockStoreDatabase.class.getName(), "onUpgrade");
             TableUtils.dropTable(connectionSource, BlockVO.class, true);
             TableUtils.dropTable(connectionSource, TransactionReceiptVO.class, true);
+            TableUtils.dropTable(connectionSource, BlockTransactionVO.class, true);
             // after we drop the old databases, we create the new ones
             onCreate(db, connectionSource);
         } catch (SQLException e) {
@@ -104,6 +110,17 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
             transactionDao = getDao(TransactionReceiptVO.class);
         }
         return transactionDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for our SimpleData class. It will create it or just give the cached
+     * value.
+     */
+    public Dao<BlockTransactionVO, Integer> getBlockTransactionDao() throws SQLException {
+        if (blockTransactionDao == null) {
+            blockTransactionDao = getDao(BlockTransactionVO.class);
+        }
+        return blockTransactionDao;
     }
 
     /**
@@ -253,6 +270,15 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
         }
     }
 
+    public void save(BlockTransactionVO blockTransactionV0) {
+
+        try {
+            getBlockTransactionDao().create(blockTransactionV0);
+        } catch(java.sql.SQLException e) {
+            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error saving blockTransaction", e);
+        }
+    }
+
     public TransactionReceipt getTransactionReceiptByHash(byte[] hash) {
 
         List<TransactionReceiptVO> list = new ArrayList<TransactionReceiptVO>();
@@ -269,18 +295,53 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
     }
 
+    public BlockTransactionVO getTransactionLocation(byte[] transactionHash) {
+
+        List<BlockTransactionVO> list = new ArrayList<>();
+        try {
+            list = getBlockTransactionDao().queryForEq("transactionHash", transactionHash);
+        } catch(java.sql.SQLException e) {
+            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error querying for transaction hash", e);
+        }
+
+        if (list.size() == 0) return null;
+        BlockTransactionVO blockTransactionVO = list.get(0);
+
+        return blockTransactionVO;
+    }
+
     public boolean flush(final List<Block> blocks) {
 
-        reset();
+        if (!storeAllBLocks) {
+            reset();
+        }
         try {
             TransactionManager.callInTransaction(getBlockDao().getConnectionSource(),
                     new Callable<Void>() {
                         public Void call() throws Exception {
-                            int lastIndex = blocks.size() - 1;
-                            for (int i = 0; i < 1000; ++i){
-                                Block block = blocks.get(lastIndex - i);
-                                BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
-                                save(blockVO);
+
+                            if (storeAllBLocks) {
+                                for (Block block: blocks) {
+                                    byte[] blockHash = block.getHash();
+                                    BlockVO blockVO = new BlockVO(block.getNumber(), blockHash, block.getEncoded(), block.getCumulativeDifficulty());
+                                    save(blockVO);
+
+                                    List<Transaction> transactions = block.getTransactionsList();
+
+                                    int index = 0;
+                                    for (Transaction transaction: transactions) {
+                                        BlockTransactionVO transactionVO = new BlockTransactionVO(blockHash, transaction.getHash(), index);
+                                        save(transactionVO);
+                                        index++;
+                                    }
+                                }
+                            } else {
+                                int lastIndex = blocks.size() - 1;
+                                for (int i = 0; i < 1000; ++i) {
+                                    Block block = blocks.get(lastIndex - i);
+                                    BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
+                                    save(blockVO);
+                                }
                             }
                             // you could pass back an object here
                             return null;
@@ -290,8 +351,13 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
 
             return true;
         } catch(java.sql.SQLException e) {
-            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error querying for hash", e);
+            Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error flushing blocks", e);
             return false;
         }
+    }
+
+    public void setFullStorage(boolean storeAllBlocks) {
+
+        this.storeAllBLocks = storeAllBlocks;
     }
 }

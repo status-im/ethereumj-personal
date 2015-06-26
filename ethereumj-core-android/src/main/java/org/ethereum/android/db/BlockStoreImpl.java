@@ -65,16 +65,22 @@ public class BlockStoreImpl implements BlockStore {
 
     public void saveBlock(Block block, List<TransactionReceipt> receipts) {
 
-        BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(),
+        byte[] blockHash = block.getHash();
+        BlockVO blockVO = new BlockVO(block.getNumber(), blockHash,
                 block.getEncoded(), block.getCumulativeDifficulty());
 
+        int index = 0;
         for (TransactionReceipt receipt : receipts) {
 
-            byte[] hash = receipt.getTransaction().getHash();
+            byte[] transactionHash = receipt.getTransaction().getHash();
             byte[] rlp = receipt.getEncoded();
 
-            TransactionReceiptVO transactionReceiptVO = new TransactionReceiptVO(hash, rlp);
+            TransactionReceiptVO transactionReceiptVO = new TransactionReceiptVO(transactionHash, rlp);
             database.save(transactionReceiptVO);
+
+            BlockTransactionVO blockTransactionVO = new BlockTransactionVO(blockHash, transactionHash, index);
+            database.save(blockTransactionVO);
+            index++;
         }
 
         database.save(blockVO);

@@ -44,8 +44,18 @@ public class EthereumModule {
 
     private Context context;
 
+    boolean storeAllBlocks;
+
     public EthereumModule(Context context) {
+
         this.context = context;
+        this.storeAllBlocks = false;
+    }
+
+    public EthereumModule(Context context,boolean storeAllBlocks) {
+
+        this.context = context;
+        this.storeAllBlocks = storeAllBlocks;
     }
 
     @Provides
@@ -74,7 +84,7 @@ public class EthereumModule {
     @Singleton
     BlockStore provideBlockStore() {
         OrmLiteBlockStoreDatabase database = OrmLiteBlockStoreDatabase.getHelper(context);
-        return new InMemoryBlockStore(database);
+        return new InMemoryBlockStore(database, storeAllBlocks);
     }
 
     @Provides

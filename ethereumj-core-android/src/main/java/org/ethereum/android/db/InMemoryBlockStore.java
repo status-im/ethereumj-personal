@@ -27,12 +27,20 @@ public class InMemoryBlockStore implements BlockStore {
     List<Block> blocks = new ArrayList<>();
 
     private BlockStoreDatabase database;
+    protected boolean storeAllBlocks = false;
 
     BigInteger totalDifficulty = ZERO;
 
     public InMemoryBlockStore(BlockStoreDatabase database) {
 
         this.database = database;
+    }
+
+    public InMemoryBlockStore(BlockStoreDatabase database, boolean storeAllBlocks) {
+
+        this.database = database;
+        this.database.setFullStorage(storeAllBlocks);
+        this.storeAllBlocks = storeAllBlocks;
     }
 
     @Override
