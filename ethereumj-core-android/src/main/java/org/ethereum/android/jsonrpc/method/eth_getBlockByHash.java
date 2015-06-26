@@ -10,10 +10,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.util.List;
 
-/*
-By specification this method can receive hash of pending block but from -core it's not possible.
-TODO: get advice from Roman about pending block
-*/
 public class eth_getBlockByHash extends JsonRpcServerMethod {
 
     public eth_getBlockByHash (Ethereum ethereum) {

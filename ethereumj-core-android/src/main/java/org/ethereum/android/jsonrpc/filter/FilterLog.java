@@ -13,20 +13,19 @@ import org.spongycastle.util.encoders.Hex;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/*
-Right now LogInfo not contains information about Transaction and Transaction not have information about block.
-TODO: talk to Roman about create links between LogInfo and Transaction and between Transaction and Block.
-*/
 public class FilterLog extends FilterBase {
 
-    private ArrayList<LogInfo> logs = new ArrayList<LogInfo>();
+    private ArrayList<FilterLogData> logs = new ArrayList<FilterLogData>();
 
     long blockFrom;
     long blockTo;
     ArrayList<byte[]> addresses = new ArrayList<>();
     ArrayList<byte[]> topics = new ArrayList<>();
 
+    private Ethereum ethereum;
+
     public FilterLog (Ethereum ethereum, JSONObject data) {
+        this.ethereum = ethereum;
         blockFrom = ethereum.getBlockchain().getBestBlock().getNumber();
         if (data.containsKey("fromBlock") && !((String)data.get("fromBlock")).equals("")) {
             String fromS = (String)data.get("fromBlock");
@@ -74,16 +73,17 @@ public class FilterLog extends FilterBase {
         }
     }
 
-/*
-TODO: Right now Bloom from -core can be used only to check total mach of 2 same class objects. Will be nice to have possibility to check contains.
-*/
     public void processEvent(Object data) {
-        if (data instanceof LogInfo) {
+        if (data instanceof FilterLogData) {
             synchronized (logs) {
-                LogInfo li = (LogInfo)data;
-                //TODO: check if li inside blockFrom - blockTo
+                FilterLogData li = (FilterLogData)data;
+                if ((blockFrom >= 0 && li.block.getNumber() < blockFrom) || (blockTo >= 0 && li.block.getNumber() > blockTo))
+                    return;
 
-                if (checkLogInfo(li))
+/*
+TODO: Roman must implement Bloom contain. When it will be done - we can use just Bloom.
+*/
+                if (checkLogInfo(li.li))
                     logs.add(li);
             }
         }
@@ -93,7 +93,7 @@ TODO: Right now Bloom from -core can be used only to check total mach of 2 same 
         updateLastRequest();
         JSONArray res = new JSONArray();
         synchronized (logs) {
-            for(LogInfo item : logs) {
+            for(FilterLogData item : logs) {
                 res.add(logInfoToJS(item));
             }
             logs.clear();
@@ -104,7 +104,6 @@ TODO: Right now Bloom from -core can be used only to check total mach of 2 same 
     public JSONArray toJS(Ethereum ethereum) {
         JSONArray res = new JSONArray();
 
-// Process mined blocks
         if (blockFrom >= 0) {
             long i = blockFrom;
             while (true) {
@@ -116,7 +115,7 @@ TODO: Right now Bloom from -core can be used only to check total mach of 2 same 
                     if (txr != null) {
                         for (LogInfo li : txr.getLogInfoList()) {
                             if (checkLogInfo(li))
-                                res.add(logInfoToJS(li));
+                                res.add(logInfoToJS(new FilterLogData(block, txr, li)));
                         }
                     }
                 }
@@ -124,16 +123,13 @@ TODO: Right now Bloom from -core can be used only to check total mach of 2 same 
             }
         }
 
-/*
-Process pending transactions. But not sure if BlockChain can return TransactionReceipt for pending transaction.
-*/
         if (blockFrom < 0 || blockTo < 0) {
             for (Transaction tx : ethereum.getPendingTransactions()) {
                 TransactionReceipt txr = ethereum.getBlockchain().getTransactionReceiptByHash(tx.getHash());
                 if (txr != null) {
                     for (LogInfo li :  txr.getLogInfoList()) {
                         if (checkLogInfo(li))
-                            res.add(logInfoToJS(li));
+                            res.add(logInfoToJS(new FilterLogData(null, txr, li)));
                     }
                 }
             }
@@ -171,29 +167,63 @@ Process pending transactions. But not sure if BlockChain can return TransactionR
         return true;
     }
 
-    private JSONObject logInfoToJS(LogInfo li) {
+    private JSONObject logInfoToJS(FilterLogData data) {
         JSONObject res = new JSONObject();
 
+        if (data.block == null) {
+            res.put("type", "pending");
+            res.put("logIndex", null);
+            res.put("transactionIndex", null);
+            res.put("transactionHash", null);
+            res.put("blockHash", null);
+            res.put("blockNumber", null);
+        } else {
+            res.put("type", "mined");
+            long txi = 0;
+            long lii = 0;
 /*
-TODO: check here if log's transaction / block mined or pending.
+TODO: for me it's a little strange way.
 */
-        res.put("type", "pending");
-        res.put("logIndex", null);
-        res.put("transactionIndex", null);
-        res.put("transactionHash", null);
-        res.put("blockHash", null);
-        res.put("blockNumber", null);
+            for (Transaction tx : data.block.getTransactionsList()) {
+                for (LogInfo li : ethereum.getBlockchain().getTransactionReceiptByHash(tx.getHash()).getLogInfoList()) {
+                    if (li.getBloom().equals(data.li.getBloom()))
+                        break;
+                    lii++;
+                }
+                if (Arrays.equals(tx.getHash(), data.txr.getTransaction().getHash())) {
+                    break;
+                }
+                txi++;
+            }
+            res.put("logIndex", "0x" + Long.toHexString(lii));
+            res.put("transactionIndex", "0x" + Long.toHexString(txi));
+            res.put("transactionHash", "0x" + Hex.toHexString(data.txr.getTransaction().getHash()));
+            res.put("blockHash", "0x" + Hex.toHexString(data.block.getHash()));
+            res.put("blockNumber", "0x" + Long.toHexString(data.block.getNumber()));
+        }
 
-        res.put("address", Hex.toHexString(li.getAddress()));
+        res.put("address", "0x" + Hex.toHexString(data.li.getAddress()));
 
-        res.put("data", Hex.toHexString(li.getData()));
+        res.put("data", "0x" + Hex.toHexString(data.li.getData()));
 
         JSONArray topics = new JSONArray();
-        for (DataWord topic : li.getTopics()) {
-            topics.add(Hex.toHexString(topic.getData()));
+        for (DataWord topic : data.li.getTopics()) {
+            topics.add("0x" + Hex.toHexString(topic.getData()));
         }
         res.put("topics", topics);
 
         return res;
+    }
+
+    public static class FilterLogData {
+        public Block block;
+        public TransactionReceipt txr;
+        public LogInfo li;
+
+        public FilterLogData( Block block, TransactionReceipt txr, LogInfo li) {
+            this.block = block;
+            this.txr = txr;
+            this.li = li;
+        }
     }
 }

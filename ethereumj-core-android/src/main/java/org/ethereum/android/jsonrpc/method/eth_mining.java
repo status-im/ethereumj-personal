@@ -6,7 +6,7 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 
 /*
-TODO: right now -core not auto start mining and also not have marker to identify if it's happening
+TODO: must be changed in app that implement mining
 */
 public class eth_mining extends JsonRpcServerMethod {
 

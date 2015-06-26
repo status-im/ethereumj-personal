@@ -15,6 +15,10 @@ import java.util.concurrent.TimeUnit;
 import static org.ethereum.core.Denomination.SZABO;
 import static org.ethereum.config.SystemProperties.CONFIG;
 
+
+/*
+TODO: get more information from Roman, he think about this right now about 20 - 32 result.
+*/
 public class eth_sendTransaction extends JsonRpcServerMethod {
 
     public eth_sendTransaction (Ethereum ethereum) {

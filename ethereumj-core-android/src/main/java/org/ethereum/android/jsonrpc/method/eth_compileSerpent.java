@@ -13,8 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
-Example taken from -studio. Not sure if we must call encodeMachineCodeForVMRun in end
-TODO: get advice from Roman about encodeMachineCodeForVMRun
+TODO: Serpent will be depricated in future.
 */
 public class eth_compileSerpent extends JsonRpcServerMethod {
 
@@ -41,7 +40,7 @@ public class eth_compileSerpent extends JsonRpcServerMethod {
                 } else {
                     asmResult = SerpentCompiler.compile(code);
                     machineCode = SerpentCompiler.compileAssemblyToMachine(asmResult);
-//                    machineCode = SerpentCompiler.encodeMachineCodeForVMRun(machineCode, null);
+                    machineCode = SerpentCompiler.encodeMachineCodeForVMRun(machineCode, null);
                 }
             } catch (Throwable th) {
                 return new JSONRPC2Response(JSONRPC2Error.INTERNAL_ERROR, req.getID());

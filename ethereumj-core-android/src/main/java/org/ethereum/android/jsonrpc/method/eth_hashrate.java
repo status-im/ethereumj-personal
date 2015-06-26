@@ -6,7 +6,7 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 
 /*
-TODO: right now -core not have "finished" mining architecture so not have hashrate
+TODO: must be changed in app that implement mining
 */
 public class eth_hashrate extends JsonRpcServerMethod {
 

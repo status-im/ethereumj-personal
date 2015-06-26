@@ -7,6 +7,7 @@ import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.EthereumListenerAdapter;
+import org.ethereum.vm.LogInfo;
 
 import java.util.Hashtable;
 import java.util.List;
@@ -55,6 +56,9 @@ public class FilterManager extends EthereumListenerAdapter {
     public void onBlock(Block block, List<TransactionReceipt> receipts) {
         processEvent(block);
         for(TransactionReceipt tx : receipts) {
+            for (LogInfo li : tx.getLogInfoList()) {
+                processEvent(new FilterLog.FilterLogData(block, tx, li));
+            }
             processEvent(tx.getTransaction());
         }
     }

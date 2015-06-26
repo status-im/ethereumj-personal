@@ -9,10 +9,6 @@ import org.ethereum.vm.DataWord;
 import org.spongycastle.util.encoders.Hex;
 import java.util.List;
 
-/*
-As I see getStorageValue not check Pending Transactions.
-TODO: ask roman advice for this method.
-*/
 public class eth_getStorageAt extends JsonRpcServerMethod {
 
     public eth_getStorageAt(Ethereum ethereum) { super(ethereum); }

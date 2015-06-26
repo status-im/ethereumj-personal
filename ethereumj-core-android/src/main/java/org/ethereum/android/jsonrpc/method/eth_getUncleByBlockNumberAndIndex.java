@@ -8,6 +8,7 @@ import org.ethereum.crypto.HashUtil;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
+
 public class eth_getUncleByBlockNumberAndIndex extends JsonRpcServerMethod {
 
     public eth_getUncleByBlockNumberAndIndex (Ethereum ethereum) {
@@ -27,7 +28,7 @@ public class eth_getUncleByBlockNumberAndIndex extends JsonRpcServerMethod {
             if (blockNumber == -1) {
                 blockNumber = ethereum.getBlockchain().getBestBlock().getNumber();
             }
-            // TODO: here we must load pending block but -core not "group" it.
+
             if (blockNumber == -2) {
             }
 
@@ -39,7 +40,7 @@ public class eth_getUncleByBlockNumberAndIndex extends JsonRpcServerMethod {
             if (block.getUncleList().size() <= index)
                 return new JSONRPC2Response(null, req.getID());
 
-            Block uncle = ethereum.getBlockchain().getBlockByHash(HashUtil.sha3(block.getUncleList().get(index).getEncoded()));
+            Block uncle = new Block(block.getUncleList().get(index), null, null);
 
             JSONRPC2Response res = new JSONRPC2Response(blockToJS(uncle, false), req.getID());
             return res;

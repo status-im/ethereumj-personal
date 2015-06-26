@@ -10,7 +10,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 /*
-TODO: -core not have solidity compiler
+ATODO: -core not have solidity compiler. Need try to use cpp solidity compiler using JNI
 */
 public class eth_compileSolidity extends JsonRpcServerMethod {
 

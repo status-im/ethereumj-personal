@@ -31,7 +31,7 @@ public class eth_getUncleByBlockHashAndIndex extends JsonRpcServerMethod {
             if (block.getUncleList().size() <= index)
                 return new JSONRPC2Response(null, req.getID());
 
-            Block uncle = ethereum.getBlockchain().getBlockByHash(HashUtil.sha3(block.getUncleList().get(index).getEncoded()));
+            Block uncle = new Block(block.getUncleList().get(index), null, null);
 
             JSONRPC2Response res = new JSONRPC2Response(blockToJS(uncle, false), req.getID());
             return res;

@@ -51,7 +51,7 @@ public class shh_post extends JsonRpcServerMethod {
 
             int ttl = jsToInt((String)obj.get("ttl"));
 
-            //TODO:
+//TODO: implement after Adrian merge with dev
 
             JSONRPC2Response res = new JSONRPC2Response(JSONRPC2Error.METHOD_NOT_FOUND, req.getID());
             return res;

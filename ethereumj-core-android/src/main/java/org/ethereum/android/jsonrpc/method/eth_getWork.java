@@ -6,7 +6,7 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 
 /*
-TODO: right now -core not auto start mining so no way to get information about state
+TODO: must be changed in app that implement mining
 */
 public class eth_getWork extends JsonRpcServerMethod {
 

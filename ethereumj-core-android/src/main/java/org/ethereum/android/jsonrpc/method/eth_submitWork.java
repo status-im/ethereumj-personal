@@ -9,7 +9,7 @@ import org.ethereum.facade.Ethereum;
 import java.util.List;
 
 /*
-TODO: right now -core not auto start mining so no way to get information about state
+TODO: must be changed in app that implement mining
 */
 public class eth_submitWork extends JsonRpcServerMethod {
 

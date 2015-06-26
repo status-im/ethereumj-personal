@@ -16,7 +16,9 @@ public class eth_getCompilers extends JsonRpcServerMethod {
 
         ArrayList<String> tmp = new ArrayList<String>();
         tmp.add("serpent");
-        //TODO: add lll and solidity when they will be implemented in -core
+/*
+TODO: add lll and solidity when we find good libs for them. They not planned to be implemented in -core.
+*/
         JSONRPC2Response res = new JSONRPC2Response(tmp, req.getID());
         return res;
 

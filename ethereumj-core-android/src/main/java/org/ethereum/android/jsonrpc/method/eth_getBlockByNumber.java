@@ -10,10 +10,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.util.List;
 
-/*
-By specification this method can receive number of pending block but from -core it's not possible.
-TODO: get advice from Roman about pending block
-*/
 public class eth_getBlockByNumber extends JsonRpcServerMethod {
 
     public eth_getBlockByNumber (Ethereum ethereum) {
@@ -33,8 +29,9 @@ public class eth_getBlockByNumber extends JsonRpcServerMethod {
             if (blockNumber == -1) {
                 blockNumber = ethereum.getBlockchain().getBestBlock().getNumber();
             }
-            // TODO: here we must load pending block but -core not "group" it.
+
             if (blockNumber == -2) {
+                return new JSONRPC2Response(null, req.getID());
             }
 
             Block block = ethereum.getBlockchain().getBlockByNumber(blockNumber);

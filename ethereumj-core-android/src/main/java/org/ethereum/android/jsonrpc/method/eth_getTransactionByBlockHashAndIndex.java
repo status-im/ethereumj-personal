@@ -36,7 +36,7 @@ public class eth_getTransactionByBlockHashAndIndex extends JsonRpcServerMethod {
             if (block.getTransactionsList().size() <= index)
                 return new JSONRPC2Response(null, req.getID());
 
-            JSONObject tx = transactionToJS(block.getTransactionsList().get(index));
+            JSONObject tx = transactionToJS(block, block.getTransactionsList().get(index));
             tx.put("transactionIndex", "0x" + Integer.toHexString(index));
             tx.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
             tx.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));

@@ -7,6 +7,9 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
+/*
+ATODO: talk with Adrian to get relation between Transaction and Block from db.
+*/
 public class eth_getTransactionByHash extends JsonRpcServerMethod {
 
     public eth_getTransactionByHash (Ethereum ethereum) {
@@ -26,7 +29,7 @@ public class eth_getTransactionByHash extends JsonRpcServerMethod {
             if (transaction == null)
                 return new JSONRPC2Response(null, req.getID());
 
-            JSONRPC2Response res = new JSONRPC2Response(transactionToJS(transaction.getTransaction()), req.getID());
+            JSONRPC2Response res = new JSONRPC2Response(transactionToJS(null, transaction.getTransaction()), req.getID());
             return res;
         }
 

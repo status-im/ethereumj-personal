@@ -11,7 +11,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 /*
-This class must receive notification from -core about new whisper message. Right now I not see the way todo that.
+This class must receive notification from -core about new whisper message. Right now I not see the way to do that.
 TODO: ask advice from Roman about how to send notification to this class.
 */
 public class FilterManager {

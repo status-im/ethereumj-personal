@@ -204,7 +204,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         i = 0;
         for (Transaction transaction : block.getTransactionsList()) {
             if (detailed) {
-                JSONObject tx = transactionToJS(transaction);
+                JSONObject tx = transactionToJS(block, transaction);
                 tx.put("transactionIndex", "0x" + Integer.toHexString(i));
                 tx.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
                 tx.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
@@ -216,7 +216,6 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         }
         res.put("transactions", transactionsJA);
 
-        //TODO: ask if I correctly get uncle's hash (takes form -core right now)
         JSONArray unclesJA = new JSONArray();
         for (BlockHeader uncle : block.getUncleList()) {
             unclesJA.add("0x" + Hex.toHexString(HashUtil.sha3(uncle.getEncoded())));
@@ -226,7 +225,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         return res;
     }
 
-    protected JSONObject transactionToJS (Transaction transaction) {
+    protected JSONObject transactionToJS (Block block, Transaction transaction) {
         JSONObject res = new JSONObject();
 
         res.put("hash", "0x" + Hex.toHexString(transaction.getHash()));
@@ -245,13 +244,22 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
 
         res.put("input", "0x" + Hex.toHexString(transaction.getData()));
 
-/*
-        No way to get this data from inside of transaction.
-        TODO: Ask roman to include it into transaction class.
-        res.put("transactionIndex", "0x" + "");
-        res.put("blockHash", "0x" + "");
-        res.put("blockNumber", "0x" + "");
-*/
+        if (block == null) {
+            res.put("transactionIndex", null);
+            res.put("blockHash", null);
+            res.put("blockNumber", null);
+        } else {
+            long txi = 0;
+            for (Transaction tx : block.getTransactionsList()) {
+                if (Arrays.equals(tx.getHash(), transaction.getHash()))
+                    break;
+                txi++;
+            }
+            res.put("transactionIndex", "0x" + Long.toHexString(txi));
+            res.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
+            res.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
+        }
+
         return res;
     }
 }

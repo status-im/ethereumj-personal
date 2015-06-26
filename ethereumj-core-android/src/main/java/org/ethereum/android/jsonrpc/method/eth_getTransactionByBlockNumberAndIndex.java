@@ -8,6 +8,7 @@ import net.minidev.json.JSONObject;
 import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
+import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
@@ -32,22 +33,21 @@ public class eth_getTransactionByBlockNumberAndIndex extends JsonRpcServerMethod
             if (blockNumber == -1) {
                 blockNumber = ethereum.getBlockchain().getBestBlock().getNumber();
             }
-            // TODO: here we must load pending block but -core not "group" it.
+
+            Block block = null;
+            JSONObject tx = null;
             if (blockNumber == -2) {
+                if (ethereum.getPendingTransactions().size() <= index)
+                    return new JSONRPC2Response(null, req.getID());
+                tx = transactionToJS(null, (Transaction)ethereum.getPendingTransactions().toArray()[index]);
+            } else {
+                block = ethereum.getBlockchain().getBlockByNumber(blockNumber);
+                if (block == null)
+                    return new JSONRPC2Response(null, req.getID());
+                if (block.getTransactionsList().size() <= index)
+                    return new JSONRPC2Response(null, req.getID());
+                tx = transactionToJS(block, block.getTransactionsList().get(index));
             }
-
-            Block block = ethereum.getBlockchain().getBlockByNumber(blockNumber);
-
-            if (block == null)
-                return new JSONRPC2Response(null, req.getID());
-
-            if (block.getTransactionsList().size() <= index)
-                return new JSONRPC2Response(null, req.getID());
-
-            JSONObject tx = transactionToJS(block.getTransactionsList().get(index));
-            tx.put("transactionIndex", "0x" + Integer.toHexString(index));
-            tx.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
-            tx.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
 
             JSONRPC2Response res = new JSONRPC2Response(tx, req.getID());
             return res;

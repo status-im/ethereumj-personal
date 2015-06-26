@@ -8,12 +8,8 @@ import org.ethereum.core.*;
 import org.spongycastle.util.encoders.Hex;
 
 /*
-Present big issue - current ethereumj-core not have coinbase "functionality".
-On each app start - it create 2 addresses: "cow", coinbase.secret ("monkey") --- WorldManager.java -> init
-Also because not present mining functionality - no wat to identify what address will be coinbase (mining success payment place to)
-TODO: change this after fix in ethereumj-core
+TODO: -core not handle mining so coinbase not present in it. Right now returned second address from Wallet. Must be changed in app where implemented mining
 */
-
 public class eth_coinbase extends JsonRpcServerMethod {
 
     public eth_coinbase (Ethereum ethereum) {

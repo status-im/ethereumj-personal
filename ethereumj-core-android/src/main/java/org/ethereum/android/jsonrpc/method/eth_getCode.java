@@ -7,10 +7,6 @@ import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.util.List;
 
-/*
-Not sure if pending can have code. Also code by itself related to repository not very clear for me.
-TODO: ask Roman advice for this method.
-*/
 public class eth_getCode extends JsonRpcServerMethod {
 
     public eth_getCode (Ethereum ethereum) {

@@ -6,7 +6,7 @@ import org.ethereum.android.jsonrpc.JsonRpcServerMethod;
 import org.ethereum.facade.Ethereum;
 
 /*
-TODO: request go version how this must be identified. Cpp version just return "".
+TODO: maybe in future AdminState will have information about this.
 */
 public class net_version extends JsonRpcServerMethod {
 

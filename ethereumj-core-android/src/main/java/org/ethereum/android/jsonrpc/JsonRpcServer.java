@@ -37,6 +37,8 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 
 import org.ethereum.android.jsonrpc.method.*;
 
+import java.net.InetAddress;
+
 
 public final class JsonRpcServer {
 
@@ -123,8 +125,8 @@ public final class JsonRpcServer {
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
-//            b.localAddress(InetAddress.getLocalHost(), PORT);
-            b.localAddress(PORT);
+            b.localAddress(InetAddress.getLocalHost(), PORT);
+//            b.localAddress(PORT);
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new JsonRpcServerInitializer());

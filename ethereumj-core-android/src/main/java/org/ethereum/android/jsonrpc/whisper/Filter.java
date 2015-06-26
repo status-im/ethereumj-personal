@@ -54,7 +54,7 @@ public class Filter {
     }
 
     public void processEvent(Object data) {
-        //TODO: parse incomming data when we will know what comes.
+//TODO: parse incomming data when we will know what comes.
     }
 
     public JSONArray toJS() {
