@@ -14,7 +14,7 @@
         android:largeHeap="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".MainActivity"
+            android:name=".RemoteMainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,11 +28,22 @@
         </activity>
 
         <service
-            android:name="org.ethereum.android_app.EthereumService"
+            android:name=".EthereumService"
             android:enabled="true"
             android:exported="true"
             android:process=":ethereum_process" >
         </service>
+        <service
+            android:name=".EthereumRemoteService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_remote_process" >
+        </service>
+
+        <activity
+            android:name=".AidlMainActivity"
+            android:label="@string/app_name" >
+        </activity>
     </application>
 
 </manifest>

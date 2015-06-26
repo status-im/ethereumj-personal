@@ -1,6 +1,6 @@
 package org.ethereum.android_app;
 
-import org.ethereum.android.EthereumAidlService;
+import org.ethereum.android.service.EthereumAidlService;
 import org.ethereum.android.interop.IListener;
 
 public class EthereumService extends EthereumAidlService {
