@@ -14,9 +14,9 @@ import java.util.List;
  */
 public class PeerInfo {
 
-    private InetAddress address;
-    private int port;
-    private String peerId;
+    protected InetAddress address;
+    protected int port;
+    protected String peerId;
 
     private List<Capability> capabilities;
     private HelloMessage handshakeHelloMessage;

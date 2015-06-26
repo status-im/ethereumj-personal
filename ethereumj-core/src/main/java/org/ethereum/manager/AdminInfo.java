@@ -14,9 +14,9 @@ import javax.inject.Singleton;
 public class AdminInfo {
 
 
-    private long startupTimeStamp;
-    private boolean consensus = true;
-    private List<Long> blockExecTime = new LinkedList<>();
+    protected long startupTimeStamp;
+    protected boolean consensus = true;
+    protected List<Long> blockExecTime = new LinkedList<>();
 
     public AdminInfo() {
         this.init();

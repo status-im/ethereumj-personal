@@ -4,7 +4,7 @@
     <!-- Create a logcat appender -->
     <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
+            <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>

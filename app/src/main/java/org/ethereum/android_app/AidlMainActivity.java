@@ -4,11 +4,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
@@ -16,10 +14,8 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.os.Build;
 import android.widget.Toast;
 
-import org.ethereum.android.EthereumManager;
 import org.ethereum.android.interop.IEthereumService;
 import org.ethereum.android.interop.IListener;
 import org.ethereum.config.SystemProperties;
@@ -28,7 +24,7 @@ import java.io.File;
 import java.util.ArrayList;
 
 
-public class MainActivity extends ActionBarActivity implements ActivityInterface {
+public class AidlMainActivity extends ActionBarActivity implements ActivityInterface {
 
     private static final String TAG = "MyActivity";
 
@@ -67,7 +63,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             // service through an IDL interface, so get a client-side
             // representation of that from the raw service object.
             ethereumService = IEthereumService.Stub.asInterface(service);
-            Toast.makeText(MainActivity.this, "service attached", Toast.LENGTH_SHORT).show();
+            Toast.makeText(AidlMainActivity.this, "service attached", Toast.LENGTH_SHORT).show();
 
             try {
 
@@ -93,7 +89,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
                         SystemProperties.CONFIG.activePeerPort(),
                         SystemProperties.CONFIG.activePeerNodeid());
                 }
-                Toast.makeText(MainActivity.this, "connected to service", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AidlMainActivity.this, "connected to service", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 logMessage("Error adding listener: " + e.getMessage());
             }
@@ -104,7 +100,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             // This is called when the connection with the service has been
             // unexpectedly disconnected -- that is, its process crashed.
             ethereumService = null;
-            Toast.makeText(MainActivity.this, "service disconnected", Toast.LENGTH_SHORT).show();
+            Toast.makeText(AidlMainActivity.this, "service disconnected", Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -125,7 +121,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         tabs.setDistributeEvenly(true);
         tabs.setViewPager(viewPager);
 
-        ComponentName myService = startService(new Intent(MainActivity.this, EthereumService.class));
+        ComponentName myService = startService(new Intent(AidlMainActivity.this, EthereumService.class));
         doBindService();
 
         //StrictMode.enableDefaults();
@@ -133,13 +129,13 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
 
     protected void logMessage(String message) {
 
-        MainActivity.consoleLog += message + "\n";
-        int consoleLength = MainActivity.consoleLog.length();
+        AidlMainActivity.consoleLog += message + "\n";
+        int consoleLength = AidlMainActivity.consoleLog.length();
         if (consoleLength > 5000) {
-            MainActivity.consoleLog = MainActivity.consoleLog.substring(4000);
+            AidlMainActivity.consoleLog = AidlMainActivity.consoleLog.substring(4000);
         }
 
-        broadcastFragments(MainActivity.consoleLog);
+        broadcastFragments(AidlMainActivity.consoleLog);
     }
 
 
@@ -155,9 +151,9 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
         // Establish a connection with the service.  We use an explicit
         // class name because there is no reason to be able to let other
         // applications replace our component.
-        bindService(new Intent(MainActivity.this, EthereumService.class), serviceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(AidlMainActivity.this, EthereumService.class), serviceConnection, Context.BIND_AUTO_CREATE);
         isBound = true;
-        Toast.makeText(MainActivity.this, "binding to service", Toast.LENGTH_SHORT).show();
+        Toast.makeText(AidlMainActivity.this, "binding to service", Toast.LENGTH_SHORT).show();
     }
 
     void doUnbindService() {
@@ -177,7 +173,7 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
             // Detach our existing connection.
             unbindService(serviceConnection);
             isBound = false;
-            Toast.makeText(MainActivity.this, "unbinding from service", Toast.LENGTH_SHORT).show();
+            Toast.makeText(AidlMainActivity.this, "unbinding from service", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -191,7 +187,6 @@ public class MainActivity extends ActionBarActivity implements ActivityInterface
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        //return super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }

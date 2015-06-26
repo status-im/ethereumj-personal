@@ -1,52 +1,37 @@
-package org.ethereum.android;
+package org.ethereum.android.service;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import android.os.RemoteException;
 
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.android.di.modules.EthereumModule;
+import org.ethereum.android.interop.IListener;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
-import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.config.SystemProperties;
-import org.ethereum.core.*;
+import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.android.interop.*;
 import org.ethereum.net.p2p.HelloMessage;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class EthereumAidlService extends Service {
-
-    protected Ethereum ethereum = null;
-
-    protected JsonRpcServer jsonRpcServer;
-
-    protected ArrayList<IListener> clientListeners = new ArrayList<>();
-
-    public static String log = "";
+public class EthereumService extends Service {
 
     boolean isConnected = false;
 
     boolean isInitialized = false;
 
-    public EthereumAidlService() {
+    protected Ethereum ethereum = null;
+
+    protected JsonRpcServer jsonRpcServer;
+
+    public EthereumService() {
     }
 
     protected void broadcastMessage(String message) {
 
-        for (IListener listener: clientListeners) {
-            try {
-                listener.trace(message);
-            } catch (Exception e) {
-                // Remove listener
-                System.out.println("ERRORRRR: " + e.getMessage());
-                clientListeners.remove(listener);
-            }
-        }
     }
 
     @Override
@@ -85,55 +70,9 @@ public class EthereumAidlService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-
-        return mBinder;
+        // TODO: Return the communication channel to the service.
+        throw new UnsupportedOperationException("Not yet implemented");
     }
-
-    IEthereumService.Stub mBinder = new IEthereumService.Stub() {
-
-        public void loadBlocks(String dumpFile) throws RemoteException {
-
-            BlockLoader blockLoader = (BlockLoader)ethereum.getBlockLoader();
-            blockLoader.loadBlocks(dumpFile);
-        }
-
-        public void connect(String ip, int port, String remoteId) throws RemoteException {
-
-            if (!isConnected) {
-                System.out.println("Connecting to : " + ip);
-                ethereum.connect(ip, port, remoteId);
-                isConnected = true;
-            } else {
-                System.out.println("Already connected");
-                System.out.println("x " + ethereum.isConnected());
-            }
-        }
-
-        public void addListener(IListener listener) throws RemoteException {
-
-            clientListeners.clear();
-            clientListeners.add(listener);
-        }
-
-        public void removeListener(IListener listener) throws RemoteException {
-
-            try {
-                clientListeners.remove(listener);
-            } catch (Exception e) {
-                System.out.println("ERRORRRR: " + e.getMessage());
-            }
-        }
-
-        public void startJsonRpcServer() throws RemoteException {
-
-            jsonRpcServer = new JsonRpcServer(ethereum);
-        }
-
-        public void getLog(IAsyncCallback callback) throws  RemoteException {
-
-            callback.handleResponse(EthereumAidlService.log);
-        }
-    };
 
     protected class EthereumListener implements org.ethereum.listener.EthereumListener {
 
