@@ -71,7 +71,6 @@ public class Memory implements ProgramTraceListenerAware {
             toCapture = dataSize;
 
         int start = 0;
-
         while (toCapture > 0) {
             int captured = captureMax(chunkIndex, chunkOffset, toCapture, data, start);
 

@@ -336,8 +336,11 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
                                     }
                                 }
                             } else {
-                                int lastIndex = blocks.size() - 1;
-                                for (int i = 0; i < 1000; ++i) {
+                                int size = blocks.size();
+                                int lastIndex = size - 1;
+                                for (int i = 0;
+                                     i < (size > 1000 ? 1000 : size);
+                                     ++i){
                                     Block block = blocks.get(lastIndex - i);
                                     BlockVO blockVO = new BlockVO(block.getNumber(), block.getHash(), block.getEncoded(), block.getCumulativeDifficulty());
                                     save(blockVO);

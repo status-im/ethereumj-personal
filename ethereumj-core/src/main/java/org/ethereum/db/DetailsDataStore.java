@@ -33,7 +33,6 @@ public class DetailsDataStore {
         if (details == null) {
 
             if (removes.contains(wrappedKey)) return null;
-
             byte[] data = db.get(key);
             if (data == null) return null;
 
@@ -108,7 +107,7 @@ public class DetailsDataStore {
         Set<ByteArrayWrapper> keys = new HashSet<>();
         keys.addAll(cache.keySet());
         keys.addAll(db.dumpKeys());
-        
+
         return keys;
     }
 }
