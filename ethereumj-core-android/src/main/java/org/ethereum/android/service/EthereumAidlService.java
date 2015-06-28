@@ -72,7 +72,6 @@ public class EthereumAidlService extends EthereumService {
         };
     }
 
-    @Override
     protected void broadcastMessage(String message) {
 
         for (IListener listener: clientListeners) {

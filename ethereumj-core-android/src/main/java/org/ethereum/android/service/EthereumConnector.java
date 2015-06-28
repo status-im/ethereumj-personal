@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.os.Message;
 import android.os.RemoteException;
 
+import org.ethereum.android.service.events.EventFlag;
 import org.ethereum.core.Transaction;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.EnumSet;
 
 
 public class EthereumConnector extends ServiceConnector {
@@ -134,7 +137,7 @@ public class EthereumConnector extends ServiceConnector {
         msg.replyTo = clientMessenger;
         msg.obj = getIdentifierBundle(identifier);
         Bundle data = new Bundle();
-        data.putParcelable("excludePeer", (org.ethereum.android.interop.PeerInfo)excludePeer);
+        data.putParcelable("excludePeer", (org.ethereum.android.interop.PeerInfo) excludePeer);
         msg.setData(data);
         try {
             serviceMessenger.send(msg);
@@ -261,9 +264,12 @@ public class EthereumConnector extends ServiceConnector {
      * Add ethereum event listener
      * @param identifier String Caller identifier used to return the response
      *
-     * Sends message parameters: none
+     * Sends message parameters ( "key": type [description] ):
+     * {
+     *      "flags": Serializable(EnumSet<ListenerFlag>) [sets flags to listen to specific events]
+     * }
      */
-    public void addListener(String identifier) {
+    public void addListener(String identifier, EnumSet<EventFlag> flags) {
 
         if (!isBound)
             return;
@@ -271,13 +277,37 @@ public class EthereumConnector extends ServiceConnector {
         Message msg = Message.obtain(null, EthereumServiceMessage.MSG_ADD_LISTENER, 0, 0);
         msg.replyTo = clientMessenger;
         msg.obj = getIdentifierBundle(identifier);
-        // TODO: Add event flags to message
+        Bundle data = new Bundle();
+        data.putSerializable("flags", flags);
+        msg.setData(data);
         try {
             serviceMessenger.send(msg);
         } catch (RemoteException e) {
             logger.error("Exception sending message(addListener) to service: " + e.getMessage());
         }
     }
+
+    /**
+     * Remove ethereum event listener
+     * @param identifier String Caller identifier used to return the response
+     *
+     * Sends message parameters: none
+     */
+    public void removeListener(String identifier) {
+
+        if (!isBound)
+            return;
+
+        Message msg = Message.obtain(null, EthereumServiceMessage.MSG_REMOVE_LISTENER, 0, 0);
+        msg.replyTo = clientMessenger;
+        msg.obj = getIdentifierBundle(identifier);
+        try {
+            serviceMessenger.send(msg);
+        } catch (RemoteException e) {
+            logger.error("Exception sending message(addListener) to service: " + e.getMessage());
+        }
+    }
+
 
     /**
      * Closes ethereum

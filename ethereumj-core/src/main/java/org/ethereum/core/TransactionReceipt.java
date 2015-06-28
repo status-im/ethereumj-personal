@@ -26,10 +26,10 @@ public class TransactionReceipt {
 
     private Transaction transaction;
 
-    private byte[] postTxState = EMPTY_BYTE_ARRAY;
-    private byte[] cumulativeGas = EMPTY_BYTE_ARRAY;
-    private Bloom bloomFilter = new Bloom();
-    private List<LogInfo> logInfoList = new ArrayList<>();
+    protected byte[] postTxState = EMPTY_BYTE_ARRAY;
+    protected byte[] cumulativeGas = EMPTY_BYTE_ARRAY;
+    protected Bloom bloomFilter = new Bloom();
+    protected List<LogInfo> logInfoList = new ArrayList<>();
 
     /* Tx Receipt in encoded form */
     private byte[] rlpEncoded;
@@ -38,6 +38,11 @@ public class TransactionReceipt {
     }
 
     public TransactionReceipt(byte[] rlp) {
+
+        parseRlp(rlp);
+    }
+
+    protected void parseRlp(byte[] rlp) {
 
         RLPList params = RLP.decode2(rlp);
         RLPList receipt = (RLPList) params.get(0);
@@ -55,7 +60,6 @@ public class TransactionReceipt {
             LogInfo logInfo = new LogInfo(log.getRLPData());
             logInfoList.add(logInfo);
         }
-
         rlpEncoded = rlp;
     }
 

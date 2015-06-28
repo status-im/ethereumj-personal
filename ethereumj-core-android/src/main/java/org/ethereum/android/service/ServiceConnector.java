@@ -34,15 +34,15 @@ public class ServiceConnector {
     protected Class serviceClass;
 
     /** Flag indicating if the service is bound. */
-    boolean isBound;
+    protected boolean isBound;
 
     /** Sends messages to the service. */
-    Messenger serviceMessenger = null;
+    protected Messenger serviceMessenger = null;
 
     /** Receives messages from the service. */
-    Messenger clientMessenger = null;
+    protected Messenger clientMessenger = null;
 
-    ArrayList<ConnectorHandler> handlers = new ArrayList<>();
+    protected ArrayList<ConnectorHandler> handlers = new ArrayList<>();
 
     /** Handles incoming messages from service. */
     class IncomingHandler extends Handler {
@@ -74,7 +74,33 @@ public class ServiceConnector {
     /**
      * Class for interacting with the main interface of the service.
      */
-    protected ServiceConnection serviceConnection = null;
+    protected ServiceConnection serviceConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className, IBinder service) {
+
+            // This is called when the connection with the service has been
+            // established, giving us the object we can use to
+            // interact with the service. We are communicating with the
+            // service using a Messenger, so here we get a client-side
+            // representation of that from the raw IBinder object.
+            serviceMessenger = new Messenger(service);
+            isBound = true;
+            for (ConnectorHandler handler: handlers) {
+                handler.onConnectorConnected();
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            serviceMessenger = null;
+            isBound = false;
+            for (ConnectorHandler handler: handlers) {
+                handler.onConnectorDisconnected();
+            }
+        }
+    };
 
     public ServiceConnector(Context context, Class serviceClass) {
 
@@ -84,32 +110,6 @@ public class ServiceConnector {
         handlerThread.start();
         handler = new IncomingHandler(handlerThread);
         clientMessenger = new Messenger(handler);
-        initializeServiceConnection();
-    }
-
-    protected void initializeServiceConnection() {
-
-        serviceConnection = new ServiceConnection() {
-
-            public void onServiceConnected(ComponentName className, IBinder service) {
-
-                // This is called when the connection with the service has been
-                // established, giving us the object we can use to
-                // interact with the service. We are communicating with the
-                // service using a Messenger, so here we get a client-side
-                // representation of that from the raw IBinder object.
-                serviceMessenger = new Messenger(service);
-                isBound = true;
-            }
-
-            public void onServiceDisconnected(ComponentName className) {
-
-                // This is called when the connection with the service has been
-                // unexpectedly disconnected -- that is, its process crashed.
-                serviceMessenger = null;
-                isBound = false;
-            }
-        };
     }
 
     /** Bind to the service */
@@ -134,7 +134,9 @@ public class ServiceConnector {
 
     public void registerHandler(ConnectorHandler handler) {
 
-        handlers.add(handler);
+        if (!handlers.contains(handler)) {
+            handlers.add(handler);
+        }
     }
 
 }

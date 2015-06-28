@@ -10,6 +10,11 @@ public class Block extends org.ethereum.core.Block implements Parcelable {
         super(rawData);
     }
 
+    public Block(org.ethereum.core.Block block) {
+
+        super(block.getEncoded());
+    }
+
     public Block(Parcel in) {
 
         super(null);

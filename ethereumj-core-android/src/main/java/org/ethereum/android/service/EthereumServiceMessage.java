@@ -45,32 +45,36 @@ public class EthereumServiceMessage {
 
     /**
      * Command to the service to add a listener
-     * <Not Implemented>
      */
     public static final int MSG_ADD_LISTENER = 9;
 
     /**
+     * Command to the service to remove a listener
+     */
+    public static final int MSG_REMOVE_LISTENER = 10;
+
+    /**
      * Command to the service to get connection status (Connected/Not Connected)
      */
-    public static final int MSG_GET_CONNECTION_STATUS = 10;
+    public static final int MSG_GET_CONNECTION_STATUS = 11;
 
     /**
      * Command to the service to close
      */
-    public static final int MSG_CLOSE = 11;
+    public static final int MSG_CLOSE = 12;
 
     /**
      * Command to the service to submit a transaction
      */
-    public static final int MSG_SUBMIT_TRANSACTION = 12;
+    public static final int MSG_SUBMIT_TRANSACTION = 13;
 
     /**
      * Command to the service to get the admin info
      */
-    public static final int MSG_GET_ADMIN_INFO = 13;
+    public static final int MSG_GET_ADMIN_INFO = 14;
 
     /**
      * Command to the service to get the pernding transactions
      */
-    public static final int MSG_GET_PENDING_TRANSACTIONS = 14;
+    public static final int MSG_GET_PENDING_TRANSACTIONS = 15;
 }

@@ -7,7 +7,7 @@ import org.ethereum.android.service.EthereumConnector;
 
 public class EthereumApplication extends MultiDexApplication {
 
-    EthereumConnector ethereum = null;
+    public EthereumConnector ethereum = null;
 
     @Override public void onCreate() {
 

@@ -11,6 +11,8 @@ import android.os.RemoteException;
 
 import org.ethereum.android.jsonrpc.JsonRpcServer;
 import org.ethereum.android.manager.BlockLoader;
+import org.ethereum.android.service.events.EventData;
+import org.ethereum.android.service.events.EventFlag;
 import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.AdminInfo;
@@ -21,7 +23,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -31,11 +37,14 @@ public class EthereumRemoteService extends EthereumService {
 
     private static final Logger logger = LoggerFactory.getLogger("EthereumRemoteService");
 
-    ArrayList<Messenger> clientListeners = new ArrayList<>();
+    static HashMap<String, Messenger> clientListeners = new HashMap<>();
+    static EnumMap<EventFlag, List<String>> listenersByType = new EnumMap<EventFlag, List<String>>(EventFlag.class);
+
 
     public EthereumRemoteService() {
 
         super();
+
     }
 
     /** Handles incoming messages from clients. */
@@ -82,6 +91,47 @@ public class EthereumRemoteService extends EthereumService {
         super.onCreate();
     }
 
+    protected void broadcastEvent(EventFlag event, EventData data) {
+
+        Message message = null;
+        List<String> listeners = listenersByType.get(event);
+        if (listeners != null) {
+            for (String identifier: listeners) {
+                Messenger listener = clientListeners.get(identifier);
+                if (listener != null) {
+                    if (message == null) {
+                        message = createEventMessage(event, data);
+                    }
+                    message.obj = getIdentifierBundle(identifier);
+                    try {
+                        listener.send(message);
+                    } catch (RemoteException e) {
+                        logger.error("Exception sending event message to client listener: " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    protected Bundle getIdentifierBundle(String identifier) {
+
+        Bundle bundle = new Bundle();
+        bundle.putString("identifier", identifier);
+        return bundle;
+    }
+
+    protected Message createEventMessage(EventFlag event, EventData data) {
+
+        Message message = Message.obtain(null, EthereumClientMessage.MSG_EVENT, 0, 0);
+        Bundle replyData = new Bundle();
+        replyData.putSerializable("event", event);
+        replyData.putParcelable("data", data);
+        message.setData(replyData);
+
+        return message;
+    }
+
+
     protected boolean handleMessage(Message message) {
 
         switch (message.what) {
@@ -120,6 +170,10 @@ public class EthereumRemoteService extends EthereumService {
 
             case EthereumServiceMessage.MSG_ADD_LISTENER:
                 addListener(message);
+                break;
+
+            case EthereumServiceMessage.MSG_REMOVE_LISTENER:
+                removeListener(message);
                 break;
 
             case EthereumServiceMessage.MSG_GET_CONNECTION_STATUS:
@@ -377,15 +431,53 @@ public class EthereumRemoteService extends EthereumService {
     /**
      * Add ethereum event listener
      *
-     * Incoming message parameters: none
+     * Incoming message parameters ( "key": type [description] ):
+     * {
+     *      "flags": Serializable(EnumSet<ListenerFlag>) [defines flags to listen to specific events]
+     * }
      * Sends message: none
      */
     protected void addListener(Message message) {
 
         // Register the client's messenger
-        clientListeners.add(message.replyTo);
-        // TODO: Add channel listener types flags
+        String identifier = ((Bundle)message.obj).getString("identifier");
+        clientListeners.put(identifier, message.replyTo);
+        Bundle data = message.getData();
+        data.setClassLoader(EnumSet.class.getClassLoader());
+        EnumSet<EventFlag> flags = (EnumSet<EventFlag>)data.getSerializable("flags");
+        EnumSet<EventFlag> list = (flags == null || flags.contains(EventFlag.EVENT_ALL)) ? EnumSet.allOf(EventFlag.class) : flags;
+        for (EventFlag flag: list) {
+            List<String> listeners = listenersByType.get(flag);
+            boolean shouldAdd = false;
+            if (listeners == null) {
+                listeners = new ArrayList<>();
+                shouldAdd = true;
+            }
+            if (shouldAdd || !listeners.contains(identifier)) {
+                listeners.add(identifier);
+                listenersByType.put(flag, listeners);
+            }
+        }
         logger.info("Client listener registered!");
+    }
+
+    /**
+     * Remove etherum event listener
+     *
+     * Incoming message parameters: none
+     * Sends message: none
+     */
+    protected void removeListener(Message message) {
+
+        String identifier = ((Bundle)message.obj).getString("identifier");
+        clientListeners.remove(identifier);
+        for (EventFlag flag: EventFlag.values()) {
+            List<String> listeners = listenersByType.get(flag);
+            if (listeners != null && listeners.contains(identifier)) {
+                listeners.remove(identifier);
+            }
+        }
+        logger.info("Client listener unregistered!");
     }
 
     /**

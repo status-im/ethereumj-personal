@@ -6,8 +6,15 @@ import android.os.IBinder;
 
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.android.di.modules.EthereumModule;
-import org.ethereum.android.interop.IListener;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
+import org.ethereum.android.service.events.BlockEventData;
+import org.ethereum.android.service.events.EventData;
+import org.ethereum.android.service.events.EventFlag;
+import org.ethereum.android.service.events.MessageEventData;
+import org.ethereum.android.service.events.PeerDisconnectEventData;
+import org.ethereum.android.service.events.PendingTransactionsEventData;
+import org.ethereum.android.service.events.TraceEventData;
+import org.ethereum.android.service.events.VMTraceCreatedEventData;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
@@ -19,18 +26,19 @@ import java.util.Set;
 
 public class EthereumService extends Service {
 
-    boolean isConnected = false;
+    static boolean isConnected = false;
 
-    boolean isInitialized = false;
+    static boolean isInitialized = false;
 
-    protected Ethereum ethereum = null;
+    static Ethereum ethereum = null;
 
-    protected JsonRpcServer jsonRpcServer;
+    static JsonRpcServer jsonRpcServer;
 
     public EthereumService() {
     }
 
-    protected void broadcastMessage(String message) {
+    protected void broadcastEvent(EventFlag event, EventData data) {
+
 
     }
 
@@ -79,61 +87,61 @@ public class EthereumService extends Service {
         @Override
         public void trace(String output) {
 
-            broadcastMessage(output);
+            broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData(output));
         }
 
         @Override
         public void onBlock(org.ethereum.core.Block block, List<TransactionReceipt> receipts) {
 
-            broadcastMessage("Added block.");
+            broadcastEvent(EventFlag.EVENT_BLOCK, new BlockEventData(block, receipts));
         }
 
         @Override
         public void onRecvMessage(org.ethereum.net.message.Message message) {
 
-            broadcastMessage("Received message: " + message.getCommand().name());
+            broadcastEvent(EventFlag.EVENT_RECEIVE_MESSAGE, new MessageEventData(message.getClass(), message.getEncoded()));
         }
 
         @Override
         public void onSendMessage(org.ethereum.net.message.Message message) {
 
-            broadcastMessage("Sending message: " + message.getCommand().name());
+            broadcastEvent(EventFlag.EVENT_SEND_MESSAGE, new MessageEventData(message.getClass(), message.getEncoded()));
         }
 
         @Override
         public void onPeerDisconnect(String host, long port) {
 
-            broadcastMessage("Peer disconnected: " + host + ":" + port);
+            broadcastEvent(EventFlag.EVENT_PEER_DISCONNECT, new PeerDisconnectEventData(host, port));
         }
 
         @Override
         public void onPendingTransactionsReceived(Set<Transaction> transactions) {
 
-            broadcastMessage("Pending transactions received: " + transactions.size());
+            broadcastEvent(EventFlag.EVENT_PENDING_TRANSACTIONS_RECEIVED, new PendingTransactionsEventData(transactions));
         }
 
         @Override
         public void onSyncDone() {
 
-            broadcastMessage("Sync done");
+            broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
         }
 
         @Override
         public void onNoConnections() {
 
-            broadcastMessage("No connections");
+            broadcastEvent(EventFlag.EVENT_NO_CONNECTIONS, new EventData());
         }
 
         @Override
         public void onHandShakePeer(HelloMessage helloMessage) {
 
-            broadcastMessage("Peer handshaked: " + helloMessage.getCode());
+            broadcastEvent(EventFlag.EVENT_HANDSHAKE_PEER, new MessageEventData(helloMessage.getClass(), helloMessage.getEncoded()));
         }
 
         @Override
         public void onVMTraceCreated(String transactionHash, String trace) {
 
-            broadcastMessage("Trace created: " + " - ");
+            broadcastEvent(EventFlag.EVENT_VM_TRACE_CREATED, new VMTraceCreatedEventData(transactionHash, trace));
         }
     }
 }

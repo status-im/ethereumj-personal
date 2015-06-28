@@ -36,4 +36,9 @@ public class EthereumClientMessage {
      * Send peers to the client
      */
     public static final int MSG_PENDING_TRANSACTIONS = 7;
+
+    /**
+     * Send event to the client
+     */
+    public static final int MSG_EVENT = 8;
 }

@@ -14,10 +14,12 @@ import org.ethereum.android.EthereumManager;
 import org.ethereum.android.interop.AdminInfo;
 import org.ethereum.android.service.ConnectorHandler;
 import org.ethereum.android.service.EthereumClientMessage;
+import org.ethereum.android.service.events.EventFlag;
 import org.ethereum.config.SystemProperties;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.UUID;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -127,6 +129,19 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
     public String getID() {
 
         return identifier;
+    }
+
+    @Override
+    public void onConnectorConnected() {
+
+        EthereumApplication app = (EthereumApplication)getActivity().getApplication();
+        app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
+        app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+    }
+
+    @Override
+    public void onConnectorDisconnected() {
+
     }
 
 }
