@@ -7,9 +7,6 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
-/*
-ATODO: talk with Adrian to get relation between Transaction and Block from db.
-*/
 public class eth_getTransactionByHash extends JsonRpcServerMethod {
 
     public eth_getTransactionByHash (Ethereum ethereum) {

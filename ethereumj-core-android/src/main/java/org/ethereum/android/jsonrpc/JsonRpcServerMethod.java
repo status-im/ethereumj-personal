@@ -6,6 +6,8 @@ import com.thetransactioncompany.jsonrpc2.server.*;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 
+import org.ethereum.android.db.BlockTransactionVO;
+import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
 import org.ethereum.core.Account;
 import org.ethereum.core.AccountState;
@@ -245,10 +247,17 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         res.put("input", "0x" + Hex.toHexString(transaction.getData()));
 
         if (block == null) {
-            res.put("transactionIndex", null);
-            res.put("blockHash", null);
-            res.put("blockNumber", null);
-        } else {
+            OrmLiteBlockStoreDatabase db = OrmLiteBlockStoreDatabase.getHelper(null);
+            BlockTransactionVO relation = db.getTransactionLocation(transaction.getHash());
+            if (relation == null) {
+                res.put("transactionIndex", null);
+                res.put("blockHash", null);
+                res.put("blockNumber", null);
+            } else {
+                block = ethereum.getBlockchain().getBlockByHash(relation.getBlockHash());
+            }
+        }
+        if (block != null) {
             long txi = 0;
             for (Transaction tx : block.getTransactionsList()) {
                 if (Arrays.equals(tx.getHash(), transaction.getHash()))
