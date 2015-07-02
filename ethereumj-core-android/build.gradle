@@ -67,4 +67,5 @@ dependencies {
     compile "javax.persistence:persistence-api:1.0.2"
 
     compile group: "com.thetransactioncompany", name: "jsonrpc2-server", version: "1.11"
+    compile group: "com.thetransactioncompany", name: "jsonrpc2-client", version: "1.15"
 }

@@ -62,7 +62,8 @@ public class EthereumAidlService extends EthereumService {
 
             public void startJsonRpcServer() throws RemoteException {
 
-                jsonRpcServer = new JsonRpcServer(ethereum);
+                //TODO: add here switch between full and light version
+                jsonRpcServer = new org.ethereum.android.jsonrpc.light.JsonRpcServer(ethereum);
             }
 
             public void getLog(IAsyncCallback callback) throws  RemoteException {

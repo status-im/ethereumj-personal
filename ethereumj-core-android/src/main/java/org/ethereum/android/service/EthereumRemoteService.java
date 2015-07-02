@@ -302,7 +302,8 @@ public class EthereumRemoteService extends EthereumService {
     protected void startJsonRpc(Message message) {
 
         // TODO: Maybe send back if it started succesfully ?
-        jsonRpcServer = new JsonRpcServer(ethereum);
+        //TODO: add here switch between full and light version
+        jsonRpcServer = new org.ethereum.android.jsonrpc.light.JsonRpcServer(ethereum);
         try {
             jsonRpcServer.start();
             logger.info("Started json rpc server!");
