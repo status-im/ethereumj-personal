@@ -65,6 +65,11 @@ public class DatabaseImpl implements Database {
     }
 
     @Override
+    public void init(){
+        keyValueDataSource.init();
+    }
+
+    @Override
     public void close() {
 
         keyValueDataSource.close();

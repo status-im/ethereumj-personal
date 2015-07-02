@@ -5,7 +5,7 @@ import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
 import org.ethereum.core.AccountState;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.serpent.SerpentCompiler;
+//import org.ethereum.serpent.SerpentCompiler;
 import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.util.List;
@@ -35,12 +35,12 @@ public class eth_compileSerpent extends JsonRpcServerMethod {
                 Pattern pattern = Pattern.compile("(.*?)init:(.*?)code:(.*?)", Pattern.DOTALL);
                 Matcher matcher = pattern.matcher(code);
                 if (matcher.find()) {
-                    asmResult = SerpentCompiler.compileFullNotion(code);
-                    machineCode = SerpentCompiler.compileFullNotionAssemblyToMachine(asmResult);
+                    //asmResult = SerpentCompiler.compileFullNotion(code);
+                    //machineCode = SerpentCompiler.compileFullNotionAssemblyToMachine(asmResult);
                 } else {
-                    asmResult = SerpentCompiler.compile(code);
-                    machineCode = SerpentCompiler.compileAssemblyToMachine(asmResult);
-                    machineCode = SerpentCompiler.encodeMachineCodeForVMRun(machineCode, null);
+                    //asmResult = SerpentCompiler.compile(code);
+                    //machineCode = SerpentCompiler.compileAssemblyToMachine(asmResult);
+                    //machineCode = SerpentCompiler.encodeMachineCodeForVMRun(machineCode, null);
                 }
             } catch (Throwable th) {
                 return new JSONRPC2Response(JSONRPC2Error.INTERNAL_ERROR, req.getID());

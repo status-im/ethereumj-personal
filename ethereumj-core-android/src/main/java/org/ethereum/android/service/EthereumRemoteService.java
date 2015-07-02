@@ -444,7 +444,7 @@ public class EthereumRemoteService extends EthereumService {
         String identifier = ((Bundle)message.obj).getString("identifier");
         clientListeners.put(identifier, message.replyTo);
         Bundle data = message.getData();
-        data.setClassLoader(EnumSet.class.getClassLoader());
+        data.setClassLoader(EventFlag.class.getClassLoader());
         EnumSet<EventFlag> flags = (EnumSet<EventFlag>)data.getSerializable("flags");
         EnumSet<EventFlag> list = (flags == null || flags.contains(EventFlag.EVENT_ALL)) ? EnumSet.allOf(EventFlag.class) : flags;
         for (EventFlag flag: list) {

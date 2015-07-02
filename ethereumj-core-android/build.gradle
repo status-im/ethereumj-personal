@@ -55,6 +55,8 @@ dependencies {
         exclude group: "org.hibernate", module: "hibernate-entitymanager"
         exclude group: "redis.clients", module: "jedis"
         exclude group: "org.antlr", module: "antlr4-runtime"
+        exclude group: "org.fusesource.leveldbjni", module: "leveldbjni"
+        exclude group: "org.fusesource.leveldbjni", module: "leveldbjni-all"
     }
 
     //compile "com.google.dagger:dagger:2.1-SNAPSHOT"

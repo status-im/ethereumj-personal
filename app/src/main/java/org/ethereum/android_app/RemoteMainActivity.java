@@ -154,8 +154,13 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
 
         Date date = new Date(timestamp);
 
+        EthereumApplication app = (EthereumApplication)getApplication();
+        app.log += formatter.format(date) + " -> " + message + "\n\n";
+        if (app.log.length() > 10000) {
+            app.log = app.log.substring(5000);
+        }
         for(FragmentInterface fragment: fragments) {
-            fragment.onMessage(formatter.format(date) + " -> " + message + "\n");
+            fragment.onMessage(app.log);
         }
     }
 

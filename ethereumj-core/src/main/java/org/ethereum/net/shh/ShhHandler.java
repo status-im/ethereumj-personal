@@ -1,11 +1,15 @@
 package org.ethereum.net.shh;
 
-import org.ethereum.listener.EthereumListener;
+import org.ethereum.crypto.ECKey;
+import org.ethereum.facade.Blockchain;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import org.ethereum.net.eth.*;
+import org.ethereum.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,23 +22,30 @@ import javax.inject.Inject;
  */
 public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
-    public final static byte VERSION = 1;
+    public final static byte VERSION = 2;
     private MessageQueue msgQueue = null;
+    private ECKey privKey;
+
+    private Whisper whisper;
 
     private boolean active = false;
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
 
-    public EthereumListener listener;
+    WorldManager worldManager;
 
     @Inject
-    public ShhHandler(EthereumListener listener) {
-        this.listener = listener;
+    public ShhHandler(WorldManager worldManager) {
+        this.worldManager = worldManager;
     }
 
     public ShhHandler(MessageQueue msgQueue) {
         this.msgQueue = msgQueue;
+    }
+
+    public void setPrivKey(ECKey privKey) {
+        this.privKey = privKey;
     }
 
     @Override
@@ -45,12 +56,14 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
         if (ShhMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("ShhHandler invoke: [{}]", msg.getCommand());
 
-        listener.trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
+        worldManager.getListener().trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case STATUS:
+                worldManager.getListener().trace("[Recv: " + msg + "]");
                 break;
             case MESSAGE:
+                whisper.processEnvelope((Envelope) msg);
                 break;
             case ADD_FILTER:
                 break;
@@ -78,8 +91,23 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     public void activate() {
         logger.info("SHH protocol activated");
-        listener.trace("SHH protocol activated");
+        worldManager.getListener().trace("SHH protocol activated");
+        whisper = new Whisper(msgQueue);
+        sendStatus();
         this.active = true;
+    }
+
+    private void sendStatus() {
+        byte protocolVersion = ShhHandler.VERSION;
+        StatusMessage msg = new StatusMessage(protocolVersion);
+        msgQueue.sendMessage(msg);
+    }
+
+    private void processEnvelop(Envelope envelope) {
+        if (!envelope.isEmpty()) {
+            Message m = envelope.open(privKey);
+            logger.info("ShhHandler invoke: [{}]", m);
+        }
     }
 
     public boolean isActive() {

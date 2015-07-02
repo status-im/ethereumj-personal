@@ -148,8 +148,6 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
             case NEW_BLOCK:
                 msgQueue.receivedMessage(msg);
                 processNewBlock((NewBlockMessage) msg);
-            case PACKET_COUNT:
-                break;
             default:
                 break;
         }

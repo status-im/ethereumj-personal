@@ -8,6 +8,7 @@ import org.ethereum.android.service.EthereumConnector;
 public class EthereumApplication extends MultiDexApplication {
 
     public EthereumConnector ethereum = null;
+    public String log="";
 
     @Override public void onCreate() {
 

@@ -54,7 +54,13 @@ public class PendingTransactionsEventData extends EventData {
     private PendingTransactionsEventData(Parcel in) {
 
         super(in);
-        transactions = new HashSet<Transaction>(Arrays.asList((Transaction[])in.readParcelableArray(org.ethereum.android.interop.Transaction.class.getClassLoader())));
+        Parcelable[] transactions = in.readParcelableArray(org.ethereum.android.interop.Transaction.class.getClassLoader());
+        Transaction[] txs = new Transaction[transactions.length];
+        int index = 0;
+        for (Parcelable transaction: transactions) {
+            txs[index] = (Transaction)transaction;
+        }
+        this.transactions = new HashSet<Transaction>(Arrays.asList(txs));
     }
 
 }

@@ -19,7 +19,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
+
+//import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
 
 /**
  * @author Roman Mandeleil
@@ -55,6 +57,7 @@ public class LevelDbDataSource implements KeyValueDataSource {
             logger.debug("Opening database");
             File dbLocation = new File(SystemProperties.CONFIG.databaseDir());
             File fileLocation = new File(dbLocation, name);
+            if (!dbLocation.exists()) dbLocation.mkdirs();
 
             if (SystemProperties.CONFIG.databaseReset()) {
                 destroyDB(fileLocation);
