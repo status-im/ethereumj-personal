@@ -13,7 +13,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /*
-TODO: Serpent will be depricated in future.
+TODO: -core not have serpent compiler
 */
 public class eth_compileSerpent extends JsonRpcServerMethod {
 
@@ -28,26 +28,8 @@ public class eth_compileSerpent extends JsonRpcServerMethod {
             return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
         } else {
             String code = (String)params.get(0);
-            String asmResult = "";
-            byte[] machineCode = null;
 
-            try {
-                Pattern pattern = Pattern.compile("(.*?)init:(.*?)code:(.*?)", Pattern.DOTALL);
-                Matcher matcher = pattern.matcher(code);
-                if (matcher.find()) {
-                    //asmResult = SerpentCompiler.compileFullNotion(code);
-                    //machineCode = SerpentCompiler.compileFullNotionAssemblyToMachine(asmResult);
-                } else {
-                    //asmResult = SerpentCompiler.compile(code);
-                    //machineCode = SerpentCompiler.compileAssemblyToMachine(asmResult);
-                    //machineCode = SerpentCompiler.encodeMachineCodeForVMRun(machineCode, null);
-                }
-            } catch (Throwable th) {
-                return new JSONRPC2Response(JSONRPC2Error.INTERNAL_ERROR, req.getID());
-            }
-
-
-            return new JSONRPC2Response("0x" + Hex.toHexString(machineCode), req.getID());
+            return new JSONRPC2Response(JSONRPC2Error.METHOD_NOT_FOUND, req.getID());
         }
 
     }
