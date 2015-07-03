@@ -13,7 +13,6 @@ import org.spongycastle.util.encoders.Hex;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.ethereum.net.p2p.P2pMessageCodes.HELLO;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 
 /**
@@ -65,28 +64,33 @@ public class HelloMessage extends P2pMessage {
         byte[] p2pVersionBytes = paramsList.get(0).getRLPData();
         this.p2pVersion = p2pVersionBytes != null ? p2pVersionBytes[0] : 0;
 
-        byte[] clientIdBytes = paramsList.get(1).getRLPData();
-        this.clientId = new String(clientIdBytes != null ? clientIdBytes : EMPTY_BYTE_ARRAY);
+        try {
+            byte[] clientIdBytes = paramsList.get(1).getRLPData();
+            this.clientId = new String(clientIdBytes != null ? clientIdBytes : EMPTY_BYTE_ARRAY);
 
-        RLPList capabilityList = (RLPList) paramsList.get(2);
-        this.capabilities = new ArrayList<>();
-        for (Object aCapabilityList : capabilityList) {
+            RLPList capabilityList = (RLPList) paramsList.get(2);
+            this.capabilities = new ArrayList<>();
+            for (Object aCapabilityList : capabilityList) {
 
-            RLPElement capId = ((RLPList) aCapabilityList).get(0);
-            RLPElement capVersion = ((RLPList) aCapabilityList).get(1);
+                RLPElement capId = ((RLPList) aCapabilityList).get(0);
+                RLPElement capVersion = ((RLPList) aCapabilityList).get(1);
 
-            String name = new String(capId.getRLPData());
-            byte version = capVersion.getRLPData() == null ? 0 : capVersion.getRLPData()[0];
+                String name = new String(capId.getRLPData());
+                byte version = capVersion.getRLPData() == null ? 0 : capVersion.getRLPData()[0];
 
-            Capability cap = new Capability(name, version);
-            this.capabilities.add(cap);
+                Capability cap = new Capability(name, version);
+                this.capabilities.add(cap);
+            }
+
+            byte[] peerPortBytes = paramsList.get(3).getRLPData();
+            this.listenPort = ByteUtil.byteArrayToInt(peerPortBytes);
+
+            byte[] peerIdBytes = paramsList.get(4).getRLPData();
+            this.peerId = Hex.toHexString(peerIdBytes);
         }
-
-        byte[] peerPortBytes = paramsList.get(3).getRLPData();
-        this.listenPort = ByteUtil.byteArrayToInt(peerPortBytes);
-
-        byte[] peerIdBytes = paramsList.get(4).getRLPData();
-        this.peerId = Hex.toHexString(peerIdBytes);
+        catch ( Exception e ) {
+            System.out.println(e.getMessage());
+        }
         this.parsed = true;
     }
 

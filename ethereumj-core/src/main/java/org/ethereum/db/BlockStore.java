@@ -43,7 +43,7 @@ public interface BlockStore {
 
     public void flush();
     public void load();
-    //public void setSessionFactory(SessionFactory sessionFactory);
+    public void setSessionFactory(SessionFactory sessionFactory);
 
 
 }

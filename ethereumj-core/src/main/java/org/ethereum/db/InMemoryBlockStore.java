@@ -251,7 +251,7 @@ public class InMemoryBlockStore implements BlockStore{
         logger.info("Loaded db in: {} ms", ((float)(t_ - t) / 1_000_000));
     }
 
-    //@Override
+    @Override
     public void setSessionFactory(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }

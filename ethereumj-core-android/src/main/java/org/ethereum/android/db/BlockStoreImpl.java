@@ -4,6 +4,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.db.BlockStore;
 import org.ethereum.util.ByteUtil;
+import org.hibernate.SessionFactory;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -123,6 +124,11 @@ public class BlockStoreImpl implements BlockStore {
 
     @Override
     public void flush() {
+
+    }
+
+    @Override
+    public void setSessionFactory(SessionFactory sessionFactory) {
 
     }
 }

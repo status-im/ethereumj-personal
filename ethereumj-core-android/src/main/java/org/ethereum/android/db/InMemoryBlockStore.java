@@ -5,6 +5,7 @@ import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,4 +211,8 @@ public class InMemoryBlockStore implements BlockStore {
         logger.info("Loaded db in: {} ms", ((float)(t_ - t) / 1_000_000));
     }
 
+    @Override
+    public void setSessionFactory(SessionFactory sessionFactory) {
+
+    }
 }

@@ -52,7 +52,9 @@ android {
 }
 
 dependencies {
-    compile project(':ethereumj-core-android')
+    compile (project(':ethereumj-core-android')) {
+        exclude group: "org.hibernate", module: "hibernate-core"
+    }
     compile 'com.android.support:multidex:1.0.0'
     compile fileTree(include: ['*.jar'], dir: '../libraries')
     compile 'com.android.support:support-v4:22.2.0'
