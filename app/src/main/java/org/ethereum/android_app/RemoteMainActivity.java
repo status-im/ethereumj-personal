@@ -176,6 +176,7 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
         EthereumApplication app = (EthereumApplication)getApplication();
         app.ethereum.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
         app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+        app.ethereum.startJsonRpc();
     }
 
     @Override
