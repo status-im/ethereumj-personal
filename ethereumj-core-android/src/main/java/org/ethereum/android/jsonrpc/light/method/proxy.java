@@ -70,6 +70,14 @@ public class proxy extends JsonRpcServerMethod {
     }
 
     @Override
+    public String[] handledRequests() {
+        ArrayList<String> tmp = new ArrayList<String>();
+        tmp.addAll(proxyMethods);
+        tmp.addAll(deprecatedMethods);
+        return tmp.toArray(new String[tmp.size()]);
+    }
+
+    @Override
     public JSONRPC2Response process(JSONRPC2Request req, MessageContext ctx) {
         if (proxyMethods.contains(req.getMethod())) {
             return worker(req, ctx);
