@@ -54,6 +54,7 @@ public class EthereumService extends Service {
     public void onDestroy() {
         if (jsonRpcServerThread != null) {
             jsonRpcServerThread.interrupt();
+            jsonRpcServerThread = null;
         }
     }
 
