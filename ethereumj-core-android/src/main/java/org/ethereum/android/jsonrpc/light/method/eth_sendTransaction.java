@@ -38,7 +38,7 @@ public class eth_sendTransaction extends JsonRpcServerMethod {
             }
 
             ArrayList<Object> rparams = new ArrayList<Object>();
-            params.add("0x" + Hex.toHexString(tx.getEncoded()));
+            rparams.add("0x" + Hex.toHexString(tx.getEncoded()));
             JSONRPC2Request rreq = new JSONRPC2Request("eth_sendRawTransaction", rparams, req.getID());
             JSONRPC2Response rres = getRemoteData(rreq);
             if (rres == null) {
