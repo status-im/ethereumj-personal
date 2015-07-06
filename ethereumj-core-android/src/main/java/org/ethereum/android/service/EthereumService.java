@@ -33,6 +33,7 @@ public class EthereumService extends Service {
     static Ethereum ethereum = null;
 
     static JsonRpcServer jsonRpcServer;
+    static Thread jsonRpcServerThread;
 
     public EthereumService() {
     }
@@ -47,6 +48,13 @@ public class EthereumService extends Service {
 
         super.onCreate();
         initializeEthereum();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (jsonRpcServerThread != null) {
+            jsonRpcServerThread.interrupt();
+        }
     }
 
     protected void initializeEthereum() {

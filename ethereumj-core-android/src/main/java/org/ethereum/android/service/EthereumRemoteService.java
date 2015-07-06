@@ -301,14 +301,23 @@ public class EthereumRemoteService extends EthereumService {
      */
     protected void startJsonRpc(Message message) {
 
-        // TODO: Maybe send back if it started succesfully ?
-        //TODO: add here switch between full and light version
-        jsonRpcServer = new org.ethereum.android.jsonrpc.light.JsonRpcServer(ethereum);
-        try {
-            jsonRpcServer.start();
-            logger.info("Started json rpc server!");
-        } catch (Exception e) {
-            logger.error("Exception starting json rpc server: " + e.getMessage());
+        if (jsonRpcServer == null) {
+            //TODO: add here switch between full and light version
+            jsonRpcServer = new org.ethereum.android.jsonrpc.light.JsonRpcServer(ethereum);
+        }
+        if (jsonRpcServerThread == null) {
+            jsonRpcServerThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        jsonRpcServer.start();
+                        logger.info("Started json rpc server!");
+                    } catch (Exception e) {
+                        logger.error("Exception starting json rpc server: " + e.getMessage());
+                    }
+                }
+            });
+            jsonRpcServerThread.start();
         }
     }
 
