@@ -488,7 +488,7 @@ public class Program {
         }
 
         if (result != null &&
-            result.getException() != null) {
+                result.getException() != null) {
             gasLogger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
                     Hex.toHexString(contextAddress),
                     result.getException());

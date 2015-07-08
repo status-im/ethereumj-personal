@@ -135,7 +135,7 @@ public class RepositoryImpl implements Repository {
             } else {
 
                 if (!contractDetails.isDirty()) continue;
-                
+
                 ContractDetailsCacheImpl contractDetailsCache =  (ContractDetailsCacheImpl)contractDetails;
                 if (contractDetailsCache.origContract == null){
                     contractDetailsCache.origContract = new ContractDetailsImpl();
@@ -171,11 +171,25 @@ public class RepositoryImpl implements Repository {
     }
 
     @Override
+    public void flushNoReconnect(){
+
+        gLogger.info("flushing to disk");
+
+        dds.flush();
+        worldState.sync();
+    }
+
+
+    @Override
     public void flush() {
         gLogger.info("flushing to disk");
 
         dds.flush();
         worldState.sync();
+
+        byte[] root = worldState.getRootHash();
+        reset();
+        worldState.setRoot(root);
     }
 
     public int getAllocatedMemorySize() {

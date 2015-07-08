@@ -24,6 +24,8 @@ public class CommonConfig {
 
     private RedisConnection redisConnection;
 
+    private MapDBFactory mapDBFactory;
+
     Repository repository() {
         return new RepositoryImpl(keyValueDataSource(), keyValueDataSource());
     }

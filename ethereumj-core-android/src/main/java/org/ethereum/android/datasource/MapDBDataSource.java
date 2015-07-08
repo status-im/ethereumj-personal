@@ -47,6 +47,11 @@ public class MapDBDataSource implements KeyValueDataSource {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public byte[] get(byte[] key) {
         return map.get(wrap(key));
     }

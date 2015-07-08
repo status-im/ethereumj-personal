@@ -295,6 +295,12 @@ public class BlockchainImpl implements Blockchain {
         track.commit();
         storeBlock(block, receipts);
 
+        if (block.getNumber() == 650_000){
+            repository.flush();
+            blockStore.flush();
+            System.exit(-1);
+        }
+
         if (needFlush(block)) {
             repository.flush();
             blockStore.flush();
@@ -322,13 +328,16 @@ public class BlockchainImpl implements Blockchain {
     }
 
     private boolean needFlush(Block block) {
+
+        boolean possibleFlush = CONFIG.flushBlocksIgnoreConsensus() || adminInfo.isConsensus();
+        if (!possibleFlush)return false;
+
         if (CONFIG.flushBlocksRepoSize() > 0 && repository.getClass().isAssignableFrom(RepositoryImpl.class)) {
             return ((RepositoryImpl) repository).getAllocatedMemorySize() > CONFIG.flushBlocksRepoSize();
         } else {
             boolean isBatchReached = block.getNumber() % CONFIG.flushBlocksBatchSize() == 0;
-            boolean isConsensus = CONFIG.flushBlocksIgnoreConsensus() || adminInfo.isConsensus();
 
-            return isConsensus && isBatchReached;
+            return isBatchReached;
         }
     }
 

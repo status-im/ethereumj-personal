@@ -90,6 +90,11 @@ public class LevelDbDataSource implements KeyValueDataSource {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public byte[] get(byte[] key) {
         return db.get(key);
     }
