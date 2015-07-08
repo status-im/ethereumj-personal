@@ -7,7 +7,6 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1'
     }
 }
@@ -17,7 +16,6 @@ plugins {
     id 'application'
     id 'jacoco'
     id 'com.github.johnrengelman.shadow' version '1.2.1'
-    id 'me.champeau.gradle.antlr4' version '0.1'
     id 'com.github.kt3k.coveralls' version '2.0.1x'
     id 'com.jfrog.bintray' version '1.0'
 }
@@ -30,7 +28,7 @@ repositories {
 sourceCompatibility = 1.7
 
 mainClassName = 'org.ethereum.Start'
-applicationDefaultJvmArgs = ["-server", "-Xss32m"]
+applicationDefaultJvmArgs = ["-server", "-Xss32m", "-Xms3500m"]
 
 ext.generatedSrcDir = file('src/gen/java')
 
@@ -45,24 +43,7 @@ sourceSets {
     }
 }
 
-antlr4 {
-    extraArgs = ['-package', 'org.ethereum.serpent']
-    output = file("${generatedSrcDir}/org/ethereum/serpent")
-}
 
-if (isJavaProject(project)) {
-    compileJava.dependsOn antlr4
-} else if (isAndroidProject(project)) {
-    preBuild.dependsOn antlr4
-} else {
-    throw new GradleException('unknown plugin type')
-}
-public static boolean isJavaProject(Project project) {
-    project.plugins.findPlugin('java')
-}
-public static boolean isAndroidProject(Project project) {
-    project.plugins.findPlugin('com.android.application') || project.plugins.findPlugin('com.android.library')
-}
 
 tasks.withType(JavaCompile){
     options.warnings = false
@@ -108,10 +89,6 @@ test {
     systemProperty "file.encoding", "UTF-8"
 }
 
-configurations {
-    compile.extendsFrom antlr4
-}
-
 ext {
     slf4jVersion = '1.7.12'
     leveldbVersion = '0.7'
@@ -127,16 +104,16 @@ dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
-    compile('io.netty:netty-all:4.0.28.Final')
+    compile "io.netty:netty-all:4.0.28.Final"
     compile "com.madgag.spongycastle:core:${scastleVersion}" // for SHA3 and SECP256K1
     compile "com.madgag.spongycastle:prov:${scastleVersion}" // for SHA3 and SECP256K1
+
     compile "org.iq80.leveldb:leveldb:${leveldbVersion}"
 
     compile "org.fusesource.leveldbjni:leveldbjni:1.8"
+    compile "org.fusesource.leveldbjni:leveldbjni-all:1.8"
 
     compile "com.cedarsoftware:java-util:1.8.0" // for deep equals
-    compile "org.antlr:antlr4-runtime:4.5" // for serpent compilation
-    compile "com.yuvalshavit:antlr-denter:1.1"
     compile "org.javassist:javassist:3.15.0-GA"
     compile "org.slf4j:slf4j-api:${slf4jVersion}"
     compile "log4j:log4j:${log4jVersion}"
@@ -150,6 +127,9 @@ dependencies {
     compile "commons-dbcp:commons-dbcp:1.4"
     compile "redis.clients:jedis:2.6.0"
     compile "com.h2database:h2:1.4.187"
+
+//    compile "org.mapdb:mapdb:1.0.7"
+    compile "org.mapdb:mapdb:2.0-beta1"
 
     compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
     compile "log4j:apache-log4j-extras:${log4jVersion}"

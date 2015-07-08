@@ -237,6 +237,10 @@ public class TransactionExecutor {
         if (vm == null) return;
 
         try {
+
+            // Charge basic cost of the transaction
+            program.spendGas(tx.transactionCost(), "TRANSACTION COST");
+
             if (CONFIG.playVM())
                 vm.play(program);
 
@@ -257,8 +261,12 @@ public class TransactionExecutor {
                 }
             }
 
-            if (result.getException() != null)
+            if (result.getException() != null){
+                result.getDeleteAccounts().clear();
+                result.getLogInfoList().clear();
+                result.futureRefundGas(0);
                 throw result.getException();
+            }
 
         } catch (Throwable e) {
 

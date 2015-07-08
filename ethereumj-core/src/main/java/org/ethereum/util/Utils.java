@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.swing.*;
+//import javax.swing.*;
 
 public class Utils {
 
@@ -51,11 +51,13 @@ public class Utils {
         return formatter.format(date);
     }
 
+    /*
     public static ImageIcon getImageIcon(String resource) {
         URL imageURL = ClassLoader.getSystemResource(resource);
         ImageIcon image = new ImageIcon(imageURL);
         return image;
     }
+    */
 
     static BigInteger _1000_ = new BigInteger("1000");
 

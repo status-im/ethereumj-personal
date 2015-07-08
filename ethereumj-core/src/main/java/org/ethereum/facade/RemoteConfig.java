@@ -11,6 +11,8 @@ import org.hibernate.SessionFactory;
  */
 public class RemoteConfig {
 
+    //@Autowired
+    CommonConfig commonConfig;
 
     public BlockStore blockStore(SessionFactory sessionFactory){
 

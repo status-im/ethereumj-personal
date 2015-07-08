@@ -5,6 +5,7 @@ import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.Wallet;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.datasource.mapdb.MapDBDataSource;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
 import org.ethereum.db.RepositoryImpl;
@@ -76,8 +77,8 @@ public class EthereumModule {
     @Provides
     @Singleton
     Repository provideRepository() {
-        LevelDbDataSource detailsDS = new LevelDbDataSource();
-        LevelDbDataSource stateDS = new LevelDbDataSource();
+        MapDBDataSource detailsDS = new MapDBDataSource();
+        MapDBDataSource stateDS = new MapDBDataSource();
         return new RepositoryImpl(detailsDS, stateDS);
     }
 
@@ -123,8 +124,8 @@ public class EthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(EthereumListener listener) {
-        return new ShhHandler(listener);
+    ShhHandler provideShhHandler(WorldManager worldManager) {
+        return new ShhHandler(worldManager);
     }
 
     @Provides

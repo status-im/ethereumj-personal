@@ -4,7 +4,7 @@
     <!-- Create a logcat appender -->
     <appender name="logcat" class="ch.qos.logback.classic.android.LogcatAppender">
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
+            <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
@@ -47,11 +47,11 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="net" level="ERROR">
+    <logger name="net" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="db" level="ERROR">
+    <logger name="db" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
@@ -87,7 +87,7 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="general" level="ERROR">
+    <logger name="general" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
@@ -99,19 +99,19 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="main" level="ERROR">
+    <logger name="main" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="state" level="ERROR">
+    <logger name="state" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="repository" level="ERROR">
+    <logger name="repository" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="blockchain" level="ERROR">
+    <logger name="blockchain" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
@@ -127,7 +127,7 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <logger name="hsqldb.db" level="ERROR">
+    <logger name="hsqldb.db" level="DEBUG">
         <appender-ref ref="logcat" />
     </logger>
 
@@ -135,7 +135,7 @@
         <appender-ref ref="logcat" />
     </logger>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="logcat" />
     </root>
 

@@ -46,7 +46,7 @@ public class Block {
 
     /* Private */
 
-    private byte[] rlpEncoded;
+    protected byte[] rlpEncoded;
     private boolean parsed = false;
 
     private Trie txsState;

@@ -1,27 +1,18 @@
 package org.ethereum.datasource;
 
-import org.ethereum.config.SystemProperties;
-
-import org.fusesource.leveldbjni.JniDBFactory;
-import org.fusesource.leveldbjni.internal.JniDB;
-import org.iq80.leveldb.CompressionType;
-import org.iq80.leveldb.DB;
-import org.iq80.leveldb.DBIterator;
-import org.iq80.leveldb.Options;
-import org.iq80.leveldb.WriteBatch;
-
-import org.iq80.leveldb.impl.Iq80DBFactory;
+import org.iq80.leveldb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.iq80.leveldb.impl.Iq80DBFactory.factory;
+import static java.lang.System.getProperty;
+import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 /**
  * @author Roman Mandeleil
@@ -53,35 +44,15 @@ public class LevelDbDataSource implements KeyValueDataSource {
         options.writeBufferSize(10 * 1024);
         options.cacheSize(0);
 
+
         try {
             logger.debug("Opening database");
-            File dbLocation = new File(System.getProperty("user.dir") + "/" +
-                    SystemProperties.CONFIG.databaseDir() + "/");
-            File fileLocation = new File(dbLocation, name);
-
-            if (SystemProperties.CONFIG.databaseReset()) {
-                destroyDB(fileLocation);
-            }
+            File fileLocation = new File(getProperty("user.dir") + "/" + CONFIG.databaseDir() + "/" + name);
+            File dbLocation = fileLocation.getParentFile();
+            if (!dbLocation.exists()) dbLocation.mkdirs();
 
             logger.debug("Initializing new or existing database: '{}'", name);
-
-            try {
-                db = JniDBFactory.factory.open(fileLocation, options);
-            } catch (Throwable e) {
-                System.out.println("No native version of LevelDB found");
-            }
-
-            String cpu = System.getProperty("sun.arch.data.model");
-            String os = System.getProperty("os.name");
-
-            if (db instanceof JniDB)
-                System.out.println("Native version of LevelDB loaded for: " + os + "." + cpu + "bit");
-            else{
-                System.out.println("Pure Java version of LevelDB loaded");
-                db = Iq80DBFactory.factory.open(fileLocation, options);
-            }
-
-
+            db = factory.open(fileLocation, options);
         } catch (IOException ioe) {
             logger.error(ioe.getMessage(), ioe);
             throw new RuntimeException("Can't initialize database");
@@ -99,10 +70,14 @@ public class LevelDbDataSource implements KeyValueDataSource {
         }
     }
 
-
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override
@@ -123,26 +98,28 @@ public class LevelDbDataSource implements KeyValueDataSource {
 
     @Override
     public Set<byte[]> keys() {
-
-        DBIterator dbIterator = db.iterator();
-        Set<byte[]> keys = new HashSet<>();
-        while (dbIterator.hasNext()) {
-
-            Map.Entry<byte[], byte[]> entry = dbIterator.next();
-            keys.add(entry.getKey());
+        try (DBIterator iterator = db.iterator()) {
+            Set<byte[]> result = new HashSet<>();
+            for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+                result.add(iterator.peekNext().getKey());
+            }
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return keys;
     }
 
     @Override
     public void updateBatch(Map<byte[], byte[]> rows) {
+        try (WriteBatch batch = db.createWriteBatch()) {
+            for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
+                batch.put(entry.getKey(), entry.getValue());
+            }
 
-        WriteBatch batch = db.createWriteBatch();
-
-        for (Map.Entry<byte[], byte[]> row : rows.entrySet())
-            batch.put(row.getKey(), row.getValue());
-
-        db.write(batch);
+            db.write(batch);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

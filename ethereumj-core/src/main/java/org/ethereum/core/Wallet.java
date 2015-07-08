@@ -179,9 +179,6 @@ public class Wallet {
     }
 
     public void applyTransaction(Transaction transaction) {
-
-        transactionMap.put(new ByteArrayWrapper(transaction.getHash()), transaction);
-
         byte[] senderAddress = transaction.getSender();
         Account sender = rows.get(Hex.toHexString(senderAddress));
         if (sender != null) {

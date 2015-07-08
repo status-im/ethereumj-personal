@@ -1,6 +1,7 @@
 package org.ethereum.db;
 
 import org.ethereum.core.Block;
+import org.h2.engine.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -67,14 +68,14 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     @Test
     public void testEmpty(){
         BlockStore blockStore = new InMemoryBlockStore();
-        //blockStore.setSessionFactory(sessionFactory());
+        blockStore.setSessionFactory(sessionFactory());
         assertNull(blockStore.getBestBlock());
     }
 
     @Test
     public void testFlush(){
         BlockStore blockStore = new InMemoryBlockStore();
-        //blockStore.setSessionFactory(sessionFactory());
+        blockStore.setSessionFactory(sessionFactory());
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
@@ -87,17 +88,17 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testSimpleLoad(){
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
+        SessionFactory sessionFactory = sessionFactory();
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
         }
 
-        //blockStore.setSessionFactory(sessionFactory);
+        blockStore.setSessionFactory(sessionFactory);
         blockStore.flush();
 
         blockStore = new InMemoryBlockStore();
-        //blockStore.setSessionFactory(sessionFactory);
+        blockStore.setSessionFactory(sessionFactory);
 
         blockStore.load();
 
@@ -108,8 +109,8 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testFlushEach1000(){
 
         InMemoryBlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
-        //blockStore.setSessionFactory(sessionFactory);
+        SessionFactory sessionFactory = sessionFactory();
+        blockStore.setSessionFactory(sessionFactory);
 
         for( int i = 0; i < blocks.size(); ++i ){
 
@@ -126,7 +127,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testBlockHashByNumber(){
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
+        SessionFactory sessionFactory = sessionFactory();
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
@@ -141,7 +142,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         hash = Hex.toHexString(blockStore.getBlockHashByNumber(5000));
         assertTrue(hash.startsWith("820aa7"));
 
-        //blockStore.setSessionFactory(sessionFactory);
+        blockStore.setSessionFactory(sessionFactory);
         blockStore.flush();
 
         hash = Hex.toHexString(blockStore.getBlockHashByNumber(7000));
@@ -158,7 +159,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testBlockByNumber(){
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
+        SessionFactory sessionFactory = sessionFactory();
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
@@ -173,7 +174,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         hash = Hex.toHexString(blockStore.getBlockByNumber(5000).getHash());
         assertTrue(hash.startsWith("820aa7"));
 
-        //blockStore.setSessionFactory(sessionFactory);
+        blockStore.setSessionFactory(sessionFactory);
         blockStore.flush();
 
         hash = Hex.toHexString(blockStore.getBlockByNumber(7000).getHash());
@@ -191,8 +192,8 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testGetBlockByNumber() {
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
-        //blockStore.setSessionFactory(sessionFactory);
+        SessionFactory sessionFactory = sessionFactory();
+        blockStore.setSessionFactory(sessionFactory);
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
@@ -209,8 +210,8 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
     public void testDbGetBlockByHash(){
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //SessionFactory sessionFactory = sessionFactory();
-        //blockStore.setSessionFactory(sessionFactory);
+        SessionFactory sessionFactory = sessionFactory();
+        blockStore.setSessionFactory(sessionFactory);
 
         for( Block block : blocks ){
             blockStore.saveBlock(block, null);
@@ -241,7 +242,7 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         Scanner scanner = new Scanner(inputStream, "UTF-8");
 
         BlockStore blockStore = new InMemoryBlockStore();
-        //blockStore.setSessionFactory(sessionFactory());
+        blockStore.setSessionFactory(sessionFactory());
 
 
         while (scanner.hasNextLine()) {
@@ -257,6 +258,11 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         }
 
         blockStore.flush();
+    }
+
+    private SessionFactory sessionFactory() {
+
+        return null;
     }
 
 }

@@ -2,15 +2,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.ethereum.android_app" >
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
-        android:name="org.ethereum.android_app.EthereumApplication"
+        android:name=".EthereumApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="org.ethereum.android_app.MainActivity"
+            android:name=".RemoteMainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,8 +22,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".TestActivity"
+            android:label="@string/title_activity_test" >
+        </activity>
+
+        <service
+            android:name=".EthereumService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_process" >
+        </service>
+        <service
+            android:name=".EthereumRemoteService"
+            android:enabled="true"
+            android:exported="true"
+            android:process=":ethereum_remote_process" >
+        </service>
+
+        <activity
+            android:name=".AidlMainActivity"
+            android:label="@string/app_name" >
+        </activity>
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
 </manifest>

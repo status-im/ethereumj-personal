@@ -85,7 +85,7 @@ public class BlockStoreDummy implements BlockStore {
     public void load() {
     }
 
-    //@Override
+    @Override
     public void setSessionFactory(SessionFactory sessionFactory) {
     }
     

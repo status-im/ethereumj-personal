@@ -4,6 +4,7 @@ import org.ethereum.config.Constants;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
+import org.ethereum.db.RepositoryImpl;
 import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
@@ -294,11 +295,16 @@ public class BlockchainImpl implements Blockchain {
         track.commit();
         storeBlock(block, receipts);
 
-
-        if (adminInfo.isConsensus() &&
-                block.getNumber() % 5_000 == 0) {
+        if (block.getNumber() == 650_000){
             repository.flush();
             blockStore.flush();
+            System.exit(-1);
+        }
+
+        if (needFlush(block)) {
+            repository.flush();
+            blockStore.flush();
+            System.gc();
         }
 
         // Remove all wallet transactions as they already approved by the net
@@ -318,6 +324,20 @@ public class BlockchainImpl implements Blockchain {
             logger.info("Sync done");
             syncDoneCalled = true;
             listener.onSyncDone();
+        }
+    }
+
+    private boolean needFlush(Block block) {
+
+        boolean possibleFlush = CONFIG.flushBlocksIgnoreConsensus() || adminInfo.isConsensus();
+        if (!possibleFlush)return false;
+
+        if (CONFIG.flushBlocksRepoSize() > 0 && repository.getClass().isAssignableFrom(RepositoryImpl.class)) {
+            return ((RepositoryImpl) repository).getAllocatedMemorySize() > CONFIG.flushBlocksRepoSize();
+        } else {
+            boolean isBatchReached = block.getNumber() % CONFIG.flushBlocksBatchSize() == 0;
+
+            return isBatchReached;
         }
     }
 

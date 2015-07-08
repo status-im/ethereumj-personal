@@ -10,6 +10,7 @@ import org.ethereum.json.EtherObjectMapper;
 import org.ethereum.json.JSONHelper;
 import org.ethereum.trie.SecureTrie;
 import org.ethereum.trie.Trie;
+import org.ethereum.trie.TrieImpl;
 import org.ethereum.vm.DataWord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,19 +134,22 @@ public class RepositoryImpl implements Repository {
 
             } else {
 
-                    ContractDetailsCacheImpl contractDetailsCache =  (ContractDetailsCacheImpl)contractDetails;
-                    if (contractDetailsCache.origContract == null){
-                        contractDetailsCache.origContract = new ContractDetailsImpl();
-                        contractDetailsCache.commit();
-                    }
+                if (!contractDetails.isDirty()) continue;
 
-                    contractDetails = contractDetailsCache.origContract;
+                ContractDetailsCacheImpl contractDetailsCache =  (ContractDetailsCacheImpl)contractDetails;
+                if (contractDetailsCache.origContract == null){
+                    contractDetailsCache.origContract = new ContractDetailsImpl();
+                    contractDetailsCache.origContract.setAddress(hash.getData());
+                    contractDetailsCache.commit();
+                }
 
-                    dds.update(hash.getData(), contractDetails);
+                contractDetails = contractDetailsCache.origContract;
 
-                    accountState.setStateRoot(contractDetails.getStorageHash());
-                    accountState.setCodeHash(sha3(contractDetails.getCode()));
-                    worldState.update(hash.getData(), accountState.getEncoded());
+                dds.update(hash.getData(), contractDetails);
+
+                accountState.setStateRoot(contractDetails.getStorageHash());
+                accountState.setCodeHash(sha3(contractDetails.getCode()));
+                worldState.update(hash.getData(), accountState.getEncoded());
 
                 if (logger.isDebugEnabled()) {
                         logger.debug("update: [{}],nonce: [{}] balance: [{}] \n [{}]",
@@ -167,13 +171,30 @@ public class RepositoryImpl implements Repository {
     }
 
     @Override
-    public void flush() {
+    public void flushNoReconnect(){
+
         gLogger.info("flushing to disk");
 
         dds.flush();
         worldState.sync();
     }
 
+
+    @Override
+    public void flush() {
+        gLogger.info("flushing to disk");
+
+        dds.flush();
+        worldState.sync();
+
+        byte[] root = worldState.getRootHash();
+        reset();
+        worldState.setRoot(root);
+    }
+
+    public int getAllocatedMemorySize() {
+        return dds.getAllocatedMemorySize() + ((TrieImpl) worldState).getCache().getAllocatedMemorySize();
+    }
 
     @Override
     public void rollback() {
@@ -454,9 +475,7 @@ public class RepositoryImpl implements Repository {
         AccountState accountState = new AccountState();
         worldState.update(addr, accountState.getEncoded());
 
-        ContractDetails contractDetails = new ContractDetailsImpl();
-
-        dds.update(addr, contractDetails);
+        dds.update(addr, new ContractDetailsImpl());
 
         return accountState;
     }
@@ -474,19 +493,13 @@ public class RepositoryImpl implements Repository {
         AccountState account = getAccountState(addr);
         ContractDetails details = getContractDetails(addr);
 
-        if (account == null)
-            account = new AccountState();
-        else
-            account = account.clone();
+        account = (account == null) ? new AccountState() : account.clone();
+        details = new ContractDetailsCacheImpl(details);
+//        details.setAddress(addr);
 
-        if (details == null) {
-            details = new ContractDetailsCacheImpl(null);
-        }
-        else
-            details = new ContractDetailsCacheImpl(details);
-
-        cacheAccounts.put(wrap(addr), account);
-        cacheDetails.put(wrap(addr), details);
+        ByteArrayWrapper wrappedAddress = wrap(addr);
+        cacheAccounts.put(wrappedAddress, account);
+        cacheDetails.put(wrappedAddress, details);
     }
 
     @Override

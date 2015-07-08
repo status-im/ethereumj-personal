@@ -4,6 +4,7 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Transaction;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
+import org.ethereum.datasource.mapdb.MapDBFactory;
 import org.ethereum.datasource.redis.RedisConnection;
 import org.ethereum.db.RepositoryImpl;
 import org.hibernate.SessionFactory;
@@ -23,6 +24,8 @@ public class CommonConfig {
 
     private RedisConnection redisConnection;
 
+    private MapDBFactory mapDBFactory;
+
     Repository repository() {
         return new RepositoryImpl(keyValueDataSource(), keyValueDataSource());
     }
@@ -33,6 +36,8 @@ public class CommonConfig {
             if ("redis".equals(dataSource) && redisConnection.isAvailable()) {
                 // Name will be defined before initialization
                 return redisConnection.createDataSource("");
+            } else if ("mapdb".equals(dataSource)) {
+                return mapDBFactory.createDataSource();
             }
 
             dataSource = "leveldb";

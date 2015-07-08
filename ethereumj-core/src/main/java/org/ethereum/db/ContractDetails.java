@@ -1,12 +1,12 @@
 package org.ethereum.db;
 
-import org.ethereum.db.ContractDetailsImpl;
 import org.ethereum.vm.DataWord;
 
 import java.util.List;
 import java.util.Map;
 
 public interface ContractDetails {
+    
     void put(DataWord key, DataWord value);
 
     DataWord get(DataWord key);
@@ -35,7 +35,15 @@ public interface ContractDetails {
 
     void setStorage(Map<DataWord, DataWord> storage);
 
+    byte[] getAddress();
+
+    void setAddress(byte[] address);
+
     ContractDetails clone();
 
     String toString();
+
+    void syncStorage();
+
+    int getAllocatedMemorySize();
 }

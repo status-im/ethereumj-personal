@@ -215,15 +215,15 @@ public class Program {
     }
 
     public void memorySave(DataWord addrB, DataWord value) {
-        memory.write(addrB.intValue(), value.getData(), false);
+        memory.write(addrB.intValue(), value.getData(), value.getData().length, false);
     }
 
-    public void memorySaveLimited(int addr, byte[] value) {
-        memory.write(addr, value, true);
+    public void memorySaveLimited(int addr, byte[] data, int dataSize) {
+        memory.write(addr, data, dataSize, true);
     }
 
     public void memorySave(int addr, byte[] value) {
-        memory.write(addr, value, false);
+        memory.write(addr, value, value.length, false);
     }
 
     public void memoryExpand(DataWord outDataOffs, DataWord outDataSize) {
@@ -334,9 +334,12 @@ public class Program {
         Repository track = result.getRepository().startTracking();
 
         //In case of hashing collisions, check for any balance before createAccount()
-        BigInteger oldBalance = track.getBalance(newAddress);
-        track.createAccount(newAddress);
-        track.addBalance(newAddress, oldBalance);
+        if (track.isExist(newAddress)) {
+            BigInteger oldBalance = track.getBalance(newAddress);
+            track.createAccount(newAddress);
+            track.addBalance(newAddress, oldBalance);
+        } else
+            track.createAccount(newAddress);
 
         // [4] TRANSFER THE BALANCE
         track.addBalance(senderAddress, endowment.negate());
@@ -357,8 +360,6 @@ public class Program {
             Program program = new Program(programCode, programInvoke);
             vm.play(program);
             result = program.getResult();
-            this.result.addDeleteAccounts(result.getDeleteAccounts());
-            this.result.addLogInfos(result.getLogInfoList());
         }
 
         if (result.getException() != null) {
@@ -391,6 +392,8 @@ public class Program {
         }
 
         track.commit();
+        this.result.addDeleteAccounts(result.getDeleteAccounts());
+        this.result.addLogInfos(result.getLogInfoList());
 
         // IN SUCCESS PUSH THE ADDRESS INTO THE STACK
         stackPush(new DataWord(newAddress));
@@ -485,7 +488,7 @@ public class Program {
         }
 
         if (result != null &&
-            result.getException() != null) {
+                result.getException() != null) {
             gasLogger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
                     Hex.toHexString(contextAddress),
                     result.getException());
@@ -500,7 +503,9 @@ public class Program {
         if (result != null) {
             byte[] buffer = result.getHReturn();
             int offset = msg.getOutDataOffs().intValue();
-            this.memorySaveLimited(offset, buffer);
+            int size   = msg.getOutDataSize().intValue();
+
+            this.memorySaveLimited(offset, buffer, size);
         }
 
         // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
@@ -892,7 +897,7 @@ public class Program {
         byte[] senderAddress = this.getOwnerAddress().getLast20Bytes();
         byte[] codeAddress = msg.getCodeAddress().getLast20Bytes();
         BigInteger endowment = msg.getEndowment().value();
-        BigInteger senderBalance = result.getRepository().getBalance(senderAddress);
+        BigInteger senderBalance = track.getBalance(senderAddress);
         if (senderBalance.compareTo(endowment) < 0) {
             stackPushZero();
             this.refundGas(msg.getGas().longValue(), "refund gas from message call");
@@ -1023,7 +1028,7 @@ public class Program {
      * used mostly for testing reasons
      */
     public void initMem(byte[] data) {
-        this.memory.write(0, data, false);
+        this.memory.write(0, data, data.length, false);
     }
 
 

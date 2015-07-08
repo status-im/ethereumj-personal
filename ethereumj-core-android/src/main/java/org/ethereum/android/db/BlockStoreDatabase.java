@@ -33,4 +33,10 @@ public interface BlockStoreDatabase {
     public TransactionReceipt getTransactionReceiptByHash(byte[] hash);
 
     public boolean flush(List<Block> blocks);
+
+    public void save(BlockTransactionVO blockTransactionVO);
+
+    public BlockTransactionVO getTransactionLocation(byte[] transactionHash);
+
+    public void setFullStorage(boolean storeAllBlocks);
 }

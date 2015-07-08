@@ -2,8 +2,6 @@ package org.ethereum.android;
 
 import android.content.Context;
 
-import com.j256.ormlite.android.apptools.OpenHelperManager;
-
 import org.ethereum.android.di.modules.EthereumModule;
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.config.SystemProperties;
@@ -37,7 +35,8 @@ public class EthereumManager {
                 .ethereumModule(new EthereumModule(context))
                 .build().ethereum();
 
-        jsonRpcServer = new JsonRpcServer(ethereum);
+        //TODO: add here switch between full and light version
+        jsonRpcServer = new org.ethereum.android.jsonrpc.light.JsonRpcServer(ethereum);
     }
 
     public void start() {
@@ -80,7 +79,6 @@ public class EthereumManager {
     public void close() {
 
         ethereum.close();
-        OpenHelperManager.releaseHelper();
     }
 
 }

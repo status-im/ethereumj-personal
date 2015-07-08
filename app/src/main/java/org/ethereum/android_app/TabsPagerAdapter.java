@@ -10,13 +10,11 @@ public class TabsPagerAdapter extends FragmentPagerAdapter {
 
     int tabsCount;
     private String[] tabTitles = { "Console", "Tests" };
-    private EthereumManager ethereumManager;
 
-    public TabsPagerAdapter(FragmentManager fragmentManager, EthereumManager ethereumManager) {
+    public TabsPagerAdapter(FragmentManager fragmentManager) {
 
         super(fragmentManager);
         this.tabsCount = tabTitles.length;
-        this.ethereumManager = ethereumManager;
     }
 
     @Override
@@ -25,7 +23,6 @@ public class TabsPagerAdapter extends FragmentPagerAdapter {
         switch (index) {
             case 0:
                 ConsoleFragment consoleFragment = new ConsoleFragment();
-                consoleFragment.setEthereumManager(ethereumManager);
                 return consoleFragment;
             case 1:
                 TestsFragment testsFragment = new TestsFragment();

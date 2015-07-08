@@ -2,8 +2,6 @@ package org.ethereum.android.di.modules;
 
 import android.content.Context;
 
-import com.j256.ormlite.android.apptools.OpenHelperManager;
-
 import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
@@ -46,8 +44,18 @@ public class EthereumModule {
 
     private Context context;
 
+    boolean storeAllBlocks;
+
     public EthereumModule(Context context) {
+
         this.context = context;
+        this.storeAllBlocks = false;
+    }
+
+    public EthereumModule(Context context,boolean storeAllBlocks) {
+
+        this.context = context;
+        this.storeAllBlocks = storeAllBlocks;
     }
 
     @Provides
@@ -75,17 +83,15 @@ public class EthereumModule {
     @Provides
     @Singleton
     BlockStore provideBlockStore() {
-        OrmLiteBlockStoreDatabase database = OpenHelperManager.getHelper(context, OrmLiteBlockStoreDatabase.class);
-        return new InMemoryBlockStore(database);
+        OrmLiteBlockStoreDatabase database = OrmLiteBlockStoreDatabase.getHelper(context);
+        return new InMemoryBlockStore(database, storeAllBlocks);
     }
 
     @Provides
     @Singleton
     Repository provideRepository() {
         LevelDbDataSource detailsDS = new LevelDbDataSource();
-        detailsDS.setContext(context);
         LevelDbDataSource stateDS = new LevelDbDataSource();
-        stateDS.setContext(context);
         return new RepositoryImpl(detailsDS, stateDS);
     }
 
@@ -131,8 +137,8 @@ public class EthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(EthereumListener listener) {
-        return new ShhHandler(listener);
+    ShhHandler provideShhHandler(WorldManager worldManager) {
+        return new ShhHandler(worldManager);
     }
 
     @Provides

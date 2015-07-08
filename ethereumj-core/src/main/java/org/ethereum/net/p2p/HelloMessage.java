@@ -1,19 +1,16 @@
 package org.ethereum.net.p2p;
 
+import com.google.common.base.Joiner;
 import org.ethereum.net.client.Capability;
 import org.ethereum.util.ByteUtil;
 import org.ethereum.util.RLP;
 import org.ethereum.util.RLPElement;
 import org.ethereum.util.RLPList;
-
-import com.google.common.base.Joiner;
-
 import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.ethereum.net.p2p.P2pMessageCodes.HELLO;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 
 /**
@@ -98,7 +95,7 @@ public class HelloMessage extends P2pMessage {
             Capability capability = this.capabilities.get(i);
             capabilities[i] = RLP.encodeList(
                     RLP.encodeElement(capability.getName().getBytes()),
-                    RLP.encodeElement(new byte[]{capability.getVersion()}));
+                    RLP.encodeInt(capability.getVersion()));
         }
         byte[] capabilityList = RLP.encodeList(capabilities);
         byte[] peerPort = RLP.encodeInt(this.listenPort);

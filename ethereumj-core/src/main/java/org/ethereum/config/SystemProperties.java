@@ -15,8 +15,8 @@ import java.util.*;
 public class SystemProperties {
 
     private static Logger logger = LoggerFactory.getLogger("general");
-
     private final static int DEFAULT_TX_APPROVE_TIMEOUT = 10;
+
     private final static String DEFAULT_DISCOVERY_PEER_LIST = "poc-9.ethdev.com:30303";
     private final static String DEFAULT_ACTIVE_PEER_NODEID = ""; // FIXME
     private final static String DEFAULT_ACTIVE_PEER_IP = "poc-9.ethdev.com";
@@ -47,6 +47,10 @@ public class SystemProperties {
     private final static String DEFAULT_KEY_VALUE_DATA_SOURCE = "leveldb";
     private final static boolean DEFAULT_REDIS_ENABLED = true;
     private static final String DEFAULT_BLOCKS_LOADER = "";
+    private static final int DEFAULT_FLUSH_BATCH_SIZE = 5_000;
+    private static final boolean DEFAULT_FLUSH_IGNORE_CONSENSUS = false;
+    private static final int DEFAULT_DETAILS_INMEMORY_STORAGE_LIMIT = 1_000;
+    private static final int DEFAULT_FLUSH_REPO_SIZE = 128_000_000;
 
 
     /* Testing */
@@ -253,6 +257,26 @@ public class SystemProperties {
 
     private boolean boolProperty(String key, Boolean defaultValue) {
         return Boolean.parseBoolean(prop.getProperty(key, String.valueOf(defaultValue)));
+    }
+    
+    private int intProperty(String key, int defaultValue) {
+        return Integer.parseInt(prop.getProperty(key, String.valueOf(defaultValue)));
+    }
+
+    public int detailsInMemoryStorageLimit() {
+        return intProperty("details.inmemory.storage.limit", DEFAULT_DETAILS_INMEMORY_STORAGE_LIMIT);
+    }
+    
+    public int flushBlocksBatchSize() {
+        return intProperty("flush.blocks.batch.size", DEFAULT_FLUSH_BATCH_SIZE);
+    }
+    
+    public int flushBlocksRepoSize() {
+        return intProperty("flush.blocks.repo.size", DEFAULT_FLUSH_REPO_SIZE);
+    }
+
+    public boolean flushBlocksIgnoreConsensus() {
+        return boolProperty("flush.blocks.ignore.consensus", DEFAULT_FLUSH_IGNORE_CONSENSUS);
     }
 
     public String vmTraceDir() {

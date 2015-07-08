@@ -180,10 +180,8 @@ public class BlockStoreImpl implements BlockStore {
     public void load() {
     }
 
-    /*
     @Override
     public void setSessionFactory(SessionFactory sessionFactory) {
     }
-    */
     
 }
