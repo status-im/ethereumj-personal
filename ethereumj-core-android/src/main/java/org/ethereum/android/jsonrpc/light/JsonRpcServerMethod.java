@@ -147,16 +147,17 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
 
     protected JSONRPC2Response getRemoteData(JSONRPC2Request req) {
         if (jpSession == null) {
-            try {
-                jpSession = new JSONRPC2Session(new URL(JsonRpcServer.RemoteServer));
-            } catch (Exception e) {
-                return null;
-            }
+            jpSession = new JSONRPC2Session(JsonRpcServer.getRemoteServer());
         }
         try {
             return jpSession.send(req);
         } catch (Exception e) {
-            return null;
+            jpSession = new JSONRPC2Session(JsonRpcServer.getRemoteServer());
+            if (!JsonRpcServer.IsRemoteServerRecuring) {
+                return getRemoteData(req);
+            } else {
+                return null;
+            }
         }
     }
 

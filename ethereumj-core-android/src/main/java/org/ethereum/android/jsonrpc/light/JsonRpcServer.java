@@ -37,12 +37,16 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import org.ethereum.android.jsonrpc.light.method.*;
 
 import java.net.InetAddress;
+import java.net.URL;
+import java.util.ArrayList;
 
 
 public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcServer{
 
     static public final int PORT = 8545;
-    static public final String RemoteServer = "http://192.168.1.30:8545/";
+    static private ArrayList<URL> RemoteServer = new ArrayList<>();
+    static private int currentRemoteServer = 0;
+    static public boolean IsRemoteServerRecuring = false;
 
     private Ethereum ethereum;
     private Dispatcher dispatcher;
@@ -72,6 +76,25 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
         this.dispatcher.register(new proxy(this.ethereum));
 
         FilterManager.getInstance();
+
+        addRemoteServer("http://192.168.1.30:8545/");
+    }
+
+    public static void addRemoteServer(String address) {
+        try {
+            RemoteServer.add(new URL(address));
+        } catch (Exception e) {
+        }
+    }
+
+    public static URL getRemoteServer() {
+        if (currentRemoteServer >= RemoteServer.size()){
+            currentRemoteServer = 0;
+            IsRemoteServerRecuring = true;
+        }
+        URL res = RemoteServer.get(currentRemoteServer);
+        currentRemoteServer++;
+        return res;
     }
 
     public void start() throws Exception {
