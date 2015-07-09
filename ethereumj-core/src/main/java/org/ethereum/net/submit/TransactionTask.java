@@ -2,7 +2,6 @@ package org.ethereum.net.submit;
 
 import org.ethereum.core.Transaction;
 import org.ethereum.core.Wallet;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.server.ChannelManager;
 
 import org.slf4j.Logger;
@@ -21,11 +20,11 @@ public class TransactionTask implements Callable<Transaction> {
     private static final Logger logger = LoggerFactory.getLogger("net");
 
     private final Transaction tx;
-    private final WorldManager worldManager;
+    private final ChannelManager channelManager;
 
-    public TransactionTask(Transaction tx, WorldManager worldManager) {
+    public TransactionTask(Transaction tx, ChannelManager channelManager) {
         this.tx = tx;
-        this.worldManager = worldManager;
+        this.channelManager = channelManager;
     }
 
     @Override
@@ -33,7 +32,6 @@ public class TransactionTask implements Callable<Transaction> {
 
         try {
             logger.info("submit tx: {}", tx.toString());
-            ChannelManager channelManager = worldManager.getChannelManager();
             channelManager.sendTransaction(tx);
             return tx;
 

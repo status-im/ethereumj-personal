@@ -18,11 +18,15 @@ import org.ethereum.android.service.events.VMTraceCreatedEventData;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
-import org.ethereum.facade.Ethereum;
+import org.ethereum.crypto.HashUtil;
+import org.ethereum.android.Ethereum;
 import org.ethereum.net.p2p.HelloMessage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 public class EthereumService extends Service {
 
@@ -68,10 +72,20 @@ public class EthereumService extends Service {
             System.out.println("Database folder: " + databaseFolder);
             SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
 
-            ethereum = DaggerEthereumComponent.builder()
+            ethereum = (Ethereum)DaggerEthereumComponent.builder()
                     .ethereumModule(new EthereumModule(this))
                     .build().ethereum();
             ethereum.addListener(new EthereumListener());
+
+            // TODO: Add init and add/remove address service messages
+            List<String> addresses = new ArrayList<String>();
+            byte[] cowAddr = HashUtil.sha3("cow".getBytes());
+            addresses.add(new String(cowAddr));
+            String secret = CONFIG.coinbaseSecret();
+            byte[] cbAddr = HashUtil.sha3(secret.getBytes());
+            addresses.add(new String(cbAddr));
+            ethereum.init(addresses);
+
             isInitialized = true;
         } else {
             System.out.println(" Already initialized");

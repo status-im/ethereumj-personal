@@ -18,7 +18,6 @@ import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.android.manager.BlockLoader;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.EthHandler;
@@ -60,16 +59,9 @@ public class EthereumModule {
 
     @Provides
     @Singleton
-    Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener) {
-        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener);
-    }
-
-    @Provides
-    @Singleton
-    WorldManager provideWorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
-        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener);
+    Ethereum provideEthereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo, ChannelManager channelManager,
+                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerDiscovery peerDiscovery, Wallet wallet) {
+        return new org.ethereum.android.Ethereum(blockchain, blockStore, repository, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerDiscovery, wallet);
     }
 
     @Provides
@@ -137,8 +129,8 @@ public class EthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(WorldManager worldManager) {
-        return new ShhHandler(worldManager);
+    ShhHandler provideShhHandler(EthereumListener listener) {
+        return new ShhHandler(listener);
     }
 
     @Provides

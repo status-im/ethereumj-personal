@@ -2,7 +2,7 @@ package org.ethereum.net.shh;
 
 import org.ethereum.crypto.ECKey;
 import org.ethereum.facade.Blockchain;
-import org.ethereum.manager.WorldManager;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.MessageQueue;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -32,12 +32,11 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
-
-    WorldManager worldManager;
+    EthereumListener listener;
 
     @Inject
-    public ShhHandler(WorldManager worldManager) {
-        this.worldManager = worldManager;
+    public ShhHandler(EthereumListener listener) {
+        this.listener = listener;
     }
 
     public ShhHandler(MessageQueue msgQueue) {
@@ -56,11 +55,11 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
         if (ShhMessageCodes.inRange(msg.getCommand().asByte()))
             logger.info("ShhHandler invoke: [{}]", msg.getCommand());
 
-        worldManager.getListener().trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
+        listener.trace(String.format("ShhHandler invoke: [%s]", msg.getCommand()));
 
         switch (msg.getCommand()) {
             case STATUS:
-                worldManager.getListener().trace("[Recv: " + msg + "]");
+                listener.trace("[Recv: " + msg + "]");
                 break;
             case MESSAGE:
                 whisper.processEnvelope((Envelope) msg);
@@ -91,7 +90,7 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     public void activate() {
         logger.info("SHH protocol activated");
-        worldManager.getListener().trace("SHH protocol activated");
+        listener.trace("SHH protocol activated");
         whisper = new Whisper(msgQueue);
         sendStatus();
         this.active = true;

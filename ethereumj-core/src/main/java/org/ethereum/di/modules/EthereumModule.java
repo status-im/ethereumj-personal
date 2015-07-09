@@ -124,8 +124,8 @@ public class EthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(WorldManager worldManager) {
-        return new ShhHandler(worldManager);
+    ShhHandler provideShhHandler(EthereumListener listener) {
+        return new ShhHandler(listener);
     }
 
     @Provides
