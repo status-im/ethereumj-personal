@@ -201,13 +201,6 @@ public class WorldManager {
 */
     }
 
-    public void reset() {
-        logger.info("Resetting blockchain ");
-        repository.reset();
-        blockchain.reset();
-        loadBlockchain();
-    }
-
 
     @PreDestroy
     public void close() {

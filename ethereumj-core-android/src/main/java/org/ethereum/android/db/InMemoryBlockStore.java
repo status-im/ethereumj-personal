@@ -78,7 +78,7 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
-    public List<byte[]> getListOfHashesStartFrom(byte[] hash, int qty) {
+    public List<byte[]> getListHashesEndWith(byte[] hash, long qty) {
 
         Block startBlock = hashIndex.get(wrap(hash));
 
@@ -96,26 +96,12 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
-    public void deleteBlocksSince(long number) {
-
-        // todo: delete blocks sinse
-    }
-
-    @Override
     public void saveBlock(Block block, List<TransactionReceipt> receipts) {
         ByteArrayWrapper wHash = wrap(block.getHash());
         blocks.add(block);
         hashIndex.put(wHash, block);
         numberIndex.put(block.getNumber(), block);
         totalDifficulty = totalDifficulty.add(block.getCumulativeDifficulty());
-    }
-
-    @Override
-    public BigInteger getTotalDifficultySince(long number) {
-
-        // todo calculate from db + from cache
-
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -127,23 +113,6 @@ public class InMemoryBlockStore implements BlockStore {
     public Block getBestBlock() {
         if (blocks.size() == 0) return null;
         return blocks.get(blocks.size() - 1);
-    }
-
-    @Override
-    public List<Block> getAllBlocks() {
-        return blocks;
-    }
-
-    @Override
-    public void reset() {
-        blocks.clear();
-        hashIndex.clear();
-        numberIndex.clear();
-    }
-
-    @Override
-    public TransactionReceipt getTransactionReceiptByHash(byte[] hash) {
-        return null;
     }
 
     // FIXME: wrap from here in to db class

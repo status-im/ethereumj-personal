@@ -32,7 +32,6 @@ public class BlockLoader {
 
         String fileSrc = CONFIG.blocksLoader();
         try {
-
             FileInputStream inputStream = null;
             inputStream = new FileInputStream(fileSrc);
             scanner = new Scanner(inputStream, "UTF-8");
@@ -70,8 +69,4 @@ public class BlockLoader {
         System.out.println(" * Done * ");
         System.exit(0);
     }
-
-
-
-
 }

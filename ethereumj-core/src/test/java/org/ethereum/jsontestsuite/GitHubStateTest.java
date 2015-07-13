@@ -26,10 +26,8 @@ public class GitHubStateTest {
     @Test // this method is mostly for hands-on convenient testing
     public void stSingleTest() throws ParseException, IOException {
 
-//        String shacommit = "cfae68e67aa922e08428c274d1ddbbc2741a975b";
-
-        String json = JSONReader.loadJSONFromCommit("StateTests/stCallCreateCallCodeTest.json", shacommit);
-        GitHubJSONTestSuite.runStateTest(json, "CallRecursiveBombPreCall");
+        String json = JSONReader.loadJSONFromCommit("StateTests/stPreCompiledContracts.json", shacommit);
+        GitHubJSONTestSuite.runStateTest(json, "CallRipemd160_5");
     }
 
     @Test
@@ -71,7 +69,7 @@ public class GitHubStateTest {
 
     @Test
     public void stPreCompiledContracts() throws ParseException, IOException {
-        String shacommit = "baf4b8479c0b524560137d27e61d7e573dc4ab17";
+
         Set<String> excluded = new HashSet<>();
         String json = JSONReader.loadJSONFromCommit("StateTests/stPreCompiledContracts.json", shacommit);
         GitHubJSONTestSuite.runStateTest(json, excluded);

@@ -46,7 +46,7 @@ public class BlockStoreImpl implements BlockStore {
         return new Block(vo.rlp);
     }
 
-    public List<byte[]> getListOfHashesStartFrom(byte[] hash, int qty) {
+    public List<byte[]> getListHashesEndWith(byte[] hash, long qty) {
 
         List<byte[]> hashes = new ArrayList<byte[]>();
 

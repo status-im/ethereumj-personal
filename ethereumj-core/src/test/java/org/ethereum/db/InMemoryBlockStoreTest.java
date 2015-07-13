@@ -1,7 +1,6 @@
 package org.ethereum.db;
 
 import org.ethereum.core.Block;
-import org.h2.engine.Session;
 import org.hibernate.SessionFactory;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -258,11 +257,6 @@ public class InMemoryBlockStoreTest extends AbstractInMemoryBlockStoreTest {
         }
 
         blockStore.flush();
-    }
-
-    private SessionFactory sessionFactory() {
-
-        return null;
     }
 
 }
