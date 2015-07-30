@@ -37,6 +37,7 @@ public class proxy extends JsonRpcServerMethod {
         proxyMethods.add("eth_getTransactionByHash");
         proxyMethods.add("eth_getTransactionByBlockHashAndIndex");
         proxyMethods.add("eth_getTransactionByBlockNumberAndIndex");
+        proxyMethods.add("eth_getTransactionReceipt");
         proxyMethods.add("eth_getUncleByBlockHashAndIndex");
         proxyMethods.add("eth_getUncleByBlockNumberAndIndex");
         proxyMethods.add("eth_getCompilers");

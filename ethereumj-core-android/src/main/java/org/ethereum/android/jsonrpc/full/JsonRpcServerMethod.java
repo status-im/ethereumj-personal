@@ -14,10 +14,12 @@ import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockHeader;
 import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.util.RLP;
 import org.ethereum.vm.DataWord;
+import org.ethereum.vm.LogInfo;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
@@ -268,6 +270,83 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             res.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
             res.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
         }
+
+        return res;
+    }
+
+    protected JSONObject transactionReceiptToJS (Block block, TransactionReceipt transaction) {
+        JSONObject res = new JSONObject();
+
+        res.put("transactionHash", "0x" + Hex.toHexString(transaction.getTransaction().getHash()));
+
+        long txi = 0;
+        long txli = 0;
+        if (block == null) {
+            OrmLiteBlockStoreDatabase db = OrmLiteBlockStoreDatabase.getHelper(null);
+            BlockTransactionVO relation = db.getTransactionLocation(transaction.getTransaction().getHash());
+            if (relation == null) {
+                res.put("transactionIndex", null);
+                res.put("blockHash", null);
+                res.put("blockNumber", null);
+            } else {
+                block = ethereum.getBlockchain().getBlockByHash(relation.getBlockHash());
+            }
+        }
+        if (block != null) {
+            for (Transaction tx : block.getTransactionsList()) {
+                if (Arrays.equals(tx.getHash(), transaction.getTransaction().getHash()))
+                    break;
+                txli += this.ethereum.getBlockchain().getTransactionReceiptByHash(transaction.getTransaction().getHash()).getLogInfoList().size();
+                txi++;
+            }
+            res.put("transactionIndex", "0x" + Long.toHexString(txi));
+            res.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
+            res.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
+        }
+
+        res.put("cumulativeGasUsed", "0x" + Hex.toHexString(transaction.getCumulativeGas()));
+
+        res.put("gasUsed", "0x" + Hex.toHexString(transaction.getTransaction().getGasPrice()));
+
+        res.put("gasUsed", "0x" + Hex.toHexString(transaction.getTransaction().getContractAddress()));
+
+        res.put("contractAddress", "0x" + Hex.toHexString(transaction.getTransaction().getContractAddress()));
+
+        JSONArray tmp = new JSONArray();
+
+        for (LogInfo li :  transaction.getLogInfoList()) {
+            JSONObject lio = new JSONObject();
+
+            if (block == null) {
+                lio.put("type", "pending");
+                lio.put("logIndex", null);
+                lio.put("transactionIndex", null);
+                lio.put("transactionHash", null);
+                lio.put("blockHash", null);
+                lio.put("blockNumber", null);
+            } else {
+                lio.put("type", "mined");
+                lio.put("logIndex", "0x" + Long.toHexString(txli));
+                lio.put("transactionIndex", "0x" + Long.toHexString(txi));
+                lio.put("transactionHash", "0x" + Hex.toHexString(transaction.getTransaction().getHash()));
+                lio.put("blockHash", "0x" + Hex.toHexString(block.getHash()));
+                lio.put("blockNumber", "0x" + Long.toHexString(block.getNumber()));
+            }
+
+            lio.put("address", "0x" + Hex.toHexString(li.getAddress()));
+
+            lio.put("data", "0x" + Hex.toHexString(li.getData()));
+
+            JSONArray topics = new JSONArray();
+            for (DataWord topic : li.getTopics()) {
+                topics.add("0x" + Hex.toHexString(topic.getData()));
+            }
+            lio.put("topics", topics);
+
+            tmp.add(lio);
+            txli++;
+        }
+        res.put("logs", tmp);
 
         return res;
     }

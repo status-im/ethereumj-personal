@@ -85,6 +85,7 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
         this.dispatcher.register(new eth_getTransactionByBlockNumberAndIndex(this.ethereum));
         this.dispatcher.register(new eth_getUncleByBlockHashAndIndex(this.ethereum));
         this.dispatcher.register(new eth_getUncleByBlockNumberAndIndex(this.ethereum));
+        this.dispatcher.register(new eth_getTransactionReceipt(this.ethereum));
         this.dispatcher.register(new eth_getCompilers(this.ethereum));
         this.dispatcher.register(new eth_compileSolidity(this.ethereum));
         this.dispatcher.register(new eth_compileLLL(this.ethereum));
