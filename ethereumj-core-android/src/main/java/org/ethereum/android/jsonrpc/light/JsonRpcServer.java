@@ -77,7 +77,7 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
         FilterManager.getInstance();
 
-        addRemoteServer("http://192.168.1.30:8545/");
+        addRemoteServer("http://139.162.13.89:8545/");
     }
 
     public static void addRemoteServer(String address) {
