@@ -95,11 +95,11 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
         init(null);
     }
 
-    public void init(List<String> addresses) {
+    public void init(List<String> privateKeys) {
 
-        if (addresses != null) {
-            for (String address: addresses) {
-                wallet.importKey(address.getBytes());
+        if (privateKeys != null) {
+            for (String privateKey: privateKeys) {
+                wallet.importKey(Hex.decode(privateKey));
             }
         }
 

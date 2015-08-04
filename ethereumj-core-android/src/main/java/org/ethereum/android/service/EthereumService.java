@@ -21,6 +21,7 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.android.Ethereum;
 import org.ethereum.net.p2p.HelloMessage;
+import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,10 +81,10 @@ public class EthereumService extends Service {
             // TODO: Add init and add/remove address service messages
             List<String> addresses = new ArrayList<String>();
             byte[] cowAddr = HashUtil.sha3("cow".getBytes());
-            addresses.add(new String(cowAddr));
+            addresses.add(Hex.toHexString(cowAddr));
             String secret = CONFIG.coinbaseSecret();
             byte[] cbAddr = HashUtil.sha3(secret.getBytes());
-            addresses.add(new String(cbAddr));
+            addresses.add(Hex.toHexString(cbAddr));
             ethereum.init(addresses);
 
             isInitialized = true;
