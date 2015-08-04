@@ -9,11 +9,8 @@ import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-
-import static org.ethereum.core.Denomination.SZABO;
 
 public abstract class JsonRpcServerMethod implements RequestHandler {
 
@@ -60,20 +57,26 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         return blockNumber;
     }
 
+    protected String clearJSString(String data) {
+        if (data.substring(0, 2).equals("0x"))
+            return data.substring(2);
+        return data;
+    }
+
     protected byte[] jsToAddress(String data) {
-        return Hex.decode(data.substring(2));
+        return Hex.decode(clearJSString(data));
     }
 
     protected int jsToInt(String data) {
-        return Integer.parseInt(data.substring(2), 16);
+        return Integer.parseInt(clearJSString(data), 16);
     }
 
     protected long jsToLong(String data) {
-        return Long.parseLong(data.substring(2), 16);
+        return Long.parseLong(clearJSString(data), 16);
     }
 
     protected BigInteger jsToBigInteger(String data) {
-        return new BigInteger(data.substring(2), 16);
+        return new BigInteger(clearJSString(data), 16);
     }
 
     protected Transaction jsToTransaction(JSONObject obj) throws Exception {
@@ -85,6 +88,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         if (obj.containsKey("from") && !((String)obj.get("from")).equals("")) {
             from = jsToAddress((String) obj.get("from"));
         }
+
         Account acc = null;
         for (Account ac : ethereum.getWallet().getAccountCollection()) {
             if (Arrays.equals(ac.getAddress(), from)) {

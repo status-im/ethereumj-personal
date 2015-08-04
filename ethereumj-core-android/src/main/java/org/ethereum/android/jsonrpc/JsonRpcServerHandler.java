@@ -4,6 +4,9 @@ import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.server.Dispatcher;
 
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONValue;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -75,9 +78,20 @@ public class JsonRpcServerHandler extends SimpleChannelInboundHandler<HttpObject
                 postData += chunk.content().toString(0, chunk.content().capacity(), CharsetUtil.UTF_8);
 
                 if (chunk instanceof LastHttpContent) {
-                    JSONRPC2Request req = JSONRPC2Request.parse(postData);
-                    JSONRPC2Response resp = dispatcher.process(req, null);
-                    responseContent.append(resp);
+                    Object tmpA = JSONValue.parse(postData);
+                    if (tmpA instanceof JSONArray) {
+                        JSONArray t = new JSONArray();
+                        for (int i = 0; i < ((JSONArray) tmpA).size(); i++) {
+                            JSONRPC2Request req = JSONRPC2Request.parse(((JSONArray) tmpA).get(i).toString());
+                            JSONRPC2Response resp = dispatcher.process(req, null);
+                            t.add(resp);
+                        }
+                        responseContent.append(t);
+                    } else {
+                        JSONRPC2Request req = JSONRPC2Request.parse(postData);
+                        JSONRPC2Response resp = dispatcher.process(req, null);
+                        responseContent.append(resp);
+                    }
                     writeResponse(ctx);
                     request = null;
                     decoder.destroy();
