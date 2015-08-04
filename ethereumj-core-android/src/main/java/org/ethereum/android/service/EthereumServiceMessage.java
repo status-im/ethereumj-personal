@@ -77,4 +77,9 @@ public class EthereumServiceMessage {
      * Command to the service to get the pernding transactions
      */
     public static final int MSG_GET_PENDING_TRANSACTIONS = 15;
+
+    /**
+     * Command to the service to initialize with specific addresses. If already initialized, restart the service
+     */
+    public static final int MSG_INIT = 16;
 }

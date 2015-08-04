@@ -11,7 +11,9 @@ import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 
 public class EthereumConnector extends ServiceConnector {
@@ -21,6 +23,22 @@ public class EthereumConnector extends ServiceConnector {
     public EthereumConnector(Context context, Class serviceClass) {
 
         super(context, serviceClass);
+    }
+
+    public void init(List<String> privateKeys) {
+
+        if (!isBound)
+            return;
+
+        Message msg = Message.obtain(null, EthereumServiceMessage.MSG_INIT, 0, 0);
+        Bundle data = new Bundle();
+        data.putStringArrayList("privateKeys", (ArrayList)privateKeys);
+        msg.setData(data);
+        try {
+            serviceMessenger.send(msg);
+        } catch (RemoteException e) {
+            logger.error("Exception sending message(init) to service: " + e.getMessage());
+        }
     }
 
     /**

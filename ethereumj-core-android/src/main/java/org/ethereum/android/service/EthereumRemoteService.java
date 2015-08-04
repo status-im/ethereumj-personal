@@ -14,6 +14,7 @@ import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.android.service.events.EventData;
 import org.ethereum.android.service.events.EventFlag;
 import org.ethereum.core.Transaction;
+import org.ethereum.crypto.HashUtil;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.peerdiscovery.PeerInfo;
@@ -40,6 +41,7 @@ public class EthereumRemoteService extends EthereumService {
     static HashMap<String, Messenger> clientListeners = new HashMap<>();
     static EnumMap<EventFlag, List<String>> listenersByType = new EnumMap<EventFlag, List<String>>(EventFlag.class);
 
+    public boolean isEthereumStarted = false;
 
     public EthereumRemoteService() {
 
@@ -136,6 +138,10 @@ public class EthereumRemoteService extends EthereumService {
 
         switch (message.what) {
 
+            case EthereumServiceMessage.MSG_INIT:
+                init(message);
+                break;
+
             case EthereumServiceMessage.MSG_CONNECT:
                 connect(message);
                 break;
@@ -201,6 +207,21 @@ public class EthereumRemoteService extends EthereumService {
         }
 
         return true;
+    }
+
+    protected void init(Message message) {
+
+        if (isEthereumStarted) {
+            closeEthereum(null);
+            ethereum = null;
+            component = null;
+            isInitialized = false;
+            initializeEthereum();
+        }
+        Bundle data = message.getData();
+        List<String> privateKeys = data.getStringArrayList("privateKeys");
+        ethereum.init(privateKeys);
+        isEthereumStarted = true;
     }
 
     /**
@@ -499,6 +520,7 @@ public class EthereumRemoteService extends EthereumService {
     protected void closeEthereum(Message message) {
 
         ethereum.close();
+        isEthereumStarted = false;
         logger.info("Closed ethereum.");
     }
 

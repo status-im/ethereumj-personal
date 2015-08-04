@@ -120,9 +120,9 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
     public byte[] createRandomAccount() {
 
-        byte[] randomAddress = HashUtil.sha3(HashUtil.randomPeerId());
-        wallet.importKey(randomAddress);
-        return randomAddress;
+        byte[] randomPrivateKey = HashUtil.sha3(HashUtil.randomPeerId());
+        wallet.importKey(randomPrivateKey);
+        return randomPrivateKey;
     }
 
     public void loadBlockchain() {

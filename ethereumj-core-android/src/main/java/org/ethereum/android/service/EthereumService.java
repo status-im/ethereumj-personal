@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.IBinder;
 
 import org.ethereum.android.di.components.DaggerEthereumComponent;
+import org.ethereum.android.di.components.EthereumComponent;
 import org.ethereum.android.di.modules.EthereumModule;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
 import org.ethereum.android.service.events.BlockEventData;
@@ -21,7 +22,6 @@ import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.android.Ethereum;
 import org.ethereum.net.p2p.HelloMessage;
-import org.spongycastle.util.encoders.Hex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +36,7 @@ public class EthereumService extends Service {
     static boolean isInitialized = false;
 
     static Ethereum ethereum = null;
+    static EthereumComponent component = null;
 
     static JsonRpcServer jsonRpcServer;
     static Thread jsonRpcServerThread;
@@ -61,6 +62,7 @@ public class EthereumService extends Service {
             jsonRpcServerThread.interrupt();
             jsonRpcServerThread = null;
         }
+        ethereum.close();
     }
 
     protected void initializeEthereum() {
@@ -73,19 +75,11 @@ public class EthereumService extends Service {
             System.out.println("Database folder: " + databaseFolder);
             SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
 
-            ethereum = (Ethereum)DaggerEthereumComponent.builder()
+            component = DaggerEthereumComponent.builder()
                     .ethereumModule(new EthereumModule(this))
-                    .build().ethereum();
+                    .build();
+            ethereum = (Ethereum)component.ethereum();
             ethereum.addListener(new EthereumListener());
-
-            // TODO: Add init and add/remove address service messages
-            List<String> addresses = new ArrayList<String>();
-            byte[] cowAddr = HashUtil.sha3("cow".getBytes());
-            addresses.add(Hex.toHexString(cowAddr));
-            String secret = CONFIG.coinbaseSecret();
-            byte[] cbAddr = HashUtil.sha3(secret.getBytes());
-            addresses.add(Hex.toHexString(cbAddr));
-            ethereum.init(addresses);
 
             isInitialized = true;
         } else {
