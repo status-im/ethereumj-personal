@@ -104,8 +104,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             to = jsToAddress((String) obj.get("to"));
         }
 
-        // default - from ethereumj-studio
-        BigInteger gasPrice = SZABO.value().multiply(BigInteger.TEN);
+        BigInteger gasPrice = getGasPrice();
         if (obj.containsKey("gasPrice") && !((String)obj.get("gasPrice")).equals("")) {
             gasPrice = jsToBigInteger((String) obj.get("gasPrice"));
         }
@@ -188,7 +187,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             return BigInteger.ZERO;
         } else {
             JSONObject block = (JSONObject)res.getResult();
-            return jsToBigInteger((String)block.get("gasLimit")).add(jsToBigInteger((String)block.get("gasUsed")).negate());
+            return jsToBigInteger((String)block.get("gasLimit")).add(jsToBigInteger((String) block.get("gasUsed")).negate());
         }
     }
 
@@ -197,6 +196,17 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         params.add("0x" + Hex.toHexString(account));
         params.add("latest");
         JSONRPC2Request req = new JSONRPC2Request("eth_getTransactionCount", params, 1000);
+        JSONRPC2Response res = getRemoteData(req);
+        if (res == null || !res.indicatesSuccess()) {
+            return BigInteger.ZERO;
+        } else {
+            return jsToBigInteger(res.getResult().toString());
+        }
+    }
+
+    protected BigInteger getGasPrice() {
+        ArrayList<Object> params = new ArrayList<Object>();
+        JSONRPC2Request req = new JSONRPC2Request("eth_gasPrice", params, 1000);
         JSONRPC2Response res = getRemoteData(req);
         if (res == null || !res.indicatesSuccess()) {
             return BigInteger.ZERO;

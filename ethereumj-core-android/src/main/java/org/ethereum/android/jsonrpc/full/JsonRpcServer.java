@@ -10,33 +10,14 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.multipart.HttpPostStandardRequestDecoder;
-import io.netty.handler.codec.http.multipart.DefaultHttpDataFactory;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.buffer.ByteBuf;
-import io.netty.util.CharsetUtil;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.channel.ChannelFuture;
 import org.ethereum.android.jsonrpc.full.filter.FilterManager;
 import org.ethereum.facade.Ethereum;
-import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
-import io.netty.handler.codec.http.HttpHeaders;
-import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import org.ethereum.android.jsonrpc.full.method.*;
 
 import java.net.InetAddress;
+
+import org.ethereum.android.jsonrpc.*;
 
 
 public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcServer{
@@ -146,82 +127,7 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
         public void initChannel(SocketChannel ch) {
             ChannelPipeline p = ch.pipeline();
             p.addLast(new HttpServerCodec());
-            p.addLast(new JsonRpcServerHandler());
-        }
-    }
-
-    class JsonRpcServerHandler extends SimpleChannelInboundHandler<HttpObject> {
-
-        private HttpRequest request;
-        private final StringBuilder responseContent = new StringBuilder();
-        private HttpPostStandardRequestDecoder decoder;
-        private String postData;
-
-        @Override
-        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-            if (decoder != null) {
-                decoder.destroy();
-            }
-        }
-        @Override
-        public void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
-            if (msg instanceof HttpRequest) {
-                HttpRequest req = this.request = (HttpRequest) msg;
-                if (!req.getUri().equals("/") || !request.getMethod().equals(HttpMethod.POST)) {
-                    responseContent.append("Hi, how are you?!!");
-                    return;
-                } else {
-                    decoder = new HttpPostStandardRequestDecoder(new DefaultHttpDataFactory(false), req);
-                    postData = "";
-                }
-            }
-
-            if (decoder != null) {
-                if (msg instanceof HttpContent) {
-                    HttpContent chunk = (HttpContent) msg;
-                    decoder.offer(chunk);
-                    postData += chunk.content().toString(0, chunk.content().capacity(), CharsetUtil.UTF_8);
-
-                    if (chunk instanceof LastHttpContent) {
-                        JSONRPC2Request req = JSONRPC2Request.parse(postData);
-                        JSONRPC2Response resp = dispatcher.process(req, null);
-                        responseContent.append(resp);
-                        writeResponse(ctx);
-                        request = null;
-                        decoder.destroy();
-                        decoder = null;
-                    }
-                }
-            } else {
-                writeResponse(ctx);
-            }
-        }
-
-        private void writeResponse(ChannelHandlerContext ctx) {
-            ByteBuf buf = Unpooled.copiedBuffer(responseContent.toString(), CharsetUtil.UTF_8);
-            responseContent.setLength(0);
-
-            boolean close = HttpHeaders.Values.CLOSE.equalsIgnoreCase(request.headers().get(CONNECTION))
-                    || request.getProtocolVersion().equals(HttpVersion.HTTP_1_0)
-                    && !HttpHeaders.Values.KEEP_ALIVE.equalsIgnoreCase(request.headers().get(CONNECTION));
-            FullHttpResponse response = new DefaultFullHttpResponse(
-                    HttpVersion.HTTP_1_1, HttpResponseStatus.OK, buf);
-            response.headers().set(CONTENT_TYPE, "text/plain; charset=UTF-8");
-
-            if (!close) {
-                response.headers().set(CONTENT_LENGTH, buf.readableBytes());
-            }
-
-            ChannelFuture future = ctx.writeAndFlush(response);
-            if (close) {
-                future.addListener(ChannelFutureListener.CLOSE);
-            }
-        }
-
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            cause.printStackTrace();
-            ctx.close();
+            p.addLast(new JsonRpcServerHandler(dispatcher));
         }
     }
 }

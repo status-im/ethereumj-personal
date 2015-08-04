@@ -117,6 +117,7 @@ public class ServiceConnector {
 
         if (serviceConnection != null) {
             Intent intent = new Intent(context, serviceClass);
+            context.getApplicationContext().startService(intent);
             return context.getApplicationContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         } else {
             return false;
@@ -129,6 +130,10 @@ public class ServiceConnector {
         if (isBound && serviceConnection != null) {
             context.getApplicationContext().unbindService(serviceConnection);
             isBound = false;
+/*
+            Intent intent = new Intent(context, serviceClass);
+            context.getApplicationContext().stopService(intent);
+*/
         }
     }
 
