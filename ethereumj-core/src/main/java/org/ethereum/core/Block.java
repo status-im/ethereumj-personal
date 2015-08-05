@@ -54,7 +54,9 @@ public class Block {
     /* Constructors */
 
     public Block(byte[] rawData) {
-        logger.debug("new from [" + Hex.toHexString(rawData) + "]");
+        if (rawData != null) {
+            logger.debug("new from [" + Hex.toHexString(rawData) + "]");
+        }
         this.rlpEncoded = rawData;
     }
 

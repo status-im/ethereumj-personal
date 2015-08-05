@@ -144,4 +144,9 @@ public class ServiceConnector {
         }
     }
 
+    public void removeHandler(ConnectorHandler handler) {
+
+        handlers.remove(handler);
+    }
+
 }
