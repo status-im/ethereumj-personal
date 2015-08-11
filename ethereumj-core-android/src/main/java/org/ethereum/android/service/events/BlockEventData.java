@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import org.ethereum.core.Block;
 import org.ethereum.core.TransactionReceipt;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -60,6 +61,10 @@ public class BlockEventData extends EventData {
 
         super(in);
         block = in.readParcelable(org.ethereum.android.interop.Block.class.getClassLoader());
-        receipts = Arrays.asList((TransactionReceipt[])in.readParcelableArray(TransactionReceipt.class.getClassLoader()));
+        receipts = new ArrayList<>();
+        Parcelable[] items = in.readParcelableArray(TransactionReceipt.class.getClassLoader());
+        for (Parcelable item: items) {
+            receipts.add((TransactionReceipt)item);
+        }
     }
 }
