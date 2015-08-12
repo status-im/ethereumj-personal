@@ -1,31 +1,26 @@
-package org.ethereum.android.jsonrpc.light.method;
+package org.ethereum.android.jsonrpc.full.method;
 
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Error;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Request;
 import com.thetransactioncompany.jsonrpc2.JSONRPC2Response;
 import com.thetransactioncompany.jsonrpc2.server.MessageContext;
 
-import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
-import net.minidev.json.parser.JSONParser;
 
 import org.ethereum.android.jsonrpc.light.JsonRpcServerMethod;
-import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
-import org.spongycastle.util.encoders.Hex;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 
-public class eth_transactionHistory extends JsonRpcServerMethod {
+public class eth_getTransactionHistory extends JsonRpcServerMethod {
 
-    public eth_transactionHistory(Ethereum ethereum) {
+    public eth_getTransactionHistory(Ethereum ethereum) {
         super(ethereum);
     }
 
