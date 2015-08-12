@@ -33,6 +33,9 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
         this.dispatcher = new Dispatcher();
 
+        // Custom methods to receive Address Transaction History
+        this.dispatcher.register(new eth_transactionHistory(this.ethereum));
+
         this.dispatcher.register(new web3_clientVersion(this.ethereum));
         this.dispatcher.register(new web3_sha3(this.ethereum));
 
