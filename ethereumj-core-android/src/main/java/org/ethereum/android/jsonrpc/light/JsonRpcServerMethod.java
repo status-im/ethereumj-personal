@@ -108,20 +108,6 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             to = jsToAddress((String) obj.get("to"));
         }
 
-        BigInteger gasPrice = getGasPrice();
-        if (obj.containsKey("gasPrice") && !((String)obj.get("gasPrice")).equals("")) {
-            gasPrice = jsToBigInteger((String) obj.get("gasPrice"));
-        }
-
-        // default - from cpp-ethereum
-        BigInteger gas = getBalance(from).divide(gasPrice);
-        BigInteger gasBBRemaining = getLatestBlockGasRemaining();
-        if (gasBBRemaining.compareTo(gas) < 0)
-            gas = gasBBRemaining;
-        if (obj.containsKey("gas") && !((String)obj.get("gas")).equals("")) {
-            gas = jsToBigInteger((String) obj.get("gas"));
-        }
-
         // default - from ethereumj-studio
         BigInteger value = new BigInteger("1000");
         if (obj.containsKey("value") && !((String)obj.get("value")).equals("")) {
@@ -129,15 +115,29 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         }
 
         // default - from ethereumj-studio
-        BigInteger nonce = getTransactionCount(from);
-        if (obj.containsKey("nonce") && !((String)obj.get("nonce")).equals("")) {
-            nonce = jsToBigInteger((String) obj.get("nonce"));
-        }
-
-        // default - from ethereumj-studio
         byte[] data = new byte[]{};
         if (obj.containsKey("data") && !((String)obj.get("data")).equals("")) {
             data = jsToAddress((String) obj.get("data"));
+        }
+
+        BigInteger gasPrice = getGasPrice();
+        if (obj.containsKey("gasPrice") && !((String)obj.get("gasPrice")).equals("")) {
+            gasPrice = jsToBigInteger((String) obj.get("gasPrice"));
+        }
+
+        JSONObject tmp = new JSONObject();
+        if (to != null)
+            tmp.put("to", "0x" + Hex.toHexString(to));
+        tmp.put("data", Hex.toHexString(data));
+        BigInteger gas = getEstimateGas(tmp);
+        if (obj.containsKey("gas") && !((String)obj.get("gas")).equals("")) {
+            gas = jsToBigInteger((String) obj.get("gas"));
+        }
+
+        // default - from ethereumj-studio
+        BigInteger nonce = getTransactionCount(from);
+        if (obj.containsKey("nonce") && !((String)obj.get("nonce")).equals("")) {
+            nonce = jsToBigInteger((String) obj.get("nonce"));
         }
 
         Transaction tx = ethereum.createTransaction(nonce, gasPrice, gas, to, value, data);
@@ -214,6 +214,18 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
         JSONRPC2Response res = getRemoteData(req);
         if (res == null || !res.indicatesSuccess()) {
             return BigInteger.ZERO;
+        } else {
+            return jsToBigInteger(res.getResult().toString());
+        }
+    }
+
+    protected BigInteger getEstimateGas(JSONObject obj) {
+        ArrayList<Object> params = new ArrayList<Object>();
+        params.add(obj);
+        JSONRPC2Request req = new JSONRPC2Request("eth_estimateGas", params, 1000);
+        JSONRPC2Response res = getRemoteData(req);
+        if (res == null || !res.indicatesSuccess()) {
+            return BigInteger.valueOf(90000);
         } else {
             return jsToBigInteger(res.getResult().toString());
         }

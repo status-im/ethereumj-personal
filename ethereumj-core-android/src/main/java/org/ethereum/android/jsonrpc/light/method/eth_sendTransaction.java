@@ -44,9 +44,9 @@ public class eth_sendTransaction extends JsonRpcServerMethod {
             if (rres == null) {
                 return new JSONRPC2Response(JSONRPC2Error.INTERNAL_ERROR, req.getID());
             }
+            rres.setID(req.getID());
 
-            JSONRPC2Response res = new JSONRPC2Response(rres.getResult(), req.getID());
-            return res;
+            return rres;
         }
 
     }
