@@ -36,7 +36,8 @@ public class eth_call extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             VM vm = new VM();
@@ -45,7 +46,8 @@ public class eth_call extends JsonRpcServerMethod {
             byte[] result = program.getResult().getHReturn();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(root);
             }
 
             String tmp = "0x" + Hex.toHexString(result);

@@ -2,13 +2,10 @@ package org.ethereum.manager;
 
 
 import org.ethereum.core.Block;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.core.Blockchain;
 import org.spongycastle.util.encoders.Hex;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.util.List;
 import java.util.Scanner;
 
 import javax.inject.Inject;
@@ -67,6 +64,5 @@ public class BlockLoader {
         }
 
         System.out.println(" * Done * ");
-        System.exit(0);
     }
 }

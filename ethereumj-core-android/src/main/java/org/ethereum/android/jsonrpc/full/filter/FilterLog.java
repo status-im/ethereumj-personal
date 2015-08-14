@@ -111,6 +111,8 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
                 if (block == null)
                     break;
                 for (Transaction tx : block.getTransactionsList()) {
+                    // TODO: Missing method on blockchain
+                    /*
                     TransactionReceipt txr = ethereum.getBlockchain().getTransactionReceiptByHash(tx.getHash());
                     if (txr != null) {
                         for (LogInfo li : txr.getLogInfoList()) {
@@ -118,6 +120,7 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
                                 res.add(logInfoToJS(new FilterLogData(block, txr, li)));
                         }
                     }
+                    */
                 }
                 i++;
             }
@@ -125,6 +128,8 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
 
         if (blockFrom < 0 || blockTo < 0) {
             for (Transaction tx : ethereum.getPendingTransactions()) {
+                // TODO: Missing method on blockchain
+                /*
                 TransactionReceipt txr = ethereum.getBlockchain().getTransactionReceiptByHash(tx.getHash());
                 if (txr != null) {
                     for (LogInfo li :  txr.getLogInfoList()) {
@@ -132,6 +137,7 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
                             res.add(logInfoToJS(new FilterLogData(null, txr, li)));
                     }
                 }
+                */
             }
         }
 
@@ -185,11 +191,14 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
 TODO: for me it's a little strange way.
 */
             for (Transaction tx : data.block.getTransactionsList()) {
+                // TODO: Missing method on blockchain
+                /*
                 for (LogInfo li : ethereum.getBlockchain().getTransactionReceiptByHash(tx.getHash()).getLogInfoList()) {
                     if (li.getBloom().equals(data.li.getBloom()))
                         break;
                     lii++;
                 }
+                */
                 if (Arrays.equals(tx.getHash(), data.txr.getTransaction().getHash())) {
                     break;
                 }

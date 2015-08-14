@@ -10,14 +10,15 @@ import org.ethereum.core.Wallet;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.Repository;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.net.submit.TransactionExecutor;
@@ -111,7 +112,7 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
             Executors.newSingleThreadExecutor().submit(
                     new Runnable() {
                         public void run() {
-//                            peerServer.start(CONFIG.listenPort());
+                            peerServer.start(CONFIG.listenPort());
                         }
                     }
             );
@@ -140,7 +141,7 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
 
-            blockStore.saveBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
+            blockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
 
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
@@ -279,22 +280,21 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
     }
 
     @Override
-    public Blockchain getBlockchain() {
+    public void connect(Node node) {
 
+        connect(node.getHost(), node.getPort(), Hex.toHexString(node.getId()));
+    }
 
-        return blockchain;
+    @Override
+    public org.ethereum.facade.Blockchain getBlockchain() {
+
+        return (org.ethereum.facade.Blockchain)blockchain;
     }
 
     @Override
     public void addListener(EthereumListener listener) {
 
         ((CompositeEthereumListener) this.listener).addListener(listener);
-    }
-
-    @Override
-    public boolean isBlockchainLoading() {
-
-        return blockchain.getQueue().size() > 2;
     }
 
     @Override
@@ -354,9 +354,9 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
 
     @Override
-    public Repository getRepository() {
+    public org.ethereum.facade.Repository getRepository() {
 
-        return repository;
+        return (org.ethereum.facade.Repository)repository;
     }
 
     @Override
@@ -388,5 +388,10 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
     public void exitOn(long number) {
 
         blockchain.setExitOn(number);
+    }
+
+    @Override
+    public org.ethereum.facade.Repository getSnapshootTo(byte[] root) {
+        return null;
     }
 }

@@ -28,13 +28,15 @@ public class eth_getStorageAt extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             String tmp = "0x" + Hex.toHexString(ethereum.getRepository().getStorageValue(address, new DataWord(key)).getData());
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(root);
             }
 
             JSONRPC2Response res = new JSONRPC2Response(tmp, req.getID());

@@ -2,10 +2,13 @@ package org.ethereum.db;
 
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Block;
+import org.ethereum.core.BlockWrapper;
 import org.ethereum.core.Genesis;
 import org.ethereum.datasource.mapdb.MapDBFactory;
 import org.ethereum.datasource.mapdb.MapDBFactoryImpl;
+import org.ethereum.util.CollectionUtils;
 import org.ethereum.util.FileUtil;
+import org.ethereum.util.Functional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
+import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.junit.Assert.*;
 
 /**
@@ -34,12 +38,13 @@ public class BlockQueueTest {
 
     private BlockQueue blockQueue;
     private List<Block> blocks = new ArrayList<>();
+    private List<byte[]> hashes = new ArrayList<>();
     private String testDb;
 
     @Before
     public void setup() throws InstantiationException, IllegalAccessException, URISyntaxException, IOException {
         URL scenario1 = ClassLoader
-                .getSystemResource("blockstore/load.dmp");
+                .getSystemResource("blockstore/light-load.dmp");
 
         File file = new File(scenario1.toURI());
         List<String> strData = Files.readAllLines(file.toPath(), StandardCharsets.UTF_8);
@@ -52,19 +57,21 @@ public class BlockQueueTest {
                     Hex.decode(blockRLP)
             );
 
-            if (block.getNumber() % 1000 == 0)
+            if (block.getNumber() % 10 == 0)
                 logger.info("adding block.hash: [{}] block.number: [{}]",
                         block.getShortHash(),
                         block.getNumber());
 
             blocks.add(block);
+            hashes.add(block.getHash());
         }
 
         logger.info("total blocks loaded: {}", blocks.size());
 
         BigInteger bi = new BigInteger(32, new Random());
         testDb = "test_db_" + bi;
-        SystemProperties.CONFIG.setDataBaseDir(testDb);
+        CONFIG.setDataBaseDir(testDb);
+        CONFIG.setDatabaseReset(false);
 
         MapDBFactory mapDBFactory = new MapDBFactoryImpl();
         blockQueue = new BlockQueueImpl();
@@ -80,25 +87,44 @@ public class BlockQueueTest {
 
     @Test // basic checks
     public void test1() {
-        blockQueue.add(blocks.get(0));
+        long receivedAt = System.currentTimeMillis();
+        long importFailedAt = receivedAt + receivedAt / 2;
+        BlockWrapper wrapper = new BlockWrapper(blocks.get(0), true);
+        wrapper.setReceivedAt(receivedAt);
+        wrapper.setImportFailedAt(importFailedAt);
+        blockQueue.add(new BlockWrapper(blocks.get(0)));
 
         // testing: peek()
-        Block block = blockQueue.peek();
+        BlockWrapper block = blockQueue.peek();
 
         assertNotNull(block);
+        assertTrue(wrapper.isNewBlock());
+        assertEquals(receivedAt, wrapper.getReceivedAt());
+        assertEquals(importFailedAt, wrapper.getImportFailedAt());
 
         // testing: validity of loaded block
         assertArrayEquals(blocks.get(0).getEncoded(), block.getEncoded());
 
-        blockQueue.poll();
+        blockQueue.take();
 
         // testing: addAll(), close(), open()
-        blockQueue.addAll(blocks);
+        blockQueue.addAll(CollectionUtils.collectList(blocks, new Functional.Function<Block, BlockWrapper>() {
+            @Override
+            public BlockWrapper apply(Block block) {
+                BlockWrapper wrapper = new BlockWrapper(block);
+                wrapper.setReceivedAt(System.currentTimeMillis());
+                return wrapper;
+            }
+        }));
 
         blockQueue.close();
         blockQueue.open();
 
         assertEquals(blocks.size(), blockQueue.size());
+
+        // checking: hashset
+        List<byte[]> filtered = blockQueue.filterExisting(hashes);
+        assertTrue(filtered.isEmpty());
 
         // testing: poll()
         long prevNumber = -1;
@@ -114,7 +140,7 @@ public class BlockQueueTest {
 
         // testing: add()
         for(Block b : blocks) {
-            blockQueue.add(b);
+            blockQueue.add(new BlockWrapper(b));
         }
 
         prevNumber = -1;
@@ -147,7 +173,7 @@ public class BlockQueueTest {
             try {
                 int nullsCount = 0;
                 while (nullsCount < 10) {
-                    Block b = blockQueue.poll();
+                    BlockWrapper b = blockQueue.poll();
                     logger.info("reader {}: {}", index, b == null ? null : b.getShortHash());
                     if(b == null) {
                         nullsCount++;
@@ -175,7 +201,7 @@ public class BlockQueueTest {
             try {
                 for(int i = 0; i < 50; i++) {
                     Block b = blocks.get(i);
-                    blockQueue.add(b);
+                    blockQueue.add(new BlockWrapper(b));
                     logger.info("writer {}: {}", index, b.getShortHash());
                     Thread.sleep(50);
                 }

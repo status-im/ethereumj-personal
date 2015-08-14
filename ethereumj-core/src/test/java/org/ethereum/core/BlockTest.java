@@ -1,11 +1,15 @@
 package org.ethereum.core;
 
+import org.ethereum.core.genesis.GenesisLoader;
 import org.ethereum.trie.SecureTrie;
 import org.ethereum.trie.Trie;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -14,9 +18,12 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Set;
 
-import static org.junit.Assert.*;
+import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class BlockTest {
 
     private static final Logger logger = LoggerFactory.getLogger("test");
@@ -26,7 +33,6 @@ public class BlockTest {
     private String GENESIS_RLP = "f901f8f901f3a00000000000000000000000000000000000000000000000000000000000000000a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000000000000000000000000000000000000000a09178d0f23c965d81f0834a4c72c6253ce6830f4022b1359aaebfc1ecba442d4ea056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302000080832fefd8808080a0000000000000000000000000000000000000000000000000000000000000000088000000000000002ac0c0";
     private String GENESIS_HASH = "fd4af92a79c7fc2fd8bf0d342f2e832e1d4f485c85b9152d2039e03bc604fdca";
     private String GENESIS_STATE_ROOT = "9178d0f23c965d81f0834a4c72c6253ce6830f4022b1359aaebfc1ecba442d4e";
-
 
 
     static String TEST_GENESIS =
@@ -65,7 +71,8 @@ public class BlockTest {
 
     @Test
     public void testGenesisFromNew() {
-        Block genesis = Genesis.getInstance();
+
+        Block genesis = GenesisLoader.loadGenesis();
         logger.info(genesis.toString());
 
         logger.info("genesis hash: [{}]", Hex.toHexString(genesis.getHash()));
@@ -107,6 +114,23 @@ public class BlockTest {
 
         logger.info("root: " + Hex.toHexString(state.getRootHash()));
         assertEquals(GENESIS_STATE_ROOT, Hex.toHexString(state.getRootHash()));
+    }
+
+
+    @Test
+    public void testFrontierGenesis(){
+
+        CONFIG.setGenesisInfo("frontier.json");
+
+        Block genesis = GenesisLoader.loadGenesis();
+
+        String hash = Hex.toHexString(genesis.getHash());
+        String root = Hex.toHexString(genesis.getStateRoot());
+
+        assertEquals("d7f8974fb5ac78d9ac099b9ad5018bedc2ce0a72dad1827a1709da30580f0544", root);
+        assertEquals("d4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3", hash);
+
+        CONFIG.setGenesisInfo("olympic.json");
     }
 
 

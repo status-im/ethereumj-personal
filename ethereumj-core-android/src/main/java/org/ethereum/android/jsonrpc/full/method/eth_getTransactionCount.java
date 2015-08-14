@@ -30,14 +30,16 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             BigInteger nonce = BigInteger.ZERO;
 
-            AccountState accountState = ethereum.getRepository().getAccountState(address);
-            if (accountState != null)
-                nonce = accountState.getNonce();
+            // TODO: Missing method on repository
+            //AccountState accountState = ethereum.getRepository().getAccountState(address);
+            //if (accountState != null)
+            //    nonce = accountState.getNonce();
 
             if (blockNumber == -1) {
                 synchronized (ethereum.getBlockchain().getPendingTransactions()) {
@@ -50,7 +52,8 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             }
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(root);
             }
 
             String tmp = "0x" + nonce.toString(16);

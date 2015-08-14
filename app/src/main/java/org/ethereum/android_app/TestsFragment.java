@@ -69,7 +69,7 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
             EthereumApplication app = (EthereumApplication)getActivity().getApplication();
             switch(v.getId()){
                 case R.id.connectButton:
-                    app.ethereum.connect(CONFIG.activePeerIP(), CONFIG.activePeerPort(), CONFIG.activePeerNodeid());
+                    //app.ethereum.connect(CONFIG.activePeerIP(), CONFIG.activePeerPort(), CONFIG.activePeerNodeid());
                     break;
                 case R.id.getEthereumStatus:
                     app.ethereum.getConnectionStatus(identifier);
@@ -136,7 +136,7 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
 
         EthereumApplication app = (EthereumApplication)getActivity().getApplication();
         app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
-        app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+        //app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
     }
 
     @Override

@@ -1,23 +1,26 @@
 package org.ethereum.core;
 
 
+import org.ethereum.TestContext;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.datasource.HashMapDB;
 import org.ethereum.db.BlockStore;
-import org.ethereum.db.InMemoryBlockStore;
+import org.ethereum.db.IndexedBlockStore;
 import org.ethereum.di.components.TestEthereumComponent;
 import org.ethereum.di.modules.TestEthereumModule;
 import org.ethereum.di.components.DaggerTestEthereumComponent;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.WorldManager;
+import org.ethereum.util.FileUtil;
 import org.hibernate.SessionFactory;
 import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.ethereum.TestContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +28,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.inject.Inject;
-
+import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.junit.Assert.assertEquals;
 
 public class ImportTest {
@@ -42,7 +46,11 @@ public class ImportTest {
         }
 
         public BlockStore blockStore(SessionFactory sessionFactory){
-            return new InMemoryBlockStore();
+
+            IndexedBlockStore blockStore = new IndexedBlockStore();
+            blockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+            return blockStore;
         }
     }
 
@@ -74,9 +82,8 @@ public class ImportTest {
     @Test
     public void testScenario1() throws URISyntaxException, IOException {
 
-        logger.error("Started");
-
         BlockchainImpl blockchain = (BlockchainImpl) worldManager.getBlockchain();
+        logger.info("Running as: {}", CONFIG.genesisInfo());
 
         URL scenario1 = ClassLoader
                 .getSystemResource("blockload/scenario1.dmp");
@@ -93,9 +100,11 @@ public class ImportTest {
             root = block.getStateRoot();
         }
 
+        Repository repository = (Repository)worldManager.getRepository();
         logger.info("asserting root state is: {}", Hex.toHexString(root));
         assertEquals(Hex.toHexString(root),
-                Hex.toHexString(worldManager.getRepository().getRoot()));
+                Hex.toHexString(repository.getRoot()));
+
     }
 
 }

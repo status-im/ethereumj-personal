@@ -3,7 +3,7 @@ package org.ethereum.android.manager;
 
 import org.ethereum.core.Block;
 import org.ethereum.core.ImportResult;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.core.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -15,7 +15,6 @@ import org.ethereum.android.util.Scanner;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import static org.ethereum.config.SystemProperties.CONFIG;
 
 @Singleton
 public class BlockLoader extends org.ethereum.manager.BlockLoader {

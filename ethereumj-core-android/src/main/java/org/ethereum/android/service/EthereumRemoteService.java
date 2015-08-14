@@ -220,7 +220,7 @@ public class EthereumRemoteService extends EthereumService {
         }
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
-        ethereum.init(privateKeys);
+        ethereum.init();
         isEthereumStarted = true;
     }
 
@@ -434,6 +434,7 @@ public class EthereumRemoteService extends EthereumService {
         logger.info("Stopped peer discovery.");
     }
 
+    //TODO: remove this
     /**
      * Gets the blockchain status
      *
@@ -445,7 +446,7 @@ public class EthereumRemoteService extends EthereumService {
      */
     protected void getBlockchainStatus(Message message) {
 
-        boolean isLoading = ethereum.isBlockchainLoading();
+        boolean isLoading = false;
         String status = isLoading ? "Loading" : "Loaded";
         Message replyMessage = Message.obtain(null, EthereumClientMessage.MSG_BLOCKCHAIN_STATUS, 0, 0, message.obj);
         Bundle replyData = new Bundle();

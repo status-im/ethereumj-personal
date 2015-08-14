@@ -4,27 +4,20 @@ import org.ethereum.core.*;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Repository;
-import org.ethereum.listener.EthereumListener;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.CompositeEthereumListener;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.client.PeerClient;
+import org.ethereum.net.eth.SyncManager;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
+import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -61,9 +54,14 @@ public class WorldManager {
 
     private EthereumListener listener;
 
+    private NodeManager nodeManager;
+
+    private SyncManager syncManager;
+
     @Inject
 	public WorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
+                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener
+						,NodeManager nodeManager, SyncManager syncManager) {
         logger.info("World manager instantiated");
         this.blockchain = blockchain;
         this.repository = repository;
@@ -73,6 +71,11 @@ public class WorldManager {
         this.channelManager = channelManager;
 		this.adminInfo = adminInfo;
         this.listener = listener;
+        this.nodeManager = nodeManager;
+        this.nodeManager.setWorldManager(this);
+        this.syncManager = syncManager;
+        this.syncManager.setBlockChain(this.blockchain);
+        this.channelManager.setSyncManager(this.syncManager);
 
         this.init();
     }
@@ -84,6 +87,13 @@ public class WorldManager {
         String secret = CONFIG.coinbaseSecret();
         byte[] cbAddr = HashUtil.sha3(secret.getBytes());
         wallet.importKey(cbAddr);
+
+        loadBlockchain();
+        syncManager.init();
+    }
+
+    public void setEthereum(Ethereum ethereum) {
+        this.syncManager.setEthereum(ethereum);
     }
 
     public void addListener(EthereumListener listener) {
@@ -117,8 +127,8 @@ public class WorldManager {
         this.wallet = wallet;
     }
 
-    public Repository getRepository() {
-        return repository;
+    public org.ethereum.facade.Repository getRepository() {
+        return (org.ethereum.facade.Repository)repository;
     }
 
     public Blockchain getBlockchain() {
@@ -137,11 +147,6 @@ public class WorldManager {
         return activePeer;
     }
 
-
-    public boolean isBlockchainLoading() {
-        return blockchain.getQueue().size() > 2;
-    }
-
     public void loadBlockchain() {
 
         if (!CONFIG.databaseReset())
@@ -157,7 +162,7 @@ public class WorldManager {
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
 
-            blockStore.saveBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
+            blockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
 
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
@@ -208,4 +213,5 @@ public class WorldManager {
         repository.close();
         blockchain.close();
     }
+
 }

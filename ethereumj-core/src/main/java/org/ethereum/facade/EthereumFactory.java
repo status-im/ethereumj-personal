@@ -6,6 +6,7 @@ import org.ethereum.di.components.DaggerEthereumComponent;
 import org.ethereum.net.eth.EthHandler;
 import org.ethereum.net.shh.ShhHandler;
 
+import org.ethereum.net.swarm.bzz.BzzHandler;
 import org.ethereum.util.FileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

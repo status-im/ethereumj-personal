@@ -302,7 +302,8 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             for (Transaction tx : block.getTransactionsList()) {
                 if (Arrays.equals(tx.getHash(), transaction.getTransaction().getHash()))
                     break;
-                txli += this.ethereum.getBlockchain().getTransactionReceiptByHash(transaction.getTransaction().getHash()).getLogInfoList().size();
+                // TODO: Missing method on blockchain
+                //txli += this.ethereum.getBlockchain().getTransactionReceiptByHash(transaction.getTransaction().getHash()).getLogInfoList().size();
                 txi++;
             }
             res.put("transactionIndex", "0x" + Long.toHexString(txi));

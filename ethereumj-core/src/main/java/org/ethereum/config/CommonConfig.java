@@ -1,6 +1,8 @@
-package org.ethereum.facade;
+package org.ethereum.config;
 
 import org.ethereum.config.SystemProperties;
+import org.ethereum.core.PendingTransaction;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
@@ -10,6 +12,12 @@ import org.ethereum.db.RepositoryImpl;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.*;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.hibernate4.HibernateTransactionManager;
+import org.springframework.orm.hibernate4.LocalSessionFactoryBuilder;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,18 +26,25 @@ import java.util.Set;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
+@Configuration
+@EnableTransactionManagement
+@ComponentScan(basePackages = "org.ethereum")
 public class CommonConfig {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
 
+    @Autowired
     private RedisConnection redisConnection;
-
+    @Autowired
     private MapDBFactory mapDBFactory;
 
+    @Bean
     Repository repository() {
         return new RepositoryImpl(keyValueDataSource(), keyValueDataSource());
     }
 
+    @Bean
+    @Scope("prototype")
     public KeyValueDataSource keyValueDataSource() {
         String dataSource = CONFIG.getKeyValueDataSource();
         try {
@@ -47,21 +62,23 @@ public class CommonConfig {
         }
     }
 
-    public Set<Transaction> pendingTransactions() {
+    @Bean
+    public Set<PendingTransaction> pendingTransactions() {
         String storage = "Redis";
         try {
             if (redisConnection.isAvailable()) {
-                return redisConnection.createTransactionSet("pendingTransactions");
+                return redisConnection.createPendingTransactionSet("pendingTransactions");
             }
 
             storage = "In memory";
-            return Collections.synchronizedSet(new HashSet<Transaction>());
+            return Collections.synchronizedSet(new HashSet<PendingTransaction>());
         } finally {
             logger.info(storage + " 'pendingTransactions' storage created.");
         }
     }
 
-    /*
+    @Bean
+    @Lazy
     public SessionFactory sessionFactory() {
         LocalSessionFactoryBuilder builder =
                 new LocalSessionFactoryBuilder(dataSource());
@@ -70,7 +87,6 @@ public class CommonConfig {
 
         return builder.buildSessionFactory();
     }
-    */
 
     private Properties getHibernateProperties() {
 
@@ -94,12 +110,15 @@ public class CommonConfig {
                 "org.hibernate.dialect.H2Dialect");
         return prop;
     }
-    /*
+
+    @Bean
+    @Lazy
     public HibernateTransactionManager txManager() {
         return new HibernateTransactionManager(sessionFactory());
     }
 
 
+    @Bean(name = "dataSource")
     public DriverManagerDataSource dataSource() {
 
         logger.info("Connecting to the block store");
@@ -118,5 +137,6 @@ public class CommonConfig {
         return ds;
 
     }
-    */
+
+
 }

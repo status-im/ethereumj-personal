@@ -4,6 +4,7 @@ import org.ethereum.config.SystemProperties;
 import org.ethereum.datasource.DataSourcePool;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.trie.SecureTrie;
+import org.ethereum.trie.TrieImpl;
 import org.ethereum.util.RLP;
 import org.ethereum.util.RLPElement;
 import org.ethereum.util.RLPItem;
@@ -14,6 +15,8 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.util.*;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.ethereum.datasource.DataSourcePool.levelDbByName;
 import static org.ethereum.util.ByteUtil.*;
 
@@ -34,7 +37,6 @@ public class ContractDetailsImpl implements ContractDetails {
     private boolean deleted = false;
     private boolean externalStorage;
     private KeyValueDataSource externalStorageDataSource;
-    private int keysSize;
 
     public ContractDetailsImpl() {
     }
@@ -51,13 +53,10 @@ public class ContractDetailsImpl implements ContractDetails {
 
     private void addKey(byte[] key) {
         keys.add(wrap(key));
-        keysSize += key.length;
     }
 
     private void removeKey(byte[] key) {
-        if (keys.remove(wrap(key))) {
-            keysSize -= key.length;
-        }
+        keys.remove(wrap(key));
     }
 
     @Override
@@ -172,18 +171,42 @@ public class ContractDetailsImpl implements ContractDetails {
     }
 
     @Override
-    public Map<DataWord, DataWord> getStorage() {
-
+    public Map<DataWord, DataWord> getStorage(Collection<DataWord> keys) {
         Map<DataWord, DataWord> storage = new HashMap<>();
+        if (keys == null) {
+            for (ByteArrayWrapper keyBytes : this.keys) {
+                DataWord key = new DataWord(keyBytes);
+                DataWord value = get(key);
 
-        for (ByteArrayWrapper keyBytes : keys) {
-
-            DataWord key = new DataWord(keyBytes);
-            DataWord value = get(key);
-            storage.put(key, value);
+                storage.put(key, value);
+            }
+        } else {
+            for (DataWord key : keys) {
+                DataWord value = get(key);
+                storage.put(key, value);
+            }
         }
 
         return storage;
+    }
+
+    @Override
+    public Map<DataWord, DataWord> getStorage() {
+        return getStorage(null);
+    }
+
+    @Override
+    public int getStorageSize() {
+        return keys.size();
+    }
+
+    @Override
+    public Set<DataWord> getStorageKeys() {
+        Set<DataWord> result = new HashSet<>();
+        for (ByteArrayWrapper key : keys) {
+            result.add(new DataWord(key));
+        }
+        return result;
     }
 
     @Override
@@ -255,14 +278,17 @@ public class ContractDetailsImpl implements ContractDetails {
     }
 
     @Override
-    public int getAllocatedMemorySize() {
-        int result = rlpEncoded == null ? 0 : rlpEncoded.length;
-        result += address.length;
-        result += code.length;
-        result += storageTrie.getCache().getAllocatedMemorySize();
-        result += keysSize;
+    public ContractDetails getSnapshotTo(byte[] hash){
 
-        return result;
+        KeyValueDataSource keyValueDataSource = ((TrieImpl) this.storageTrie).getCache().getDb();
+
+        SecureTrie snapStorage = new SecureTrie(keyValueDataSource, hash);
+        snapStorage.setCache(this.storageTrie.getCache());
+
+        ContractDetailsImpl details = new ContractDetailsImpl(this.address, snapStorage, this.code);
+        details.keys = this.keys;
+
+        return details;
     }
 }
 

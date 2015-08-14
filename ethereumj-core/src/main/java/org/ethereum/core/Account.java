@@ -1,7 +1,7 @@
 package org.ethereum.core;
 
 import org.ethereum.crypto.ECKey;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.util.Utils;
 
 import java.math.BigInteger;
@@ -50,13 +50,7 @@ public class Account {
 
     public BigInteger getBalance() {
 
-        AccountState accountState =
-                repository.getAccountState(this.getAddress());
-
-        BigInteger balance = BigInteger.ZERO;
-
-        if (accountState != null)
-            balance = accountState.getBalance();
+        BigInteger balance = repository.getBalance(this.getAddress());
 
         synchronized (getPendingTransactions()) {
             if (!getPendingTransactions().isEmpty()) {

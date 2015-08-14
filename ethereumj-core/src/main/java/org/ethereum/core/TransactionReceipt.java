@@ -60,6 +60,7 @@ public class TransactionReceipt {
             LogInfo logInfo = new LogInfo(log.getRLPData());
             logInfoList.add(logInfo);
         }
+
         rlpEncoded = rlp;
     }
 

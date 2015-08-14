@@ -1,24 +1,34 @@
 package org.ethereum.net;
 
 import org.ethereum.core.Block;
+import org.ethereum.core.BlockWrapper;
 import org.ethereum.core.ImportResult;
+import org.ethereum.datasource.mapdb.MapDBFactory;
+import org.ethereum.datasource.mapdb.MapDBFactoryImpl;
+import org.ethereum.db.BlockQueueImpl;
 import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.db.HashStore;
+import org.ethereum.db.HashStoreImpl;
+import org.ethereum.core.Blockchain;
+import org.ethereum.net.eth.SyncManager;
+import org.ethereum.net.eth.SyncState;
+import org.ethereum.util.CollectionUtils;
+import org.ethereum.util.Functional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.PriorityBlockingQueue;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static java.lang.Thread.sleep;
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.core.ImportResult.IMPORTED_NOT_BEST;
 import static org.ethereum.core.ImportResult.NO_PARENT;
-import static org.ethereum.core.ImportResult.SUCCESS;
+import static org.ethereum.core.ImportResult.IMPORTED_BEST;
 
 /**
  * The processing queue for blocks to be validated and added to the blockchain.
@@ -33,35 +43,50 @@ public class BlockQueue {
 
     private static final Logger logger = LoggerFactory.getLogger("blockqueue");
 
+    private static final int IMPORT_FAIL_THRESHOLD = 10 * 1000; // 10 seconds
+
     /**
-     * The list of hashes of the heaviest chain on the network,
+     * Store holding a list of hashes of the heaviest chain on the network,
      * for which this client doesn't have the blocks yet
      */
-    private Deque<byte[]> blockHashQueue = new ArrayDeque<>();
+    private HashStore hashStore;
 
     /**
      * Queue with blocks to be validated and added to the blockchain
      */
-    private PriorityBlockingQueue<Block> blockReceivedQueue = new PriorityBlockingQueue<>(1000, new BlockByNumberComparator());
-
-    /**
-     * Highest known total difficulty, representing the heaviest chain on the network
-     */
-    private BigInteger highestTotalDifficulty;
+    private org.ethereum.db.BlockQueue blockQueue;
 
     /**
      * Last block in the queue to be processed
      */
     private Block lastBlock;
 
+    private byte[] bestHash;
+
     private Timer timer = new Timer("BlockQueueTimer");
 
     Blockchain blockchain;
 
+    SyncManager syncManager;
+
     @Inject
-    public BlockQueue(Blockchain blockchain) {
+    public BlockQueue(Blockchain blockchain, SyncManager syncManager) {
 
         this.blockchain = blockchain;
+        this.syncManager = syncManager;
+        this.init();
+	}
+
+    public void init() {
+        MapDBFactory mapDBFactory = new MapDBFactoryImpl();
+        hashStore = new HashStoreImpl();
+        ((HashStoreImpl)hashStore).setMapDBFactory(mapDBFactory);
+        hashStore.open();
+
+        blockQueue = new BlockQueueImpl();
+        ((BlockQueueImpl)blockQueue).setMapDBFactory(mapDBFactory);
+        blockQueue.open();
+
         Runnable queueProducer = new Runnable(){
 
             @Override
@@ -82,21 +107,34 @@ public class BlockQueue {
         while (1==1){
 
             try {
-                Block block = blockReceivedQueue.take();
-                logger.info("BlockQueue size: {}", blockReceivedQueue.size());
-                ImportResult importResult = blockchain.tryToConnect(block);
+                BlockWrapper wrapper = blockQueue.take();
+                logger.info("BlockQueue size: {}", blockQueue.size());
+                ImportResult importResult = blockchain.tryToConnect(wrapper.getBlock());
 
                 // In case we don't have a parent on the chain
                 // return the try and wait for more blocks to come.
-                if (importResult == NO_PARENT){
-                    logger.info("No parent on the chain for block.number: [{}]", block.getNumber());
-                    blockReceivedQueue.add(block);
+                if (importResult == NO_PARENT) {
+                    logger.info("No parent on the chain for block.number: {} block.hash: {}", wrapper.getNumber(), wrapper.getBlock().getShortHash());
+                    if (!syncManager.isGapRecovery()) {
+                        wrapper.importFailed();
+                        if (hashStore.isEmpty() || wrapper.timeSinceFail() > IMPORT_FAIL_THRESHOLD) {
+                            syncManager.recoverGap(wrapper);
+                            wrapper.resetImportFail();
+                        }
+                    }
+                    blockQueue.add(wrapper);
                     sleep(2000);
                 }
 
+                if(wrapper.isNewBlock() && importResult.isSuccessful()) {
+                    syncManager.notifyNewBlockImported(wrapper);
+                }
 
-                if (importResult == SUCCESS)
-                    logger.info("Success importing: block number: {}", block.getNumber());
+                if (importResult == IMPORTED_BEST)
+                    logger.info("Success importing BEST: block.number: {}, block.hash {}", wrapper.getNumber(), wrapper.getBlock().getShortHash());
+
+                if (importResult == IMPORTED_NOT_BEST)
+                    logger.info("Success importing NOT_BEST: block.number: {} block.hash {}", wrapper.getNumber(), wrapper.getBlock().getShortHash());
 
             } catch (Throwable e) {
                 logger.error("Error: {} ", e);
@@ -117,29 +155,54 @@ public class BlockQueue {
      */
     public void addBlocks(List<Block> blockList) {
 
-        for (Block block : blockList)
-            blockReceivedQueue.put(block);
+        List<BlockWrapper> wrappers = CollectionUtils.collectList(blockList, new Functional.Function<Block, BlockWrapper>() {
+            @Override
+            public BlockWrapper apply(Block block) {
+                return new BlockWrapper(block);
+            }
+        });
+        blockQueue.addAll(wrappers);
 
         lastBlock = blockList.get(blockList.size() - 1);
 
         logger.info("Blocks waiting to be proceed:  queue.size: [{}] lastBlock.number: [{}]",
-                blockReceivedQueue.size(),
+                blockQueue.size(),
                 lastBlock.getNumber());
+    }
+
+    /**
+     * adding single block to the queue
+     *
+     * @param block block
+     */
+    public void addBlock(Block block) {
+        addBlock(new BlockWrapper(block));
+    }
+
+    /**
+     * adding new block to the queue
+     *
+     * @param block new block
+     */
+    public void addNewBlock(Block block) {
+        BlockWrapper wrapper = new BlockWrapper(block, true);
+        wrapper.setReceivedAt(System.currentTimeMillis());
+        addBlock(wrapper);
     }
 
     /**
      * adding single block to the queue usually
      * a result of a NEW_BLOCK message announce.
      *
-     * @param block - new block
+     * @param wrapper block wrapper
      */
-    public void addBlock(Block block) {
+    public void addBlock(BlockWrapper wrapper) {
 
-        blockReceivedQueue.add(block);
-        lastBlock = block;
+        blockQueue.add(wrapper);
+        lastBlock = wrapper.getBlock();
 
         logger.debug("Blocks waiting to be proceed:  queue.size: [{}] lastBlock.number: [{}]",
-                blockReceivedQueue.size(),
+                blockQueue.size(),
                 lastBlock.getNumber());
     }
 
@@ -152,7 +215,7 @@ public class BlockQueue {
      * always the Genesis block at the start of the chain.
      */
     public Block getLastBlock() {
-        if (blockReceivedQueue.isEmpty())
+        if (blockQueue.isEmpty())
             return blockchain.getBestBlock();
         return lastBlock;
     }
@@ -164,8 +227,8 @@ public class BlockQueue {
      * @param hash - the best hash
      */
     public void setBestHash(byte[] hash) {
-        blockHashQueue.clear();
-        blockHashQueue.addLast(hash);
+        hashStore.addFirst(hash);
+        this.bestHash = hash;
     }
 
     /**
@@ -175,17 +238,36 @@ public class BlockQueue {
      * @return The best hash on the network known to the client
      */
     public byte[] getBestHash() {
-        return blockHashQueue.peekLast();
+        return bestHash;
     }
 
     public void addHash(byte[] hash) {
-        blockHashQueue.addLast(hash);
+        hashStore.addFirst(hash);
+        this.bestHash = hash;
+        if (logger.isTraceEnabled())
+            logAddHash(hash);
+    }
 
-        if (logger.isTraceEnabled()) {
-            logger.trace("Adding hash to a hashQueue: [{}], hash queue size: {} ",
-                    Hex.toHexString(hash).substring(0, 6),
-                    blockHashQueue.size());
+    public void addHashes(List<byte[]> hashes) {
+        if(hashes.isEmpty()) {
+            return;
         }
+        if (logger.isTraceEnabled())
+            for(byte[] hash : hashes)
+                logAddHash(hash);
+
+        this.bestHash = hashes.listIterator(hashes.size()).previous();
+        List<byte[]> filtered = blockQueue.filterExisting(hashes);
+        hashStore.addFirstBatch(filtered);
+
+        if(logger.isDebugEnabled())
+            logger.debug("{} hashes filtered out, {} added", hashes.size() - filtered.size(), filtered.size());
+    }
+
+    private void logAddHash(byte[] hash) {
+        logger.trace("Adding hash to a hashQueue: [{}], hash queue size: {} ",
+                Hex.toHexString(hash).substring(0, 6),
+                hashStore.size());
     }
 
     public void returnHashes(List<ByteArrayWrapper> hashes) {
@@ -201,12 +283,12 @@ public class BlockQueue {
 
             if (logger.isDebugEnabled())
                 logger.debug("Return hash: [{}]", Hex.toHexString(hash));
-            blockHashQueue.addLast(hash);
+            hashStore.addFirst(hash);
         }
     }
 
     public void addNewBlockHash(byte[] hash) {
-        blockHashQueue.addFirst(hash);
+        hashStore.add(hash);
     }
 
     /**
@@ -215,43 +297,13 @@ public class BlockQueue {
      * @return A list of hashes for which blocks need to be retrieved.
      */
     public List<byte[]> getHashes() {
-
-        List<byte[]> hashes = new ArrayList<>();
-        while (!blockHashQueue.isEmpty() && hashes.size() < CONFIG.maxBlocksAsk()) {
-            hashes.add(blockHashQueue.removeLast());
-        }
-        return hashes;
+        return hashStore.pollBatch(CONFIG.maxBlocksAsk());
     }
 
     // a bit ugly but really gives
     // good result
     public void logHashQueueSize() {
-        logger.info("Block hashes list size: [{}]", blockHashQueue.size());
-    }
-
-    private class BlockByNumberComparator implements Comparator<Block> {
-
-        @Override
-        public int compare(Block o1, Block o2) {
-
-            if (o1 == null || o2 == null)
-                throw new NullPointerException();
-
-            if (o1.getNumber() > o2.getNumber())
-                return 1;
-            if (o1.getNumber() < o2.getNumber())
-                return -1;
-
-            return 0;
-        }
-    }
-
-    public BigInteger getHighestTotalDifficulty() {
-        return highestTotalDifficulty;
-    }
-
-    public void setHighestTotalDifficulty(BigInteger highestTotalDifficulty) {
-        this.highestTotalDifficulty = highestTotalDifficulty;
+        logger.info("Block hashes list size: [{}]", hashStore.size());
     }
 
     /**
@@ -260,16 +312,16 @@ public class BlockQueue {
      * @return the current number of blocks in the queue
      */
     public int size() {
-        return blockReceivedQueue.size();
+        return blockQueue.size();
     }
 
     public boolean isHashesEmpty() {
-        return blockHashQueue.size() == 0;
+        return hashStore.isEmpty();
     }
 
     public void clear() {
-        this.blockHashQueue.clear();
-        this.blockReceivedQueue.clear();
+        this.hashStore.clear();
+        this.blockQueue.clear();
     }
 
     /**
@@ -281,5 +333,13 @@ public class BlockQueue {
         timer.purge();
     }
 
+    public HashStore getHashStore() {
+        return hashStore;
+    }
 
+    //TODO we need more robust solution for this check
+    public boolean hasSolidBlocks() {
+        BlockWrapper wrapper = blockQueue.peek();
+        return wrapper != null && wrapper.isSolidBlock();
+    }
 }

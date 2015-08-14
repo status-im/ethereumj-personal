@@ -2,35 +2,24 @@ package org.ethereum.android.di.modules;
 
 import android.content.Context;
 
-import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.config.SystemProperties;
-import org.ethereum.core.BlockchainImpl;
-import org.ethereum.core.Wallet;
-import org.ethereum.db.BlockStore;
-import org.ethereum.db.RepositoryImpl;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Ethereum;
-import org.ethereum.facade.EthereumImpl;
-import org.ethereum.facade.Repository;
-import org.ethereum.listener.CompositeEthereumListener;
-import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.AdminInfo;
+import org.ethereum.core.Blockchain;
 import org.ethereum.android.manager.BlockLoader;
-import org.ethereum.net.MessageQueue;
-import org.ethereum.net.client.PeerClient;
-import org.ethereum.net.eth.EthHandler;
-import org.ethereum.net.p2p.P2pHandler;
-import org.ethereum.net.peerdiscovery.DiscoveryChannel;
-import org.ethereum.net.peerdiscovery.PeerDiscovery;
-import org.ethereum.net.peerdiscovery.WorkerThread;
-import org.ethereum.net.server.ChannelManager;
-import org.ethereum.net.server.EthereumChannelInitializer;
-import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.wire.MessageCodec;
-import org.ethereum.vm.ProgramInvokeFactory;
-import org.ethereum.vm.ProgramInvokeFactoryImpl;
+import org.ethereum.datasource.HashMapDB;
+import org.ethereum.datasource.KeyValueDataSource;
+import org.ethereum.android.datasource.LevelDbDataSource;
+import org.ethereum.db.BlockStore;
+import org.ethereum.db.IndexedBlockStore;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -38,8 +27,10 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
+import static org.ethereum.db.IndexedBlockStore.BLOCK_INFO_SERIALIZER;
+
 @Module
-public class EthereumModule {
+public class EthereumModule extends org.ethereum.di.modules.EthereumModule {
 
     private Context context;
 
@@ -57,116 +48,52 @@ public class EthereumModule {
         this.storeAllBlocks = storeAllBlocks;
     }
 
-    @Provides
-    @Singleton
-    Ethereum provideEthereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerDiscovery peerDiscovery, Wallet wallet) {
-        return new org.ethereum.android.Ethereum(blockchain, blockStore, repository, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerDiscovery, wallet);
-    }
+    @Override
+    protected BlockStore createBlockStore() {
 
-    @Provides
-    @Singleton
-    Blockchain provideBlockchain(BlockStore blockStore, Repository repository,
-                                 Wallet wallet, AdminInfo adminInfo,
-                                 EthereumListener listener, ChannelManager channelManager) {
-        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener, channelManager);
-    }
-
-    @Provides
-    @Singleton
-    BlockStore provideBlockStore() {
         OrmLiteBlockStoreDatabase database = OrmLiteBlockStoreDatabase.getHelper(context);
         return new InMemoryBlockStore(database, storeAllBlocks);
     }
+    @Override
+    protected org.ethereum.manager.BlockLoader createBlockLoader(Blockchain blockchain) {
+        return (org.ethereum.manager.BlockLoader) new BlockLoader(blockchain);
+    }
+/*
+    @Override
+    protected BlockStore createBlockStore() {
+        String database = SystemProperties.CONFIG.databaseDir();
 
+        String blocksIndexFile = database + "/blocks/index";
+        File dbFile = new File(blocksIndexFile);
+        if (!dbFile.getParentFile().exists()) dbFile.getParentFile().mkdirs();
+
+        DB indexDB = DBMaker.fileDB(dbFile)
+                .closeOnJvmShutdown()
+                .make();
+
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = indexDB.hashMapCreate("index")
+                .keySerializer(Serializer.LONG)
+                .valueSerializer(BLOCK_INFO_SERIALIZER)
+                .counterEnable()
+                .makeOrGet();
+
+        KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
+        blocksDB.init();
+
+
+        IndexedBlockStore cache = new IndexedBlockStore();
+        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+        IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
+        indexedBlockStore.init(indexMap, blocksDB, cache, indexDB);
+
+
+        return indexedBlockStore;
+    }
+*/
     @Provides
     @Singleton
-    Repository provideRepository() {
-        LevelDbDataSource detailsDS = new LevelDbDataSource();
-        LevelDbDataSource stateDS = new LevelDbDataSource();
-        return new RepositoryImpl(detailsDS, stateDS);
-    }
-
-    @Provides
-    @Singleton
-    AdminInfo provideAdminInfo() {
-        return new AdminInfo();
-    }
-
-    @Provides
-    @Singleton
-    EthereumListener provideEthereumListener() {
-        return new CompositeEthereumListener();
-    }
-
-    @Provides
-    @Singleton
-    PeerDiscovery providePeerDiscovery() {
-        return new PeerDiscovery();
-    }
-
-    @Provides
-    @Singleton
-    ChannelManager provideChannelManager(EthereumListener listener) {
-        return new ChannelManager(listener);
-    }
-
-    @Provides
-    @Singleton
-    BlockLoader provideBlockLoader(Blockchain blockchain) {
-        return new BlockLoader(blockchain);
-    }
-
-    @Provides
-    @Singleton
-    ProgramInvokeFactory provideProgramInvokeFactory() {
-        return new ProgramInvokeFactoryImpl();
-    }
-
-    @Provides
-    EthHandler provideEthHandler(Blockchain blockchain, EthereumListener listener, Wallet wallet) {
-        return new EthHandler(blockchain, listener, wallet);
-    }
-
-    @Provides
-    ShhHandler provideShhHandler(EthereumListener listener) {
-        return new ShhHandler(listener);
-    }
-
-    @Provides
-    P2pHandler provideP2pHandler(PeerDiscovery peerDiscovery, EthereumListener listener) {
-        return new P2pHandler(peerDiscovery, listener);
-    }
-
-    @Provides
-    MessageCodec provideMessageCodec(EthereumListener listener) {
-        return new MessageCodec(listener);
-    }
-
-    @Provides
-    PeerClient providePeerClient(EthereumListener listener, ChannelManager channelManager,
-                                 Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider) {
-        return new PeerClient(listener, channelManager, ethereumChannelInitializerProvider);
-    }
-
-    @Provides
-    MessageQueue provideMessageQueue(EthereumListener listener) {
-        return new MessageQueue(listener);
-    }
-
-    @Provides
-    WorkerThread provideWorkerThread(Provider<DiscoveryChannel> discoveryChannelProvider) {
-        return new WorkerThread(discoveryChannelProvider);
-    }
-
-    @Provides
-    String provideRemoteId() {
-        return SystemProperties.CONFIG.activePeerNodeid();
-    }
-
-    @Provides
-    @Singleton
-    Context provideContext() {
+    public Context provideContext() {
         return context;
     }
 }

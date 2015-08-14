@@ -43,7 +43,6 @@ public class BlocksMessage extends EthMessage {
     private void encode() {
 
         List<byte[]> encodedElements = new Vector<>();
-        encodedElements.add(RLP.encodeByte(BLOCKS.asByte()));
 
         for (Block block : blocks)
             encodedElements.add(block.getEncoded());
@@ -83,6 +82,6 @@ public class BlocksMessage extends EthMessage {
         for (Block blockData : this.getBlocks()) {
             sb.append("\n   ").append(blockData.toFlatString());
         }
-        return "[" + getCommand().name() + sb.toString() + "]";
+        return "[" + getCommand().name() + " count( " + blocks.size() + " )]";
     }
 }

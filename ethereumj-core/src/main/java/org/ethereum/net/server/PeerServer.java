@@ -1,5 +1,6 @@
 package org.ethereum.net.server;
 
+import org.ethereum.crypto.ECKey;
 import org.ethereum.listener.EthereumListener;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,6 +15,7 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.spongycastle.util.encoders.Hex;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -69,6 +71,13 @@ public class PeerServer {
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);
+
+            ECKey myKey = ECKey.fromPrivate(CONFIG.privateKey().getBytes()).decompress();
+            byte[] nodeIdWithFormat = myKey.getPubKey();
+            byte[] nodeId = new byte[nodeIdWithFormat.length - 1];
+            System.arraycopy(nodeIdWithFormat, 1, nodeId, 0, nodeId.length);
+            logger.info("NodeId: [{}] ", Hex.toHexString(nodeId));
+
             ChannelFuture f = b.bind(port).sync();
 
             // Wait until the connection is closed.

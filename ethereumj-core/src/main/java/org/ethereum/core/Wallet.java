@@ -1,34 +1,13 @@
 package org.ethereum.core;
 
 import org.ethereum.crypto.ECKey;
-import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.net.submit.WalletTransaction;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
-
-import org.w3c.dom.Attr;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
+import org.w3c.dom.*;
 import org.xml.sax.SAXException;
-
-import java.io.File;
-import java.io.IOException;
-
-import java.math.BigInteger;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,7 +17,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -67,8 +50,6 @@ public class Wallet {
     Repository repository;
 
     private List<WalletListener> listeners = new ArrayList<>();
-
-    private Map<ByteArrayWrapper, Transaction> transactionMap = new HashMap<>();
 
     Provider<Account> accountProvider;
 
@@ -101,13 +82,6 @@ public class Wallet {
 
     public Collection<Account> getAccountCollection() {
         return rows.values();
-    }
-
-    public AccountState getAccountState(byte[] address) {
-        AccountState accountState =
-                repository.getAccountState(address);
-
-        return accountState;
     }
 
     public BigInteger totalBalance() {

@@ -56,7 +56,7 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
-    public Block getBlockByNumber(long blockNumber) {
+    public Block getChainBlockByNumber(long blockNumber) {
 
         Block block = numberIndex.get(blockNumber);
 
@@ -78,6 +78,12 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
+    public boolean isBlockExist(byte[] hash) {
+        Block block = hashIndex.get(wrap(hash));
+        return block != null || dbGetBlockByHash(hash) != null;
+    }
+
+    @Override
     public List<byte[]> getListHashesEndWith(byte[] hash, long qty) {
 
         Block startBlock = hashIndex.get(wrap(hash));
@@ -88,7 +94,7 @@ public class InMemoryBlockStore implements BlockStore {
         List<byte[]> hashes = new ArrayList<>();
 
         for (long i = startBlock.getNumber();  i <= endIndex; ++i){
-            Block block = getBlockByNumber(i);
+            Block block = getChainBlockByNumber(i);
             hashes.add(block.getHash() );
         }
 
@@ -96,7 +102,7 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
-    public void saveBlock(Block block, List<TransactionReceipt> receipts) {
+    public void saveBlock(Block block, BigInteger cummDifficulty, boolean mainChain) {
         ByteArrayWrapper wHash = wrap(block.getHash());
         blocks.add(block);
         hashIndex.put(wHash, block);
@@ -119,7 +125,7 @@ public class InMemoryBlockStore implements BlockStore {
 
     public byte[] dbGetBlockHashByNumber(long blockNumber) {
 
-        Block block = getBlockByNumber(blockNumber);
+        Block block = getChainBlockByNumber(blockNumber);
         if (block != null) return block.getHash();
         return null;
     }
@@ -129,8 +135,8 @@ public class InMemoryBlockStore implements BlockStore {
         List result = database.getByNumber(blockNumber);
         if (result.size() == 0) return null;
         BlockVO vo = (BlockVO) result.get(0);
-
-        return new Block(vo.rlp);
+        byte[] rlp = vo.getRlp();
+        return new Block(rlp);
     }
 
     public Block dbGetBlockByHash(byte[] hash) {
@@ -155,10 +161,10 @@ public class InMemoryBlockStore implements BlockStore {
         hashIndex.clear();
         numberIndex.clear();
 
-        saveBlock(block, null);
+        saveBlock(block, BigInteger.ZERO, true);
 
         long t__ = System.nanoTime();
-        logger.info("Flush block store in: {} ms", ((float) (t__ - t_) / 1_000_000));
+        logger.info("Flush block store in: {} ms", ((float)(t__ - t_) / 1_000_000));
 
         totalDifficulty = (BigInteger) database.getTotalDifficulty();
     }
@@ -171,7 +177,7 @@ public class InMemoryBlockStore implements BlockStore {
 
         Block bestBlock = database.getBestBlock();
         if (bestBlock == null) return;
-        saveBlock(bestBlock, null);
+        saveBlock(bestBlock, ZERO, true);
 
         totalDifficulty =  database.getTotalDifficulty();
 
@@ -181,7 +187,26 @@ public class InMemoryBlockStore implements BlockStore {
     }
 
     @Override
+    public long getMaxNumber() {
+
+        Long bestNumber = database.getMaxNumber();
+
+        return bestNumber == null ? 0 : bestNumber;
+    }
+
+    @Override
     public void setSessionFactory(SessionFactory sessionFactory) {
 
     }
+
+    @Override
+    public void reBranch(Block forkBlock) {
+
+    }
+
+    @Override
+    public BigInteger getTotalDifficultyForHash(byte[] hash) {
+        return null;
+    }
 }
+

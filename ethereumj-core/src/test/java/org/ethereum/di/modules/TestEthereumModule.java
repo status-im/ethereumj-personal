@@ -9,10 +9,10 @@ import org.ethereum.datasource.redis.RedisConnectionImpl;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;
 import org.ethereum.db.RepositoryImpl;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.core.Blockchain;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumImpl;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
@@ -21,14 +21,17 @@ import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.EthHandler;
+import org.ethereum.net.eth.SyncManager;
 import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.peerdiscovery.DiscoveryChannel;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.WorkerThread;
+import org.ethereum.net.rlpx.Node;
+import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.wire.MessageCodec;
+import org.ethereum.net.rlpx.MessageCodec;
 import org.ethereum.vm.ProgramInvokeFactory;
 import org.ethereum.vm.ProgramInvokeFactoryImpl;
 
@@ -55,8 +58,8 @@ public class TestEthereumModule {
     @Provides
     @Singleton
     WorldManager provideWorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
-        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener);
+            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener, NodeManager nodeManager, SyncManager syncManager) {
+        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener, nodeManager, syncManager);
     }
 
     @Provides
@@ -101,8 +104,10 @@ public class TestEthereumModule {
 
     @Provides
     @Singleton
-    ChannelManager provideChannelManager(EthereumListener listener) {
-        return new ChannelManager(listener);
+    ChannelManager provideChannelManager(SyncManager syncManager, NodeManager nodeManager) {
+        ChannelManager channelManager = new ChannelManager();
+        channelManager.setSyncManager(syncManager);
+        return channelManager;
     }
 
     @Provides
@@ -130,8 +135,8 @@ public class TestEthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(WorldManager worldManager) {
-        return new ShhHandler(worldManager);
+    ShhHandler provideShhHandler(EthereumListener listener) {
+        return new ShhHandler(listener);
     }
 
     @Provides
@@ -140,8 +145,8 @@ public class TestEthereumModule {
     }
 
     @Provides
-    MessageCodec provideMessageCodec(EthereumListener listener) {
-        return new MessageCodec(listener);
+    MessageCodec provideMessageCodec(WorldManager worldManager) {
+        return new MessageCodec(worldManager);
     }
 
     @Provides
@@ -160,11 +165,9 @@ public class TestEthereumModule {
         return new WorkerThread(discoveryChannelProvider);
     }
 
-
-
     @Provides
     String provideRemoteId() {
-        return SystemProperties.CONFIG.activePeerNodeid();
+        return "";
     }
 
 

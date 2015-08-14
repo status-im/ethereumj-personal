@@ -1,4 +1,4 @@
-package org.ethereum.net.wire;
+package org.ethereum.net.rlpx;
 
 import com.google.common.io.ByteStreams;
 import io.netty.buffer.ByteBuf;
@@ -8,24 +8,28 @@ import io.netty.handler.codec.ByteToMessageCodec;
 import org.ethereum.crypto.ECIESCoder;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.listener.EthereumListener;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.eth.EthMessageCodes;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.message.MessageFactory;
+import org.ethereum.net.p2p.DisconnectMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.p2p.P2pMessageCodes;
-import org.ethereum.net.rlpx.*;
 import org.ethereum.net.server.Channel;
 import org.ethereum.net.shh.ShhMessageCodes;
+import org.ethereum.net.swarm.bzz.BzzMessageCodes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.util.encoders.Hex;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.List;
 
 import javax.inject.Inject;
 
+import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.net.rlpx.FrameCodec.Frame;
 
 /**
@@ -37,12 +41,13 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     private static final Logger loggerNet = LoggerFactory.getLogger("net");
 
     private FrameCodec frameCodec;
-    private ECKey myKey;
+    private ECKey myKey = ECKey.fromPrivate(CONFIG.privateKey().getBytes()).decompress();
     private byte[] nodeId;
     private byte[] remoteId;
     private EncryptionHandshake handshake;
     private byte[] initiatePacket;
     private Channel channel;
+    private MessageCodesResolver messageCodesResolver;
     private boolean isHandshakeDone;
     private final InitiateHandler initiator = new InitiateHandler();
 
@@ -53,19 +58,29 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     public class InitiateHandler extends ChannelInboundHandlerAdapter {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            initiate(ctx);
+            channel.setInetSocketAddress((InetSocketAddress) ctx.channel().remoteAddress());
+            if (remoteId.length == 64) {
+                initiate(ctx);
+            } else {
+                handshake = new EncryptionHandshake();
+                byte[] nodeIdWithFormat = myKey.getPubKey();
+                nodeId = new byte[nodeIdWithFormat.length - 1];
+                System.arraycopy(nodeIdWithFormat, 1, nodeId, 0, nodeId.length);
+            }
         }
     }
 
-    EthereumListener listener;
+    WorldManager worldManager;
 
     @Inject
-    public MessageCodec(EthereumListener listener) {
-        super();
-        this.listener = listener;
+    public MessageCodec(WorldManager worldManager) {
+
+        this.worldManager = worldManager;
     }
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        loggerWire.debug("Received packet bytes: " + in.readableBytes());
         if (!isHandshakeDone)
             decodeHandshake(ctx, in);
         else
@@ -85,23 +100,25 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         byte[] payload = ByteStreams.toByteArray(frame.getStream());
 
         if (loggerWire.isDebugEnabled())
-            loggerWire.debug("Recv: Encoded: [{}]", Hex.toHexString(payload));
+            loggerWire.debug("Recv: Encoded: {} [{}]", frame.getType(), Hex.toHexString(payload));
 
-        Message msg = MessageFactory.createMessage((byte) frame.getType(), payload);
+        Message msg = MessageFactory.createMessage((byte) frame.getType(), payload, messageCodesResolver);
 
         if (loggerNet.isInfoEnabled())
             loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), msg);
 
+        EthereumListener listener = worldManager.getListener();
         listener.onRecvMessage(msg);
 
         out.add(msg);
+        channel.getNodeStatistics().rlpxInMessages.add();
     }
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
 
         String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
-        listener.trace(output);
+        worldManager.getListener().trace(output);
 
         if (loggerNet.isInfoEnabled())
             loggerNet.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), msg);
@@ -109,12 +126,14 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         byte[] encoded = msg.getEncoded();
 
         if (loggerWire.isDebugEnabled())
-            loggerWire.debug("Send: Encoded: [{}]", Hex.toHexString(encoded));
+            loggerWire.debug("Send: Encoded: {} [{}]", getCode(msg.getCommand()), Hex.toHexString(encoded));
 
         /*  HERE WE ACTUALLY USING THE SECRET ENCODING */
         byte code = getCode(msg.getCommand());
         Frame frame = new Frame(code, msg.getEncoded());
         frameCodec.writeFrame(frame, out);
+
+        channel.getNodeStatistics().rlpxOutMessages.add();
     }
 
 
@@ -122,7 +141,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
 
         loggerNet.info("RLPX protocol activated");
 
-        myKey = new ECKey().decompress();
         channel.getShhHandler().setPrivKey(myKey);
         byte[] nodeIdWithFormat = myKey.getPubKey();
         nodeId = new byte[nodeIdWithFormat.length - 1];
@@ -141,6 +159,8 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         byteBufMsg.writeBytes(initiatePacket);
         ctx.writeAndFlush(byteBufMsg).sync();
 
+        channel.getNodeStatistics().rlpxAuthMessagesSent.add();
+
         if (loggerNet.isInfoEnabled())
             loggerNet.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), initiateMessage);
     }
@@ -155,12 +175,53 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
                     return;
                 buffer.readBytes(responsePacket);
 
-                this.handshake.handleAuthResponse(myKey, initiatePacket, responsePacket);
+                AuthResponseMessage response = this.handshake.handleAuthResponse(myKey, initiatePacket, responsePacket);
+                if (loggerNet.isInfoEnabled())
+                    loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), response);
+
                 EncryptionHandshake.Secrets secrets = this.handshake.getSecrets();
                 this.frameCodec = new FrameCodec(secrets);
 
                 loggerNet.info("auth exchange done");
                 channel.sendHelloMessage(ctx, frameCodec, Hex.toHexString(nodeId));
+            } else {
+                loggerWire.info("MessageCodec: Buffer bytes: " + buffer.readableBytes());
+                Frame frame = frameCodec.readFrame(buffer);
+                if (frame == null)
+                    return;
+                byte[] payload = ByteStreams.toByteArray(frame.getStream());
+                if (frame.getType() == P2pMessageCodes.HELLO.asByte()) {
+                    HelloMessage helloMessage = new HelloMessage(payload);
+                    if (loggerNet.isInfoEnabled())
+                        loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), helloMessage);
+                    isHandshakeDone = true;
+                    this.channel.publicRLPxHandshakeFinished(ctx, frameCodec, helloMessage, nodeId);
+                } else {
+                    DisconnectMessage message = new DisconnectMessage(payload);
+                    if (loggerNet.isInfoEnabled())
+                        loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), message);
+                    channel.getNodeStatistics().nodeDisconnectedRemote(message.getReason());
+                }
+            }
+        } else {
+            if (frameCodec == null) {
+                byte[] authInitPacket = new byte[AuthInitiateMessage.getLength() + ECIESCoder.getOverhead()];
+                if (!buffer.isReadable(authInitPacket.length))
+                    return;
+                buffer.readBytes(authInitPacket);
+
+                this.handshake = new EncryptionHandshake();
+                byte[] responsePacket = this.handshake.handleAuthInitiate(authInitPacket, myKey);
+                EncryptionHandshake.Secrets secrets = this.handshake.getSecrets();
+                this.frameCodec = new FrameCodec(secrets);
+
+                ECPoint remotePubKey = this.handshake.getRemotePublicKey();
+                this.remoteId = remotePubKey.getEncoded();
+                this.channel.init(Hex.toHexString(this.remoteId), false);
+
+                final ByteBuf byteBufMsg = ctx.alloc().buffer(responsePacket.length);
+                byteBufMsg.writeBytes(responsePacket);
+                ctx.writeAndFlush(byteBufMsg).sync();
             } else {
                 Frame frame = frameCodec.readFrame(buffer);
                 if (frame == null)
@@ -169,20 +230,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
                 HelloMessage helloMessage = new HelloMessage(payload);
                 if (loggerNet.isInfoEnabled())
                     loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), helloMessage);
-                isHandshakeDone = true;
-                this.channel.publicRLPxHandshakeFinished(ctx, frameCodec, helloMessage, nodeId);
-            }
-        } else {
-            if (frameCodec == null) {
-                // Respond to auth
-                throw new UnsupportedOperationException();
-            } else {
-                Frame frame = frameCodec.readFrame(buffer);
-                if (frame == null)
-                    return;
-                byte[] payload = ByteStreams.toByteArray(frame.getStream());
-                HelloMessage helloMessage = new HelloMessage(payload);
-                System.out.println("hello message received");
 
                 // Secret authentication finish here
                 isHandshakeDone = true;
@@ -190,6 +237,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
                 this.channel.publicRLPxHandshakeFinished(ctx, frameCodec, helloMessage, nodeId);
             }
         }
+        channel.getNodeStatistics().rlpxInHello.add();
     }
 
     /* TODO: this dirty hack is here cause we need to use message
@@ -199,15 +247,19 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         byte code = 0;
 
         if (msgCommand instanceof P2pMessageCodes){
-            code = ((P2pMessageCodes)msgCommand).asByte();
+            code = messageCodesResolver.withP2pOffset(((P2pMessageCodes) msgCommand).asByte());
         }
 
         if (msgCommand instanceof EthMessageCodes){
-            code = ((EthMessageCodes)msgCommand).asByte();
+            code = messageCodesResolver.withEthOffset(((EthMessageCodes) msgCommand).asByte());
         }
 
         if (msgCommand instanceof ShhMessageCodes){
-            code = ((ShhMessageCodes)msgCommand).asByte();
+            code = messageCodesResolver.withShhOffset(((ShhMessageCodes)msgCommand).asByte());
+        }
+
+        if (msgCommand instanceof BzzMessageCodes){
+            code = messageCodesResolver.withBzzOffset(((BzzMessageCodes) msgCommand).asByte());
         }
 
         return code;
@@ -216,5 +268,28 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     public void setRemoteId(String remoteId, Channel channel){
         this.remoteId = Hex.decode(remoteId);
         this.channel = channel;
+        this.messageCodesResolver = channel.getMessageCodesResolver();
+    }
+
+    /**
+     * Generate random Key (and thus NodeID) per channel for 'anonymous'
+     * connection (e.g. for peer discovery)
+     */
+    public void generateTempKey() {
+        myKey = new ECKey().decompress();
+    }
+
+    public byte[] getRemoteId() {
+        return remoteId;
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        if (channel.isDiscoveryMode()) {
+            loggerNet.debug("MessageCodec handling failed", cause);
+        } else {
+            loggerNet.error("MessageCodec handling failed", cause);
+        }
+        ctx.close();
     }
 }

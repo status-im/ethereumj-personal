@@ -3,8 +3,8 @@ package org.ethereum.vm;
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
 import org.ethereum.db.BlockStore;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.Repository;
 
 import java.math.BigInteger;
 
@@ -14,10 +14,10 @@ import java.math.BigInteger;
  */
 public interface ProgramInvokeFactory {
 
-    public ProgramInvoke createProgramInvoke(Transaction tx, Block block,
-                                             Repository repository, BlockStore blockStore);
+    ProgramInvoke createProgramInvoke(Transaction tx, Block block,
+                                      Repository repository, BlockStore blockStore);
 
-    public ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
+    ProgramInvoke createProgramInvoke(Program program, DataWord toAddress,
                                              DataWord inValue, DataWord inGas,
                                              BigInteger balanceInt, byte[] dataIn,
                                              Repository repository, BlockStore blockStore, boolean byTestingSuite);

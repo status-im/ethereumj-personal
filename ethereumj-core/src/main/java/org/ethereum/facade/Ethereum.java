@@ -7,6 +7,7 @@ import org.ethereum.manager.AdminInfo;
 import org.ethereum.manager.BlockLoader;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.server.ChannelManager;
 
 import java.math.BigInteger;
@@ -70,9 +71,9 @@ public interface Ethereum {
 
     public void connect(String ip, int port, String remoteId);
 
-    public Blockchain getBlockchain();
+    public void connect(Node node);
 
-    public boolean isBlockchainLoading();
+    public Blockchain getBlockchain();
 
     public void addListener(EthereumListener listener);
 
@@ -127,6 +128,8 @@ public interface Ethereum {
 
     public void init();
 //  2.   // is blockchain still loading - if buffer is not empty
+
+    public Repository getSnapshootTo(byte[] root);
 
     public AdminInfo getAdminInfo();
 

@@ -2,7 +2,10 @@ package org.ethereum.android.service;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Message;
 
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.android.di.components.EthereumComponent;
@@ -16,14 +19,15 @@ import org.ethereum.android.service.events.PeerDisconnectEventData;
 import org.ethereum.android.service.events.PendingTransactionsEventData;
 import org.ethereum.android.service.events.TraceEventData;
 import org.ethereum.android.service.events.VMTraceCreatedEventData;
-import org.ethereum.config.SystemProperties;
+import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
-import org.ethereum.crypto.HashUtil;
-import org.ethereum.android.Ethereum;
+import org.ethereum.facade.Ethereum;
+import org.ethereum.net.eth.StatusMessage;
 import org.ethereum.net.p2p.HelloMessage;
+import org.ethereum.net.rlpx.Node;
 
-import java.util.ArrayList;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +57,7 @@ public class EthereumService extends Service {
     public void onCreate() {
 
         super.onCreate();
-        initializeEthereum();
+        new InitializeTask().execute(ethereum);
     }
 
     @Override
@@ -65,6 +69,24 @@ public class EthereumService extends Service {
         ethereum.close();
     }
 
+    protected class InitializeTask extends AsyncTask<Ethereum, Message, Void> {
+
+        public InitializeTask() {
+
+        }
+
+        protected Void doInBackground(Ethereum... args) {
+
+            initializeEthereum();
+            return null;
+        }
+
+        protected void onPostExecute(Void results) {
+
+
+        }
+    }
+
     protected void initializeEthereum() {
 
         if (!isInitialized) {
@@ -73,12 +95,20 @@ public class EthereumService extends Service {
 
             String databaseFolder = getApplicationInfo().dataDir;
             System.out.println("Database folder: " + databaseFolder);
-            SystemProperties.CONFIG.setDataBaseDir(databaseFolder);
-
+            CONFIG.setDataBaseDir(databaseFolder);
+            System.out.println("Loading genesis");
+            String genesisFile = CONFIG.genesisInfo();
+            try {
+                InputStream is = getApplication().getAssets().open("genesis/" + genesisFile);
+                Genesis.androidGetInstance(is);
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            System.out.println("Genesis loaded");
             component = DaggerEthereumComponent.builder()
                     .ethereumModule(new EthereumModule(this))
                     .build();
-            ethereum = (Ethereum)component.ethereum();
+            ethereum = component.ethereum();
             ethereum.addListener(new EthereumListener());
 
             isInitialized = true;
@@ -151,7 +181,7 @@ public class EthereumService extends Service {
         }
 
         @Override
-        public void onHandShakePeer(HelloMessage helloMessage) {
+        public void onHandShakePeer(Node node, HelloMessage helloMessage) {
 
             broadcastEvent(EventFlag.EVENT_HANDSHAKE_PEER, new MessageEventData(helloMessage.getClass(), helloMessage.getEncoded()));
         }
@@ -160,6 +190,16 @@ public class EthereumService extends Service {
         public void onVMTraceCreated(String transactionHash, String trace) {
 
             broadcastEvent(EventFlag.EVENT_VM_TRACE_CREATED, new VMTraceCreatedEventData(transactionHash, trace));
+        }
+
+        @Override
+        public void onEthStatusUpdated(Node node, StatusMessage status) {
+            // TODO: add boardcast event
+        }
+
+        @Override
+        public void onNodeDiscovered(Node node) {
+            // TODO: add broadcast event
         }
     }
 }

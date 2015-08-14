@@ -218,7 +218,7 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
         return null;
     }
 
-    public Block getBestBlock() {
+    public Long getMaxNumber() {
 
         Long bestNumber = null;
         try {
@@ -232,6 +232,12 @@ public class OrmLiteBlockStoreDatabase extends OrmLiteSqliteOpenHelper implement
         } catch (Exception e) {
             Log.e(OrmLiteBlockStoreDatabase.class.getName(), "Error getting best block", e);
         }
+        return bestNumber;
+    }
+
+    public Block getBestBlock() {
+
+        Long bestNumber = getMaxNumber();
 
         if (bestNumber == null) return null;
         List result = getByNumber(bestNumber);

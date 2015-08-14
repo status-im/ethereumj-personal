@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
@@ -37,6 +40,14 @@ public class PeerClient {
 
     Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider;
 
+    private static EventLoopGroup workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
+        AtomicInteger cnt = new AtomicInteger(0);
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "EthJClientWorker-" + cnt.getAndIncrement());
+        }
+    });
+
     @Inject
 	public PeerClient(EthereumListener listener, ChannelManager channelManager,
                       Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider) {
@@ -47,12 +58,15 @@ public class PeerClient {
     }
 
     public void connect(String host, int port, String remoteId) {
+        connect(host, port, remoteId, false);
+    }
 
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+    public void connect(String host, int port, String remoteId, boolean discoveryMode) {
         listener.trace("Connecting to: " + host + ":" + port);
 
         EthereumChannelInitializer ethereumChannelInitializer = ethereumChannelInitializerProvider.get();
         ethereumChannelInitializer.setRemoteId(remoteId);
+        ethereumChannelInitializer.setPeerDiscoveryMode(discoveryMode);
 
         try {
             Bootstrap b = new Bootstrap();
@@ -71,13 +85,17 @@ public class PeerClient {
 
             // Wait until the connection is closed.
             f.channel().closeFuture().sync();
-            logger.debug("Connection is closed");
 
+            if(!discoveryMode) {
+                channelManager.notifyDisconnect(ethereumChannelInitializer.getChannel());
+            }
+            logger.debug("Connection is closed");
         } catch (Exception e) {
-            logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
-        } finally {
-            workerGroup.shutdownGracefully();
+            if (discoveryMode) {
+                logger.debug("Exception:", e);
+            } else {
+                logger.error("Exception:", e);
+            }
         }
     }
-
 }

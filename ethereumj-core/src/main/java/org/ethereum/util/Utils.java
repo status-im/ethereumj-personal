@@ -32,8 +32,9 @@ public class Utils {
         if (!match)
             return (new BigInteger(number));
         else{
-
-            byte[] numberBytes = Hex.decode(number.substring(2));
+            number = number.substring(2);
+            number = number.length() % 2 != 0 ? "0".concat(number) : number;
+            byte[] numberBytes = Hex.decode(number);
             return (new BigInteger(1, numberBytes));
         }
     }
@@ -139,4 +140,7 @@ public class Utils {
         return sb.append(" ").append(firstHash).append("...").append(lastHash).toString();
     }
 
+    public static String getNodeIdShort(String nodeId) {
+        return nodeId == null ? "<null>" : nodeId.substring(0, 8);
+    }
 }

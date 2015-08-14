@@ -4,7 +4,7 @@ import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
 import org.ethereum.db.ByteArrayWrapper;
 import org.ethereum.db.ContractDetails;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.vmtrace.ProgramTraceListener;
 
 import java.math.BigInteger;
@@ -181,4 +181,10 @@ public class Storage implements Repository, ProgramTraceListenerAware {
     public void loadAccount(byte[] addr, HashMap<ByteArrayWrapper, AccountState> cacheAccounts, HashMap<ByteArrayWrapper, ContractDetails> cacheDetails) {
         repository.loadAccount(addr, cacheAccounts, cacheDetails);
     }
+
+    @Override
+    public Repository getSnapshotTo(byte[] root) {
+        throw new UnsupportedOperationException();
+    }
+
 }

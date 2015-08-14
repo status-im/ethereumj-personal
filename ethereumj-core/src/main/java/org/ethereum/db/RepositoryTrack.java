@@ -2,7 +2,7 @@ package org.ethereum.db;
 
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.vm.DataWord;
 
 import org.slf4j.Logger;
@@ -317,4 +317,14 @@ public class RepositoryTrack implements Repository {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Repository getSnapshotTo(byte[] root) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Repository getOriginRepository() {
+        return (repository instanceof RepositoryTrack)
+                ? ((RepositoryTrack) repository).getOriginRepository()
+                : repository;
+    }
 }

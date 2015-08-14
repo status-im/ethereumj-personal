@@ -14,11 +14,11 @@ import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 public final class VMUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("VM");
-    private static final SystemProperties CONFIG = new SystemProperties();
 
     private VMUtils() {
     }

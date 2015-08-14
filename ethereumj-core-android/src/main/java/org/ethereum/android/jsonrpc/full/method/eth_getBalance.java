@@ -29,7 +29,8 @@ public class eth_getBalance extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             BigInteger balance = ethereum.getRepository().getBalance(address);
@@ -40,7 +41,8 @@ public class eth_getBalance extends JsonRpcServerMethod {
             }
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                // TODO: Missing method on repository
+                //ethereum.getRepository().syncToRoot(root);
             }
 
             String tmp = "0x" + balance.toString(16);

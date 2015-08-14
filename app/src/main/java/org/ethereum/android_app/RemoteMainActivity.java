@@ -55,8 +55,7 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
         tabs = (SlidingTabLayout) findViewById(R.id.tabs);
         tabs.setDistributeEvenly(true);
         tabs.setViewPager(viewPager);
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.ethereum.registerHandler(this);
+        EthereumApplication.ethereum.registerHandler(this);
     }
 
     @Override
@@ -154,13 +153,12 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
 
         Date date = new Date(timestamp);
 
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.log += formatter.format(date) + " -> " + message + "\n\n";
-        if (app.log.length() > 10000) {
-            app.log = app.log.substring(5000);
+        EthereumApplication.log += formatter.format(date) + " -> " + message + "\n\n";
+        if (EthereumApplication.log.length() > 10000) {
+            EthereumApplication.log = EthereumApplication.log.substring(5000);
         }
         for(FragmentInterface fragment: fragments) {
-            fragment.onMessage(app.log);
+            fragment.onMessage(EthereumApplication.log);
         }
     }
 
@@ -173,10 +171,9 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
     @Override
     public void onConnectorConnected() {
 
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.ethereum.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
-        app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
-        app.ethereum.startJsonRpc();
+        EthereumApplication.ethereum.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
+        //app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+        //app.ethereum.startJsonRpc();
     }
 
     @Override

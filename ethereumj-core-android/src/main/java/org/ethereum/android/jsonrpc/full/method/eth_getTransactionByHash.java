@@ -21,13 +21,18 @@ public class eth_getTransactionByHash extends JsonRpcServerMethod {
         } else {
             byte[] address = jsToAddress((String) params.get(0));
 
+            // TODO: Missing method on repository
+            /*
             TransactionReceipt transaction = ethereum.getBlockchain().getTransactionReceiptByHash(address);
+
 
             if (transaction == null)
                 return new JSONRPC2Response(null, req.getID());
 
             JSONRPC2Response res = new JSONRPC2Response(transactionToJS(null, transaction.getTransaction()), req.getID());
             return res;
+            */
+            return null;
         }
 
     }

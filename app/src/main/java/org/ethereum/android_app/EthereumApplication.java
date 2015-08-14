@@ -1,26 +1,53 @@
 package org.ethereum.android_app;
 
 
+import android.os.Message;
 import android.support.multidex.MultiDexApplication;
 
+import org.ethereum.android.service.ConnectorHandler;
 import org.ethereum.android.service.EthereumConnector;
 
-public class EthereumApplication extends MultiDexApplication {
+public class EthereumApplication extends MultiDexApplication implements ConnectorHandler {
 
-    public EthereumConnector ethereum = null;
-    public String log="";
+    public static EthereumConnector ethereum = null;
+    public static String log = "";
 
     @Override public void onCreate() {
 
         super.onCreate();
-        ethereum = new EthereumConnector(this, EthereumRemoteService.class);
-        ethereum.bindService();
+        if (ethereum == null) {
+            ethereum = new EthereumConnector(this, EthereumService.class);
+            ethereum.registerHandler(this);
+            ethereum.bindService();
+        }
     }
 
     @Override
     public void onTerminate() {
-
         super.onTerminate();
+        ethereum.removeHandler(this);
         ethereum.unbindService();
+        ethereum = null;
+    }
+
+    @Override
+    public void onConnectorConnected() {
+        System.out.println("Connector connected");
+        ethereum.startJsonRpc();
+    }
+
+    @Override
+    public void onConnectorDisconnected() {
+
+    }
+
+    @Override
+    public String getID() {
+        return "1";
+    }
+
+    @Override
+    public boolean handleMessage(Message message) {
+        return false;
     }
 }

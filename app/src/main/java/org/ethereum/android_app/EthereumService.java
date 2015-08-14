@@ -1,35 +1,12 @@
 package org.ethereum.android_app;
 
-import org.ethereum.android.service.EthereumAidlService;
-import org.ethereum.android.interop.IListener;
 
-public class EthereumService extends EthereumAidlService {
+import android.content.Intent;
 
-    public EthereumService() {
-
-    }
+public class EthereumService extends org.ethereum.android.service.EthereumRemoteService {
 
     @Override
-    protected void broadcastMessage(String message) {
-
-        updateLog(message);
-        for (IListener listener: clientListeners) {
-            try {
-                listener.trace(message);
-            } catch (Exception e) {
-                // Remove listener
-                clientListeners.remove(listener);
-            }
-        }
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
     }
-
-    private void updateLog(String message) {
-
-        EthereumService.log += message;
-        int logLength = EthereumService.log.length();
-        if (logLength > 5000) {
-            EthereumService.log = EthereumService.log.substring(2500);
-        }
-    }
-
 }

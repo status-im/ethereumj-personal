@@ -1,7 +1,6 @@
 package org.ethereum.core;
 
 import org.ethereum.db.BlockStore;
-import org.ethereum.facade.Repository;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.listener.EthereumListenerAdapter;
 import org.ethereum.vm.*;
@@ -196,7 +195,6 @@ public class TransactionExecutor {
 
                 this.vm = new VM();
                 this.program = new Program(code, programInvoke);
-
             } else {
 
                 m_endGas = toBI(tx.getGasLimit()).longValue() - basicTxCost;
@@ -218,8 +216,6 @@ public class TransactionExecutor {
             this.vm = new VM();
             this.program = new Program(tx.getData(), programInvoke);
         } else {
-
-
             m_endGas = toBI(tx.getGasLimit()).longValue() - basicTxCost;
             cacheTrack.createAccount(tx.getContractAddress());
         }
@@ -228,7 +224,6 @@ public class TransactionExecutor {
         transfer(cacheTrack, tx.getSender(), newContractAddress, endowment);
 
     }
-
 
     public void go() {
         if (!readyToExecute) return;
