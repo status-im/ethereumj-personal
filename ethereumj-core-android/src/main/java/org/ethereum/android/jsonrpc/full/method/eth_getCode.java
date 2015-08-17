@@ -3,6 +3,7 @@ package org.ethereum.android.jsonrpc.full.method;
 import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
+import org.ethereum.core.Repository;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.util.List;
@@ -27,15 +28,15 @@ public class eth_getCode extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             String tmp = "0x" + Hex.toHexString(ethereum.getRepository().getCode(address));
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(root);
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(root);
             }
 
             JSONRPC2Response res = new JSONRPC2Response(tmp, req.getID());

@@ -18,6 +18,8 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
+
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -77,16 +79,14 @@ public class WorldManager {
         this.syncManager.setBlockChain(this.blockchain);
         this.channelManager.setSyncManager(this.syncManager);
 
-        this.init();
     }
 
-    public void init() {
-        byte[] cowAddr = HashUtil.sha3("cow".getBytes());
-        wallet.importKey(cowAddr);
-
-        String secret = CONFIG.coinbaseSecret();
-        byte[] cbAddr = HashUtil.sha3(secret.getBytes());
-        wallet.importKey(cbAddr);
+    public void init(List<String> privateKeys) {
+        if (privateKeys != null) {
+            for (String privateKey: privateKeys) {
+                wallet.importKey(Hex.decode(privateKey));
+            }
+        }
 
         loadBlockchain();
         syncManager.init();

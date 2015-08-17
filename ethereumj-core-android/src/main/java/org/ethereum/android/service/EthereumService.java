@@ -19,6 +19,7 @@ import org.ethereum.android.service.events.PeerDisconnectEventData;
 import org.ethereum.android.service.events.PendingTransactionsEventData;
 import org.ethereum.android.service.events.TraceEventData;
 import org.ethereum.android.service.events.VMTraceCreatedEventData;
+import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
@@ -69,26 +70,28 @@ public class EthereumService extends Service {
         ethereum.close();
     }
 
-    protected class InitializeTask extends AsyncTask<Ethereum, Message, Void> {
+    protected class InitializeTask extends AsyncTask<Ethereum, Message, Ethereum> {
 
         public InitializeTask() {
 
         }
 
-        protected Void doInBackground(Ethereum... args) {
+        protected Ethereum doInBackground(Ethereum... args) {
 
-            initializeEthereum();
-            return null;
+            return initializeEthereum();
         }
 
-        protected void onPostExecute(Void results) {
+        protected void onPostExecute(Ethereum results) {
 
-
+            if (results != null) {
+                EthereumService.ethereum = results;
+            }
         }
     }
 
-    protected void initializeEthereum() {
+    protected Ethereum initializeEthereum() {
 
+        Ethereum ethereum = null;
         if (!isInitialized) {
             System.setProperty("sun.arch.data.model", "32");
             System.setProperty("leveldb.mmap", "false");
@@ -116,6 +119,8 @@ public class EthereumService extends Service {
             System.out.println(" Already initialized");
             System.out.println("x " + (ethereum != null));
         }
+
+        return ethereum;
     }
 
     @Override
@@ -195,11 +200,13 @@ public class EthereumService extends Service {
         @Override
         public void onEthStatusUpdated(Node node, StatusMessage status) {
             // TODO: add boardcast event
+            System.out.println(node.getHost() + " = " + status.toString());
         }
 
         @Override
         public void onNodeDiscovered(Node node) {
             // TODO: add broadcast event
+            System.out.println(node.toString());
         }
     }
 }

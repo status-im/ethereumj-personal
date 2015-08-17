@@ -33,6 +33,7 @@ import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.rlpx.discover.PeerConnectionTester;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
+import org.ethereum.net.server.PeerServer;
 import org.ethereum.net.shh.ShhHandler;
 import org.ethereum.net.rlpx.MessageCodec;
 import org.ethereum.vm.ProgramInvokeFactory;
@@ -64,8 +65,13 @@ public class EthereumModule {
     @Provides
     @Singleton
     public Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener) {
-        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener);
+                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerServer peerServer) {
+        return createEthereum(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerServer);
+    }
+
+    protected Ethereum createEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
+                                      BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerServer peerServer) {
+        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerServer);
     }
 
     @Provides
@@ -73,6 +79,12 @@ public class EthereumModule {
     public WorldManager provideWorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
             ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener, NodeManager nodeManager, SyncManager syncManager) {
         return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener, nodeManager, syncManager);
+    }
+
+    @Provides
+    @Singleton
+    public PeerServer providePeerServer(ChannelManager channelManager, EthereumChannelInitializer ethereumChannelInitializer, EthereumListener listener) {
+        return new PeerServer(channelManager, ethereumChannelInitializer, listener);
     }
 
     @Provides
@@ -123,6 +135,10 @@ public class EthereumModule {
     @Provides
     @Singleton
     public Repository provideRepository() {
+        return createRepository();
+    }
+
+    protected Repository createRepository() {
         MapDBDataSource detailsDS = new MapDBDataSource();
         MapDBDataSource stateDS = new MapDBDataSource();
         return new RepositoryImpl(detailsDS, stateDS);

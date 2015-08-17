@@ -57,8 +57,7 @@ public class EthereumImpl implements Ethereum {
     @Inject
     public EthereumImpl(WorldManager worldManager, AdminInfo adminInfo,
                         ChannelManager channelManager, BlockLoader blockLoader,
-                        Provider<PeerClient> peerClientProvider, EthereumListener listener) {
-        System.out.println();
+                        Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerServer peerServer) {
 		logger.info("EthereumImpl constructor");
         this.worldManager = worldManager;
         this.adminInfo = adminInfo;
@@ -66,8 +65,9 @@ public class EthereumImpl implements Ethereum {
         this.blockLoader = blockLoader;
         this.peerClientProvider = peerClientProvider;
         this.listener = listener;
+        this.peerServer = peerServer;
         this.worldManager.setEthereum(this);
-
+        this.worldManager.init(null);
         this.init();
     }
 

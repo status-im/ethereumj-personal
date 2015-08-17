@@ -5,6 +5,7 @@ import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServer;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
 import org.ethereum.core.AccountState;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
@@ -18,6 +19,7 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
 
     protected JSONRPC2Response worker(JSONRPC2Request req, MessageContext ctx) {
 
+        Repository repository = (Repository)ethereum.getRepository();
         List<Object> params = req.getPositionalParams();
         if (params.size() != 2) {
             return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
@@ -30,16 +32,14 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             BigInteger nonce = BigInteger.ZERO;
 
-            // TODO: Missing method on repository
-            //AccountState accountState = ethereum.getRepository().getAccountState(address);
-            //if (accountState != null)
-            //    nonce = accountState.getNonce();
+            AccountState accountState = repository.getAccountState(address);
+            if (accountState != null)
+                nonce = accountState.getNonce();
 
             if (blockNumber == -1) {
                 synchronized (ethereum.getBlockchain().getPendingTransactions()) {
@@ -52,8 +52,7 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             }
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(root);
+                repository.syncToRoot(root);
             }
 
             String tmp = "0x" + nonce.toString(16);

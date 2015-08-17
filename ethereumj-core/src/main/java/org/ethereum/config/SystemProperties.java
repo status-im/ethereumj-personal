@@ -90,9 +90,11 @@ public class SystemProperties {
 
             Properties props = new Properties();
             InputStream is = ClassLoader.getSystemResourceAsStream("version.properties");
-            props.load(is);
-            this.projectVersion = props.getProperty("versionNumber");
-            this.projectVersion = this.projectVersion.replaceAll("'", "");
+            if (is != null) {
+                props.load(is);
+                this.projectVersion = props.getProperty("versionNumber");
+                this.projectVersion = this.projectVersion.replaceAll("'", "");
+            }
 
             if (this.projectVersion == null) this.projectVersion = "-.-.-";
 

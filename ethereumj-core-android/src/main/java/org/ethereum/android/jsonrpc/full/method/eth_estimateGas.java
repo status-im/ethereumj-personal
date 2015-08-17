@@ -4,6 +4,7 @@ import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import net.minidev.json.JSONObject;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.vm.Program;
@@ -36,8 +37,8 @@ public class eth_estimateGas extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             VM vm = new VM();
@@ -46,8 +47,8 @@ public class eth_estimateGas extends JsonRpcServerMethod {
             long result = program.getResult().getGasUsed();
 
             if (blockNumber >= 0) {
-                // TODO: Missing method on repository
-                //ethereum.getRepository().syncToRoot(root);
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(root);
             }
 
             String tmp = "0x" + Long.toHexString(result);

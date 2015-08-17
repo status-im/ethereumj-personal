@@ -7,11 +7,21 @@ import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Blockchain;
 import org.ethereum.android.manager.BlockLoader;
+import org.ethereum.core.Repository;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.IndexedBlockStore;
+import org.ethereum.db.RepositoryImpl;
+import org.ethereum.facade.Ethereum;
+import org.ethereum.facade.EthereumImpl;
+import org.ethereum.listener.EthereumListener;
+import org.ethereum.manager.AdminInfo;
+import org.ethereum.manager.WorldManager;
+import org.ethereum.net.client.PeerClient;
+import org.ethereum.net.server.ChannelManager;
+import org.ethereum.net.server.PeerServer;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
@@ -46,6 +56,19 @@ public class EthereumModule extends org.ethereum.di.modules.EthereumModule {
 
         this.context = context;
         this.storeAllBlocks = storeAllBlocks;
+    }
+
+    @Override
+    protected Ethereum createEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
+                                      org.ethereum.manager.BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerServer peerServer) {
+        return new org.ethereum.android.Ethereum(worldManager, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerServer);
+    }
+
+    @Override
+    protected Repository createRepository() {
+        LevelDbDataSource detailsDS = new LevelDbDataSource();
+        LevelDbDataSource stateDS = new LevelDbDataSource();
+        return new RepositoryImpl(detailsDS, stateDS);
     }
 
     @Override
