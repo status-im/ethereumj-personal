@@ -37,7 +37,7 @@ public class ChannelManager {
 
     @Inject
     public ChannelManager() {
-        this.init();
+        
     }
 
     public void init() {
@@ -52,6 +52,7 @@ public class ChannelManager {
     public void setSyncManager(SyncManager syncManager) {
 
         this.syncManager = syncManager;
+		this.init();
     }
 
     private void processNewPeers() {

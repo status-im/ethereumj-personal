@@ -459,9 +459,7 @@ public class EthHandler extends SimpleChannelInboundHandler<EthMessage> {
         Vector<Block> blocks = new Vector<>();
         for (byte[] hash : hashes) {
             Block block = blockchain.getBlockByHash(hash);
-            if (block != null) {
-                blocks.add(block);
-            }
+            blocks.add(block);
         }
 
         BlocksMessage bm = new BlocksMessage(blocks);

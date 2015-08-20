@@ -31,6 +31,7 @@ import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.WorkerThread;
 import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.rlpx.discover.PeerConnectionTester;
+import org.ethereum.net.rlpx.discover.UDPListener;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.server.PeerServer;
@@ -77,8 +78,14 @@ public class EthereumModule {
     @Provides
     @Singleton
     public WorldManager provideWorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener, NodeManager nodeManager, SyncManager syncManager) {
-        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener, nodeManager, syncManager);
+            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener, NodeManager nodeManager, SyncManager syncManager, Provider<WorkerThread> workerThreadProvider) {
+        return new WorldManager(blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, listener, nodeManager, syncManager, workerThreadProvider);
+    }
+
+    @Provides
+    @Singleton
+    public UDPListener provideUDPListener(NodeManager nodeManager, WorldManager worldManager) {
+        return new UDPListener(nodeManager, worldManager);
     }
 
     @Provides
@@ -200,8 +207,8 @@ public class EthereumModule {
     }
 
     @Provides
-    public MessageCodec provideMessageCodec(WorldManager worldManager) {
-        return new MessageCodec(worldManager);
+    public MessageCodec provideMessageCodec(EthereumListener ethereumListener) {
+        return new MessageCodec(ethereumListener);
     }
 
     @Provides

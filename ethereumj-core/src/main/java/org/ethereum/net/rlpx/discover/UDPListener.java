@@ -20,8 +20,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-
+@Singleton
 public class UDPListener {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger("discover");
 

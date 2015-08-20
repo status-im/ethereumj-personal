@@ -94,7 +94,7 @@ ext {
     leveldbVersion = '0.7'
     scastleVersion = '1.51.0.0'
     log4jVersion = '1.2.17'
-    hibernateVersion = '4.3.10.Final'
+    hibernateVersion = '4.3.7.Final'
     junitVersion = '4.11'
 }
 

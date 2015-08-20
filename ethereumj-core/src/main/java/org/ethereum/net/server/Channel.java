@@ -67,14 +67,14 @@ public class Channel {
 
     @Inject
     public Channel(ChannelManager channelManager, MessageQueue msgQueue, P2pHandler p2pHandler
-            , EthHandler ethHandler, ShhHandler shhHandler, BzzHandler bzzHandler
+            , EthHandler ethHandler, ShhHandler shhHandler
             , MessageCodec messageCodec, NodeManager nodeManager) {
         this.channelManager = channelManager;
         this.msgQueue = msgQueue;
         this.p2pHandler = p2pHandler;
         this.ethHandler = ethHandler;
         this.shhHandler = shhHandler;
-        this.bzzHandler = bzzHandler;
+        //this.bzzHandler = bzzHandler;
         this.messageCodec = messageCodec;
         this.nodeManager = nodeManager;
     }
@@ -93,7 +93,7 @@ public class Channel {
         ethHandler.setMsgQueue(msgQueue);
         ethHandler.setPeerDiscoveryMode(discoveryMode);
         shhHandler.setMsgQueue(msgQueue);
-        bzzHandler.setMsgQueue(msgQueue);
+        //bzzHandler.setMsgQueue(msgQueue);
 
         ethHandler.setChannel(this);
 

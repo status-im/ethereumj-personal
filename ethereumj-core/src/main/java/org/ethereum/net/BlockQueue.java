@@ -74,7 +74,6 @@ public class BlockQueue {
 
         this.blockchain = blockchain;
         this.syncManager = syncManager;
-        this.init();
 	}
 
     public void init() {

@@ -61,7 +61,7 @@ public class PeerConnectionTester {
                     logger.debug("Trying node connection: " + nodeHandler);
                     Node node = nodeHandler.getNode();
                     worldManager.getActivePeer().connect(node.getHost(), node.getPort(),
-                            Hex.encodeHexString(node.getId()), true);
+                            new String(Hex.encodeHex(node.getId())), true);
                     logger.debug("Terminated node connection: " + nodeHandler);
                     nodeHandler.getNodeStatistics().disconnected();
                     if (!nodeHandler.getNodeStatistics().getEthTotalDifficulty().equals(BigInteger.ZERO) &&

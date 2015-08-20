@@ -8,7 +8,6 @@ import io.netty.handler.codec.ByteToMessageCodec;
 import org.ethereum.crypto.ECIESCoder;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.listener.EthereumListener;
-import org.ethereum.manager.WorldManager;
 import org.ethereum.net.eth.EthMessageCodes;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.message.MessageFactory;
@@ -70,12 +69,12 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         }
     }
 
-    WorldManager worldManager;
+    EthereumListener listener;
 
     @Inject
-    public MessageCodec(WorldManager worldManager) {
+    public MessageCodec(EthereumListener listener) {
 
-        this.worldManager = worldManager;
+        this.listener = listener;
     }
 
     @Override
@@ -107,7 +106,6 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
         if (loggerNet.isInfoEnabled())
             loggerNet.info("From: \t{} \tRecv: \t{}", ctx.channel().remoteAddress(), msg);
 
-        EthereumListener listener = worldManager.getListener();
         listener.onRecvMessage(msg);
 
         out.add(msg);
@@ -118,7 +116,7 @@ public class MessageCodec extends ByteToMessageCodec<Message> {
     protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
 
         String output = String.format("To: \t%s \tSend: \t%s", ctx.channel().remoteAddress(), msg);
-        worldManager.getListener().trace(output);
+        listener.trace(output);
 
         if (loggerNet.isInfoEnabled())
             loggerNet.info("To: \t{} \tSend: \t{}", ctx.channel().remoteAddress(), msg);

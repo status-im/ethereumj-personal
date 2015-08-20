@@ -10,6 +10,7 @@ import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.SyncManager;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
+import org.ethereum.net.peerdiscovery.WorkerThread;
 import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import java.util.List;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
@@ -63,12 +65,13 @@ public class WorldManager {
     @Inject
 	public WorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
                         ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener
-						,NodeManager nodeManager, SyncManager syncManager) {
+						,NodeManager nodeManager, SyncManager syncManager, Provider<WorkerThread> workerThreadProvider) {
         logger.info("World manager instantiated");
         this.blockchain = blockchain;
         this.repository = repository;
         this.wallet = wallet;
         this.peerDiscovery = peerDiscovery;
+        this.peerDiscovery.setWorkerThreadProvider(workerThreadProvider);
         this.blockStore = blockStore;
         this.channelManager = channelManager;
 		this.adminInfo = adminInfo;

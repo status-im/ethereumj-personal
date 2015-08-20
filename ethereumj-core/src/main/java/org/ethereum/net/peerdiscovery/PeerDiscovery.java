@@ -45,11 +45,13 @@ public class PeerDiscovery {
     private ThreadPoolExecutor executorPool;
     private RejectedExecutionHandler rejectionHandler;
 
-    @Inject
     Provider<WorkerThread> workerThreadProvider;
 
-    @Inject
     public PeerDiscovery() {
+    }
+
+    public void setWorkerThreadProvider(Provider<WorkerThread> workerThreadProvider) {
+        this.workerThreadProvider = workerThreadProvider;
     }
 
     private final AtomicBoolean started = new AtomicBoolean(false);

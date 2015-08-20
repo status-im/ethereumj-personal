@@ -49,11 +49,11 @@ dependencies {
         exclude group: "commons-codec", module: "commons-codec"
         exclude group: "commons-logging", module: "commons-logging"
         exclude group: "org.apache.commons", module: "commons-pool2"
+        exclude group: "log4j"
+        exclude group: "org.slf4j", module: "log4j-over-slf4j"
         exclude group: "org.slf4j", module: "slf4j-log4j12"
-        exclude group: "log4j", module: "apache-log4j-extras"
         exclude group: "org.hibernate", module: "hibernate-entitymanager"
         exclude group: "redis.clients", module: "jedis"
-        exclude group: "org.antlr", module: "antlr4-runtime"
         exclude group: "org.fusesource.leveldbjni", module: "leveldbjni"
         exclude group: "org.fusesource.leveldbjni", module: "leveldbjni-all"
     }

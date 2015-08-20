@@ -33,7 +33,6 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
     @Override
     public void onConnectorConnected() {
         System.out.println("Connector connected");
-        ethereum.startJsonRpc();
     }
 
     @Override
@@ -48,6 +47,8 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
 
     @Override
     public boolean handleMessage(Message message) {
-        return false;
+
+        System.out.println(message.toString());
+        return true;
     }
 }

@@ -4,40 +4,25 @@ import android.content.Context;
 
 import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
-import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Blockchain;
 import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.core.Repository;
-import org.ethereum.datasource.HashMapDB;
-import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.db.BlockStore;
-import org.ethereum.db.IndexedBlockStore;
 import org.ethereum.db.RepositoryImpl;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.facade.EthereumImpl;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.Serializer;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-
-import static org.ethereum.db.IndexedBlockStore.BLOCK_INFO_SERIALIZER;
 
 @Module
 public class EthereumModule extends org.ethereum.di.modules.EthereumModule {

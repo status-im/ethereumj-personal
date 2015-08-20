@@ -58,7 +58,13 @@ public class EthereumService extends Service {
     public void onCreate() {
 
         super.onCreate();
-        new InitializeTask().execute(ethereum);
+        if (!isInitialized) {
+            isInitialized = true;
+            new InitializeTask().execute(ethereum);
+        } else {
+            System.out.println(" Already initialized");
+            System.out.println("x " + (ethereum != null));
+        }
     }
 
     @Override
@@ -92,33 +98,28 @@ public class EthereumService extends Service {
     protected Ethereum initializeEthereum() {
 
         Ethereum ethereum = null;
-        if (!isInitialized) {
-            System.setProperty("sun.arch.data.model", "32");
-            System.setProperty("leveldb.mmap", "false");
 
-            String databaseFolder = getApplicationInfo().dataDir;
-            System.out.println("Database folder: " + databaseFolder);
-            CONFIG.setDataBaseDir(databaseFolder);
-            System.out.println("Loading genesis");
-            String genesisFile = CONFIG.genesisInfo();
-            try {
-                InputStream is = getApplication().getAssets().open("genesis/" + genesisFile);
-                Genesis.androidGetInstance(is);
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-            }
-            System.out.println("Genesis loaded");
-            component = DaggerEthereumComponent.builder()
-                    .ethereumModule(new EthereumModule(this))
-                    .build();
-            ethereum = component.ethereum();
-            ethereum.addListener(new EthereumListener());
+        System.setProperty("sun.arch.data.model", "32");
+        System.setProperty("leveldb.mmap", "false");
 
-            isInitialized = true;
-        } else {
-            System.out.println(" Already initialized");
-            System.out.println("x " + (ethereum != null));
+        String databaseFolder = getApplicationInfo().dataDir;
+        System.out.println("Database folder: " + databaseFolder);
+        CONFIG.setDataBaseDir(databaseFolder);
+        System.out.println("Loading genesis");
+        String genesisFile = CONFIG.genesisInfo();
+        try {
+            InputStream is = getApplication().getAssets().open("genesis/" + genesisFile);
+            Genesis.androidGetInstance(is);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
+        System.out.println("Genesis loaded");
+        component = DaggerEthereumComponent.builder()
+                .ethereumModule(new EthereumModule(this))
+                .build();
+        ethereum = component.ethereum();
+        ethereum.addListener(new EthereumListener());
+        ethereum.init();
 
         return ethereum;
     }
@@ -140,6 +141,7 @@ public class EthereumService extends Service {
         @Override
         public void trace(String output) {
 
+            //System.out.println(output);
             broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData(output));
         }
 

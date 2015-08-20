@@ -37,6 +37,7 @@ public class EthereumFactory {
 
         logger.info("capability eth version: [{}]", EthHandler.VERSION);
         logger.info("capability shh version: [{}]", ShhHandler.VERSION);
+        logger.info("capability bzz version: [{}]", BzzHandler.VERSION);
 
         ethereumComponent = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule())

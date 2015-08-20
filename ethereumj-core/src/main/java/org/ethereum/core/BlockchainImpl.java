@@ -131,6 +131,7 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
     public void setBlockQueue(BlockQueue blockQueue) {
 
         this.blockQueue = blockQueue;
+        blockQueue.init();
     }
 
     @Override
