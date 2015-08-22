@@ -96,6 +96,7 @@ public class WorldManager {
     }
 
     public void setEthereum(Ethereum ethereum) {
+
         this.syncManager.setEthereum(ethereum);
     }
 

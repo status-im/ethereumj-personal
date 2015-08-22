@@ -3,7 +3,7 @@ package org.ethereum.android.di.components;
 import android.content.Context;
 
 import org.ethereum.android.di.modules.EthereumModule;
-import org.ethereum.facade.Ethereum;
+import org.ethereum.android.Ethereum;
 import org.ethereum.net.rlpx.discover.UDPListener;
 
 import javax.inject.Singleton;

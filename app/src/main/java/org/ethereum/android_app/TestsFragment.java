@@ -56,8 +56,7 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
         getEthereumStatus.setOnClickListener(onClickListener);
         getBlockchainStatus.setOnClickListener(onClickListener);
 
-        EthereumApplication app = (EthereumApplication)getActivity().getApplication();
-        app.ethereum.registerHandler(this);
+        EthereumApplication.ethereum.registerHandler(this);
 
         return view;
     }
@@ -66,17 +65,16 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
         @Override
         public void onClick(final View v) {
 
-            EthereumApplication app = (EthereumApplication)getActivity().getApplication();
             switch(v.getId()){
                 case R.id.connectButton:
-                    //app.ethereum.connect(CONFIG.activePeerIP(), CONFIG.activePeerPort(), CONFIG.activePeerNodeid());
+                    EthereumApplication.ethereum.connect("192.168.122.90", 30303, "aceb348f4fd7b9b5033b1703b724970d93dbc6ee8410bdc20bc0585e668d629e542cd8ec560311fc8f4a0851c914aae8945555adee73878063dfa0078cc03e07");
                     break;
                 case R.id.getEthereumStatus:
-                    app.ethereum.getConnectionStatus(identifier);
-                    app.ethereum.getAdminInfo(identifier);
+                    EthereumApplication.ethereum.getConnectionStatus(identifier);
+                    EthereumApplication.ethereum.getAdminInfo(identifier);
                     break;
                 case R.id.getBlockchainStatus:
-                    app.ethereum.getBlockchainStatus(identifier);
+                    EthereumApplication.ethereum.getBlockchainStatus(identifier);
                     break;
             }
         }
@@ -134,9 +132,8 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
     @Override
     public void onConnectorConnected() {
 
-        EthereumApplication app = (EthereumApplication)getActivity().getApplication();
-        app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
-        //app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+        EthereumApplication.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
+        //EthereumApplication.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
     }
 
     @Override

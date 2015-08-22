@@ -10,8 +10,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Singleton;
+
 import static java.lang.System.getProperty;
 
+@Singleton
 public class MapDBFactoryImpl implements MapDBFactory {
 
     @Override

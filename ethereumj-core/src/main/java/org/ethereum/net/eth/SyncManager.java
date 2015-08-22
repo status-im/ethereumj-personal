@@ -157,6 +157,10 @@ public class SyncManager {
                     }
                 }
         );
+
+        for (Node node : CONFIG.peerActive()) {
+            initiateConnection(node);
+        }
     }
 
     public void setBlockChain(Blockchain blockchain) {

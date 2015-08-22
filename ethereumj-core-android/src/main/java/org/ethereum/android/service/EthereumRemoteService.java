@@ -112,9 +112,7 @@ public class EthereumRemoteService extends EthereumService {
                 for (String identifier: listeners) {
                     Messenger listener = clientListeners.get(identifier);
                     if (listener != null) {
-                        if (message == null) {
-                            message = createEventMessage(event, data);
-                        }
+                        message = createEventMessage(event, data);
                         message.obj = getIdentifierBundle(identifier);
                         try {
                             listener.send(message);
@@ -228,7 +226,19 @@ public class EthereumRemoteService extends EthereumService {
     }
 
     @Override
-    protected Ethereum initializeEthereum() {
+    protected void onEthereumCreated(List<String> privateKeys) {
+
+        if (ethereum != null) {
+            ethereum.init(privateKeys);
+            startJsonRpc(null);
+            broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
+            isEthereumStarted = true;
+            isInitialized = true;
+        }
+    }
+
+    @Override
+    protected void createEthereum() {
 
         System.setProperty("sun.arch.data.model", "32");
         System.setProperty("leveldb.mmap", "false");
@@ -248,16 +258,9 @@ public class EthereumRemoteService extends EthereumService {
         component = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule(this))
                 .build();
+        component.udpListener();
         ethereum = component.ethereum();
         ethereum.addListener(new EthereumListener());
-        ethereum.init();
-        //ethereum.getDefaultPeer();
-        //component.udpListener();
-        startJsonRpc(null);
-
-        broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
-
-        return null;
     }
 
     protected void init(Message message) {
@@ -267,12 +270,10 @@ public class EthereumRemoteService extends EthereumService {
             ethereum = null;
             component = null;
             isInitialized = false;
-            initializeEthereum();
         }
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
-        ethereum.init();
-        isEthereumStarted = true;
+        new InitializeTask(privateKeys).execute();
     }
 
     /**
@@ -289,7 +290,7 @@ public class EthereumRemoteService extends EthereumService {
     protected void connect(Message message) {
 
         if (!isConnected) {
-            isConnected = true;
+            //isConnected = true;
             new ConnectTask(message).execute(ethereum);
         }
     }
@@ -311,7 +312,11 @@ public class EthereumRemoteService extends EthereumService {
         protected Void doInBackground(Ethereum... args) {
 
             Ethereum ethereum = args[0];
-            ethereum.connect(ip, port, remoteId);
+            try {
+                ethereum.connect(ip, port, remoteId);
+            } catch(Exception e) {
+                System.out.println(e.getMessage());
+            }
             logger.info("Ethereum connecting to : " + ip + ":" + port);
             return null;
         }

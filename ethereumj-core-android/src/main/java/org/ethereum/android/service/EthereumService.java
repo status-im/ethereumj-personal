@@ -3,10 +3,9 @@ package org.ethereum.android.service;
 import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Message;
 
+import org.spongycastle.util.encoders.Hex;
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.android.di.components.EthereumComponent;
 import org.ethereum.android.di.modules.EthereumModule;
@@ -19,11 +18,11 @@ import org.ethereum.android.service.events.PeerDisconnectEventData;
 import org.ethereum.android.service.events.PendingTransactionsEventData;
 import org.ethereum.android.service.events.TraceEventData;
 import org.ethereum.android.service.events.VMTraceCreatedEventData;
-import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
-import org.ethereum.facade.Ethereum;
+import org.ethereum.android.Ethereum;
+import org.ethereum.crypto.HashUtil;
 import org.ethereum.net.eth.StatusMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.rlpx.Node;
@@ -60,7 +59,7 @@ public class EthereumService extends Service {
         super.onCreate();
         if (!isInitialized) {
             isInitialized = true;
-            new InitializeTask().execute(ethereum);
+            new InitializeTask(null).execute();
         } else {
             System.out.println(" Already initialized");
             System.out.println("x " + (ethereum != null));
@@ -76,26 +75,44 @@ public class EthereumService extends Service {
         ethereum.close();
     }
 
-    protected class InitializeTask extends AsyncTask<Ethereum, Message, Ethereum> {
+    protected class InitializeTask extends AsyncTask<Void, Void, Void> {
 
-        public InitializeTask() {
+        protected List<String> privateKeys = null;
 
+        public InitializeTask(List<String> privateKeys) {
+
+            this.privateKeys = privateKeys;
         }
 
-        protected Ethereum doInBackground(Ethereum... args) {
+        protected Void doInBackground(Void... args) {
 
-            return initializeEthereum();
+            createEthereum();
+            return null;
         }
 
-        protected void onPostExecute(Ethereum results) {
+        protected void onPostExecute(Void results) {
 
-            if (results != null) {
-                EthereumService.ethereum = results;
-            }
+            onEthereumCreated(privateKeys);
         }
     }
 
-    protected Ethereum initializeEthereum() {
+    protected void onEthereumCreated(List<String> privateKeys) {
+
+        if (ethereum != null) {
+            if (privateKeys == null || privateKeys.size() == 0) {
+                byte[] cowAddr = HashUtil.sha3("cow".getBytes());
+                privateKeys.add(Hex.toHexString(cowAddr));
+
+                String secret = CONFIG.coinbaseSecret();
+                byte[] cbAddr = HashUtil.sha3(secret.getBytes());
+                privateKeys.add(Hex.toHexString(cbAddr));
+            }
+            ethereum.init(privateKeys);
+            broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
+        }
+    }
+
+    protected void createEthereum() {
 
         Ethereum ethereum = null;
 
@@ -119,9 +136,6 @@ public class EthereumService extends Service {
                 .build();
         ethereum = component.ethereum();
         ethereum.addListener(new EthereumListener());
-        ethereum.init();
-
-        return ethereum;
     }
 
     @Override

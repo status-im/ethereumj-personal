@@ -64,6 +64,7 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
         this.listener = listener;
         this.peerServer = peerServer;
         this.worldManager.setEthereum(this);
+        getDefaultPeer();
     }
 
     @Override

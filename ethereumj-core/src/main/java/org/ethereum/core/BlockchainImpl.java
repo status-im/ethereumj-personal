@@ -32,11 +32,13 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static java.lang.Runtime.getRuntime;
+import static java.math.BigInteger.ZERO;
 import static org.ethereum.config.Constants.*;
 import static org.ethereum.config.SystemProperties.CONFIG;
 import static org.ethereum.core.Denomination.SZABO;
 import static org.ethereum.core.ImportResult.*;
 import static org.ethereum.util.BIUtil.isMoreThan;
+import static org.ethereum.util.BIUtil.toBI;
 
 /**
  * The Ethereum blockchain is in many ways similar to the Bitcoin blockchain,
@@ -86,7 +88,7 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
     private BlockStore blockStore;
 
     private Block bestBlock;
-    private BigInteger totalDifficulty = BigInteger.ZERO;
+    private BigInteger totalDifficulty = ZERO;
 
     Wallet wallet;
 
@@ -250,14 +252,14 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
         // The simple case got the block
         // to connect to the main chain
         if (bestBlock.isParentOf(block)) {
-            add(block);
             recordBlock(block);
+            add(block);
             return IMPORTED_BEST;
         } else {
 
             if (blockStore.isBlockExist(block.getParentHash())) {
+                recordBlock(block);
                 ImportResult result = tryConnectAndFork(block);
-                if (result == IMPORTED_BEST || result == IMPORTED_NOT_BEST) recordBlock(block);
                 return result;
             }
 
@@ -650,7 +652,7 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
                 adminInfo.lostConsensus();
 
                 System.out.println("CONFLICT: BLOCK #" + block.getNumber() );
-//                System.exit(1);
+                System.exit(1);
                 // in case of rollback hard move the root
 //                Block parentBlock = blockStore.getBlockByHash(block.getParentHash());
 //                repository.syncToRoot(parentBlock.getStateRoot());
@@ -722,17 +724,9 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
 
         if (!CONFIG.recordBlocks()) return;
 
-        if (block.getNumber() == 1) {
-            try {
-                FileUtils.forceDelete(new File(CONFIG.dumpDir()));
-            } catch (IOException e) {
-                logger.error(e.getMessage(), e);
-            }
-        }
+        String dumpDir = CONFIG.databaseDir() + "/" + CONFIG.dumpDir();
 
-        String dir = CONFIG.dumpDir() + "/";
-
-        File dumpFile = new File(System.getProperty("user.dir") + "/" + dir + "_blocks_rec.txt");
+        File dumpFile = new File(dumpDir + "/blocks-rec.dmp");
         FileWriter fw = null;
         BufferedWriter bw = null;
 
@@ -776,7 +770,18 @@ public class BlockchainImpl implements Blockchain, org.ethereum.facade.Blockchai
 
         long number = bestBlock.getNumber();
         for (Transaction tx : transactions) {
-            pendingTransactions.add(new PendingTransaction(tx, number));
+
+            BigInteger txNonce = toBI(tx.getNonce());
+            if (repository.isExist(tx.getSender())){
+
+                BigInteger currNonce = repository.getAccountState(tx.getSender()).getNonce();
+                if (currNonce.equals(txNonce))
+                    pendingTransactions.add(new PendingTransaction(tx, number));
+            } else {
+
+                if (txNonce.equals(ZERO))
+                    pendingTransactions.add(new PendingTransaction(tx, number));
+            }
         }
     }
 

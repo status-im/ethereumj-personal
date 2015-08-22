@@ -2,6 +2,7 @@ package org.ethereum.android_app;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.method.ScrollingMovementMethod;
@@ -10,35 +11,42 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.ethereum.android.EthereumManager;
-import org.ethereum.listener.EthereumListenerAdapter;
 
 public class ConsoleFragment extends Fragment implements FragmentInterface {
 
-    EthereumManager ethereumManager;
     private TextView console;
 
-    TextViewUpdater consoleUpdater = new TextViewUpdater();
+    private final static int CONSOLE_LENGTH = 10000;
+    private final static int CONSOLE_REFRESH_MILLS = 1000 * 5; //5 sec
 
-    private class TextViewUpdater implements Runnable {
+    private Handler handler = new Handler();
 
-        private String txt;
+
+    private Runnable mRunnable = new Runnable() {
         @Override
         public void run() {
 
-            console.setText(txt);
+            console.setText(EthereumApplication.log);
+            handler.postDelayed(mRunnable, CONSOLE_REFRESH_MILLS);
         }
-        public void setText(String txt) {
-
-            this.txt = txt;
-        }
-
-    }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        handler.removeCallbacksAndMessages(null);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        handler.post(mRunnable);
     }
 
     @Override
@@ -58,9 +66,8 @@ public class ConsoleFragment extends Fragment implements FragmentInterface {
         return view;
     }
 
+    @Override
     public void onMessage(String message) {
-
-        consoleUpdater.setText(message);
-        ConsoleFragment.this.console.post(consoleUpdater);
+        System.out.println(message);
     }
 }

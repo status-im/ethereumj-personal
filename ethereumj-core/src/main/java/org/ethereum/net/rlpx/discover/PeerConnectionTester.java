@@ -3,6 +3,7 @@ package org.ethereum.net.rlpx.discover;
 import org.apache.commons.codec.binary.Hex;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.manager.WorldManager;
+import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.rlpx.Node;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +61,11 @@ public class PeerConnectionTester {
                     nodeHandler.getNodeStatistics().rlpxConnectionAttempts.add();
                     logger.debug("Trying node connection: " + nodeHandler);
                     Node node = nodeHandler.getNode();
-                    worldManager.getActivePeer().connect(node.getHost(), node.getPort(),
+                    PeerClient activePeer = worldManager.getActivePeer();
+                    if (activePeer != null) {
+                        activePeer.connect(node.getHost(), node.getPort(),
                             new String(Hex.encodeHex(node.getId())), true);
+                    }
                     logger.debug("Terminated node connection: " + nodeHandler);
                     nodeHandler.getNodeStatistics().disconnected();
                     if (!nodeHandler.getNodeStatistics().getEthTotalDifficulty().equals(BigInteger.ZERO) &&

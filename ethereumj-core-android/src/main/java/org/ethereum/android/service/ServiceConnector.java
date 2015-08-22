@@ -56,12 +56,16 @@ public class ServiceConnector {
         public void handleMessage(Message message) {
 
             boolean isClaimed = false;
+            System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAA");
             String identifier = ((Bundle)message.obj).getString("identifier");
             if (identifier != null) {
 
                 for (ConnectorHandler handler : handlers) {
                     if (identifier.equals(handler.getID())) {
                         isClaimed = handler.handleMessage(message);
+                        if (isClaimed) {
+                            break;
+                        }
                     }
                 }
             }
@@ -88,6 +92,7 @@ public class ServiceConnector {
             for (ConnectorHandler handler: handlers) {
                 handler.onConnectorConnected();
             }
+            onConnected();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -101,6 +106,10 @@ public class ServiceConnector {
             }
         }
     };
+
+    protected void onConnected() {
+
+    }
 
     public ServiceConnector(Context context, Class serviceClass) {
 
