@@ -266,7 +266,9 @@ public class NodeManager implements Functional.Consumer<DiscoveryEvent>{
         if (discoveryEnabled) {
             logger.trace(" <===({}) {} [{}] {}", discoveryEvent.getAddress(),
                     discoveryEvent.getMessage().getClass().getSimpleName(), this, discoveryEvent.getMessage());
-            messageSender.accept(discoveryEvent);
+            if (messageSender != null) {
+                messageSender.accept(discoveryEvent);
+            }
         }
     }
 

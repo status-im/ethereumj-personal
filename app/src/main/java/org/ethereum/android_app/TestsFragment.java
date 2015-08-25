@@ -67,7 +67,7 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
 
             switch(v.getId()){
                 case R.id.connectButton:
-                    EthereumApplication.ethereum.connect("192.168.122.90", 30303, "aceb348f4fd7b9b5033b1703b724970d93dbc6ee8410bdc20bc0585e668d629e542cd8ec560311fc8f4a0851c914aae8945555adee73878063dfa0078cc03e07");
+                    EthereumApplication.ethereum.connect("139.162.13.89", 30303, "f471362a05597ef17cb28ba6aa94ebf05af4b68c5fa2f34cc0c50939b58904db00ba8c60b810d06a350df5fd4c7152bd4bd42a782ae455917252f8d1814c6d9d");
                     break;
                 case R.id.getEthereumStatus:
                     EthereumApplication.ethereum.getConnectionStatus(identifier);

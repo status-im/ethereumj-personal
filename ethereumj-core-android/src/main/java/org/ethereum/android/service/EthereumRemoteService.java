@@ -258,7 +258,7 @@ public class EthereumRemoteService extends EthereumService {
         component = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule(this))
                 .build();
-        component.udpListener();
+        //component.udpListener();
         ethereum = component.ethereum();
         ethereum.addListener(new EthereumListener());
     }
