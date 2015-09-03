@@ -52,6 +52,17 @@ public class proxy extends JsonRpcServerMethod {
         proxyMethods.add("eth_getFilterLogs");
         proxyMethods.add("eth_getLogs");
 
+        proxyMethods.add("shh_version");
+        proxyMethods.add("shh_post");
+        proxyMethods.add("shh_newIdentity");
+        proxyMethods.add("shh_hasIdentity");
+        proxyMethods.add("shh_newGroup");
+        proxyMethods.add("shh_addToGroup");
+        proxyMethods.add("shh_newFilter");
+        proxyMethods.add("shh_uninstallFilter");
+        proxyMethods.add("shh_getFilterChanges");
+        proxyMethods.add("shh_getMessages");
+
         //TODO: issue methods - they generate transaction but must call them in blockchain.
         proxyMethods.add("eth_call");
         proxyMethods.add("eth_estimateGas");

@@ -10,7 +10,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import org.ethereum.android.jsonrpc.light.whisper.FilterManager;
 import org.ethereum.facade.Ethereum;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.light.method.*;
@@ -45,20 +44,7 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
         this.dispatcher.register(new eth_sign(this.ethereum));
         this.dispatcher.register(new eth_sendTransaction(this.ethereum));
 
-        this.dispatcher.register(new shh_version(this.ethereum));
-        this.dispatcher.register(new shh_post(this.ethereum));
-        this.dispatcher.register(new shh_newIdentity(this.ethereum));
-        this.dispatcher.register(new shh_hasIdentity(this.ethereum));
-        this.dispatcher.register(new shh_newGroup(this.ethereum));
-        this.dispatcher.register(new shh_addToGroup(this.ethereum));
-        this.dispatcher.register(new shh_newFilter(this.ethereum));
-        this.dispatcher.register(new shh_uninstallFilter(this.ethereum));
-        this.dispatcher.register(new shh_getFilterChanges(this.ethereum));
-        this.dispatcher.register(new shh_getMessages(this.ethereum));
-
         this.dispatcher.register(new proxy(this.ethereum));
-
-        FilterManager.getInstance();
 
         addRemoteServer("http://139.162.13.89:8545/");
     }
