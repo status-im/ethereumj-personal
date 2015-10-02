@@ -1,7 +1,7 @@
 package org.ethereum.db;
 
 import org.ethereum.core.Block;
-import org.ethereum.core.TransactionReceipt;
+import org.ethereum.core.BlockHeader;
 import org.ethereum.crypto.HashUtil;
 import org.hibernate.SessionFactory;
 
@@ -23,7 +23,7 @@ public class BlockStoreDummy implements BlockStore {
     }
 
     @Override
-    public Block getBlockByNumber(long blockNumber) {
+    public Block getChainBlockByNumber(long blockNumber) {
         return null;
     }
 
@@ -33,13 +33,30 @@ public class BlockStoreDummy implements BlockStore {
     }
 
     @Override
+    public boolean isBlockExist(byte[] hash) {
+        return false;
+    }
+
+    @Override
     public List<byte[]> getListHashesEndWith(byte[] hash, long qty) {
         return null;
     }
 
     @Override
-    public void saveBlock(Block block, List<TransactionReceipt> receipts) {
+    public List<BlockHeader> getListHeadersEndWith(byte[] hash, long qty) {
+        return null;
     }
+
+    @Override
+    public List<Block> getListBlocksEndWith(byte[] hash, long qty) {
+        return null;
+    }
+
+    @Override
+    public void saveBlock(Block block, BigInteger cummDifficulty, boolean mainChain) {
+
+    }
+
 
     @Override
     public BigInteger getTotalDifficulty() {
@@ -64,4 +81,20 @@ public class BlockStoreDummy implements BlockStore {
     public void setSessionFactory(SessionFactory sessionFactory) {
     }
 
+
+    @Override
+    public long getMaxNumber() {
+        return 0;
+    }
+
+
+    @Override
+    public void reBranch(Block forkBlock) {
+
+    }
+
+    @Override
+    public BigInteger getTotalDifficultyForHash(byte[] hash) {
+        return null;
+    }
 }

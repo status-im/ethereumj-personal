@@ -1,8 +1,10 @@
 package org.ethereum.util;
 
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 public class BIUtil {
 
@@ -39,7 +41,7 @@ public class BIUtil {
      * @return true - if the valueA is less than valueB is zero
      */
     public static boolean isLessThan(BigInteger valueA, BigInteger valueB){
-        return valueA.compareTo(valueB) == -1;
+        return valueA.compareTo(valueB) < 0;
     }
 
     /**
@@ -48,7 +50,7 @@ public class BIUtil {
      * @return true - if the valueA is more than valueB is zero
      */
     public static boolean isMoreThan(BigInteger valueA, BigInteger valueB){
-        return valueA.compareTo(valueB) == 1;
+        return valueA.compareTo(valueB) > 0;
     }
 
 
@@ -84,11 +86,11 @@ public class BIUtil {
     }
 
     public static boolean isCovers(BigInteger covers, BigInteger value){
-        return covers.compareTo(value) > -1;
+        return !isNotCovers(covers, value);
     }
 
     public static boolean isNotCovers(BigInteger covers, BigInteger value){
-        return !(covers.compareTo(value) > -1);
+        return covers.compareTo(value) < 0;
     }
 
 
@@ -100,5 +102,24 @@ public class BIUtil {
     public static boolean exitLong(BigInteger value){
 
         return (value.compareTo(new BigInteger(Long.MAX_VALUE + ""))) > -1;
+    }
+
+    public static boolean isIn20PercentRange(BigInteger first, BigInteger second){
+
+        if (isMoreThan(first, second)) return true;
+
+        BigInteger gap = second.subtract(first);
+        BigInteger onePercent = first.divide(BigInteger.valueOf(100));
+        BigInteger ratio = gap.divide(onePercent);
+
+        if (ratio.doubleValue() <= 20){
+            return true;
+        }
+
+        return false;
+    }
+
+    public static BigInteger max(BigInteger first, BigInteger second) {
+        return first.compareTo(second) < 0 ? second : first;
     }
 }

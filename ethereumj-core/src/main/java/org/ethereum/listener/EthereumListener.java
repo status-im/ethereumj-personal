@@ -2,9 +2,13 @@ package org.ethereum.listener;
 
 import org.ethereum.core.Block;
 import org.ethereum.core.Transaction;
+import org.ethereum.core.TransactionExecutionSummary;
 import org.ethereum.core.TransactionReceipt;
+import org.ethereum.net.eth.message.StatusMessage;
 import org.ethereum.net.message.Message;
 import org.ethereum.net.p2p.HelloMessage;
+import org.ethereum.net.rlpx.Node;
+import org.ethereum.vm.program.InternalTransaction;
 
 import java.util.List;
 import java.util.Set;
@@ -31,7 +35,13 @@ public interface EthereumListener {
 
     void onNoConnections();
 
-    void onHandShakePeer(HelloMessage helloMessage);
+    void onHandShakePeer(Node node, HelloMessage helloMessage);
 
     void onVMTraceCreated(String transactionHash, String trace);
+
+    void onTransactionExecuted(TransactionExecutionSummary summary);
+
+    void onNodeDiscovered(Node node);
+
+    void onEthStatusUpdated(Node node, StatusMessage status);
 }

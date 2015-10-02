@@ -3,6 +3,7 @@ package org.ethereum.android.jsonrpc.full.method;
 import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
@@ -21,7 +22,8 @@ public class eth_getTransactionReceipt extends JsonRpcServerMethod {
         } else {
             byte[] address = jsToAddress((String) params.get(0));
 
-            TransactionReceipt transaction = ethereum.getBlockchain().getTransactionReceiptByHash(address);
+            Blockchain blockchain = (Blockchain)ethereum.getBlockchain();
+            TransactionReceipt transaction = blockchain.getTransactionReceiptByHash(address);
 
             if (transaction == null)
                 return new JSONRPC2Response(null, req.getID());

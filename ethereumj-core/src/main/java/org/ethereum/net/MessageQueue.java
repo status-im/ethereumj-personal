@@ -1,18 +1,17 @@
 package org.ethereum.net;
 
+import io.netty.channel.ChannelHandlerContext;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.message.Message;
+import org.ethereum.net.message.ReasonCode;
+import org.ethereum.net.p2p.DisconnectMessage;
 import org.ethereum.net.p2p.PingMessage;
-
-import io.netty.channel.ChannelHandlerContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
@@ -37,13 +36,20 @@ public class MessageQueue {
 
     private static final Logger logger = LoggerFactory.getLogger("net");
 
+    private static final ScheduledExecutorService timer = Executors.newScheduledThreadPool(4, new ThreadFactory() {
+        private AtomicInteger cnt = new AtomicInteger(0);
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "MessageQueueTimer-" + cnt.getAndIncrement());
+        }
+    });
+
     private Queue<MessageRoundtrip> messageQueue = new ConcurrentLinkedQueue<>();
     private ChannelHandlerContext ctx = null;
-    private final Timer timer = new Timer("MessageQueue");
 
     EthereumListener listener;
     boolean hasPing = false;
-	
+    private ScheduledFuture<?> timerTask;
+
 	@Inject
     public MessageQueue(EthereumListener listener) {
         this.listener = listener;
@@ -51,11 +57,11 @@ public class MessageQueue {
 
     public void activate(ChannelHandlerContext ctx) {
         this.ctx = ctx;
-        timer.scheduleAtFixedRate(new TimerTask() {
+        timerTask = timer.scheduleAtFixedRate(new Runnable() {
             public void run() {
                 nudgeQueue();
             }
-        }, 10, 10);
+        }, 10, 10, TimeUnit.MILLISECONDS);
     }
 
     public void sendMessage(Message msg) {
@@ -68,7 +74,15 @@ public class MessageQueue {
     }
 
     public void disconnect() {
-        ctx.writeAndFlush(DISCONNECT_MESSAGE);
+        disconnect(DISCONNECT_MESSAGE);
+    }
+
+    public void disconnect(ReasonCode reason) {
+        disconnect(new DisconnectMessage(reason));
+    }
+
+    private void disconnect(DisconnectMessage msg) {
+        ctx.writeAndFlush(msg);
         ctx.close();
     }
 
@@ -85,7 +99,7 @@ public class MessageQueue {
             if (waitingMessage.getAnswerMessage() != null
                     && msg.getClass() == waitingMessage.getAnswerMessage()) {
                 messageRoundtrip.answer();
-                logger.debug("Message round trip covered: [{}] ",
+                logger.trace("Message round trip covered: [{}] ",
                         messageRoundtrip.getMsg().getClass());
             }
         }
@@ -124,7 +138,8 @@ public class MessageQueue {
     }
 
     public void close() {
-        timer.cancel();
-        timer.purge();
+        if (timerTask != null) {
+            timerTask.cancel(false);
+        }
     }
 }

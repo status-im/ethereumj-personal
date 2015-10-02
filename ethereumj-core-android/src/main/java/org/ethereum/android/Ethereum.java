@@ -3,6 +3,7 @@ package org.ethereum.android;
 
 import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.core.Block;
+import org.ethereum.core.CallTransaction;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
@@ -10,19 +11,23 @@ import org.ethereum.core.Wallet;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.Repository;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
+import org.ethereum.listener.GasPriceTracker;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.net.submit.TransactionExecutor;
 import org.ethereum.net.submit.TransactionTask;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.vm.program.ProgramResult;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -38,9 +43,11 @@ import java.util.concurrent.Future;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
+@Singleton
 public class Ethereum implements org.ethereum.facade.Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
@@ -67,11 +74,15 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
     Wallet wallet;
 
+    ProgramInvokeFactory programInvokeFactory;
+
     private PeerClient activePeer;
+
+    private GasPriceTracker gasPriceTracker = new GasPriceTracker();
 
     @Inject
     public Ethereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo,
-                        ChannelManager channelManager, BlockLoader blockLoader,
+                        ChannelManager channelManager, BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory,
                         Provider<PeerClient> peerClientProvider, EthereumListener listener,
                         PeerDiscovery peerDiscovery, Wallet wallet) {
 
@@ -83,6 +94,7 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
         this.adminInfo = adminInfo;
         this.channelManager = channelManager;
         this.blockLoader = blockLoader;
+        this.programInvokeFactory = programInvokeFactory;
         this.peerClientProvider = peerClientProvider;
         this.listener = listener;
         this.peerDiscovery = peerDiscovery;
@@ -111,11 +123,12 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
             Executors.newSingleThreadExecutor().submit(
                     new Runnable() {
                         public void run() {
-//                            peerServer.start(CONFIG.listenPort());
+                            peerServer.start(CONFIG.listenPort());
                         }
                     }
             );
         }
+        addListener(gasPriceTracker);
     }
 
     public byte[] createRandomAccount() {
@@ -140,7 +153,7 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
 
-            blockStore.saveBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
+            blockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
 
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
@@ -268,33 +281,31 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
     }
 
     @Override
-    public void connect(String ip, int port, String remoteId) {
-
+    public void connect(final String ip, final int port, final String remoteId) {
         logger.info("Connecting to: {}:{}", ip, port);
-
-        if (activePeer == null)
-            activePeer = peerClientProvider.get();
-
-        activePeer.connect(ip, port, remoteId);
+        final PeerClient peerClient = peerClientProvider.get();
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                peerClient.connect(ip, port, remoteId);
+            }
+        });
     }
 
     @Override
-    public Blockchain getBlockchain() {
+    public void connect(Node node) {
+        connect(node.getHost(), node.getPort(), Hex.toHexString(node.getId()));
+    }
 
-
-        return blockchain;
+    @Override
+    public org.ethereum.facade.Blockchain getBlockchain() {
+        return (org.ethereum.facade.Blockchain)blockchain;
     }
 
     @Override
     public void addListener(EthereumListener listener) {
 
         ((CompositeEthereumListener) this.listener).addListener(listener);
-    }
-
-    @Override
-    public boolean isBlockchainLoading() {
-
-        return blockchain.getQueue().size() > 2;
     }
 
     @Override
@@ -345,6 +356,27 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
         return TransactionExecutor.instance.submitTransaction(transactionTask);
     }
 
+     @Override
+    public ProgramResult callConstantFunction(String receiveAddress, CallTransaction.Function function,
+                                              Object... funcArgs) {
+        Transaction tx = CallTransaction.createCallTransaction(0, 0, 100000000000000L,
+                receiveAddress, 0, function, funcArgs);
+        tx.sign(new byte[32]);
+
+        Block bestBlock = blockchain.getBestBlock();
+
+        org.ethereum.core.TransactionExecutor executor = new org.ethereum.core.TransactionExecutor
+                (tx, bestBlock.getCoinbase(), repository,
+                blockStore, programInvokeFactory, bestBlock)
+                .setLocalCall(true);
+
+        executor.init();
+        executor.execute();
+        executor.go();
+        executor.finalization();
+
+        return executor.getResult();
+    }
 
     @Override
     public Wallet getWallet() {
@@ -354,9 +386,17 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
 
     @Override
-    public Repository getRepository() {
+    public org.ethereum.facade.Repository getRepository() {
 
-        return repository;
+        return (org.ethereum.facade.Repository)repository;
+    }
+
+    @Override
+    public org.ethereum.facade.Repository getSnapshootTo(byte[] root){
+
+        org.ethereum.facade.Repository snapshot = (org.ethereum.facade.Repository) repository.getSnapshotTo(root);
+
+        return snapshot;
     }
 
     @Override
@@ -382,6 +422,11 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
     public BlockLoader getBlockLoader() {
 
         return  blockLoader;
+    }
+
+    @Override
+    public long getGasPrice() {
+        return gasPriceTracker.getGasPrice();
     }
 
     @Override

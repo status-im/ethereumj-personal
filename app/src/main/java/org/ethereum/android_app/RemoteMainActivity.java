@@ -20,6 +20,7 @@ import org.ethereum.android.service.events.TraceEventData;
 import org.ethereum.android.service.events.VMTraceCreatedEventData;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.net.p2p.HelloMessage;
+import org.ethereum.net.rlpx.Node;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -175,7 +176,8 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
 
         EthereumApplication app = (EthereumApplication)getApplication();
         app.ethereum.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
-        app.ethereum.connect(SystemProperties.CONFIG.activePeerIP(), SystemProperties.CONFIG.activePeerPort(), SystemProperties.CONFIG.activePeerNodeid());
+        //Node node = SystemProperties.CONFIG.peerActive().get(0);
+        //app.ethereum.connect(node.getHost(), node.getPort(), node.getHexId());
         app.ethereum.startJsonRpc();
     }
 

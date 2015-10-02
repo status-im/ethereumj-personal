@@ -13,6 +13,7 @@ import org.ethereum.core.Account;
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockHeader;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
@@ -302,7 +303,8 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
             for (Transaction tx : block.getTransactionsList()) {
                 if (Arrays.equals(tx.getHash(), transaction.getTransaction().getHash()))
                     break;
-                txli += this.ethereum.getBlockchain().getTransactionReceiptByHash(transaction.getTransaction().getHash()).getLogInfoList().size();
+                Blockchain blockchain = (Blockchain)this.ethereum.getBlockchain();
+                txli += blockchain.getTransactionReceiptByHash(transaction.getTransaction().getHash()).getLogInfoList().size();
                 txi++;
             }
             res.put("transactionIndex", "0x" + Long.toHexString(txi));

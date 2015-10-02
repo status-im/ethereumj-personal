@@ -39,4 +39,6 @@ public interface BlockStoreDatabase {
     public BlockTransactionVO getTransactionLocation(byte[] transactionHash);
 
     public void setFullStorage(boolean storeAllBlocks);
+
+    public long getMaxNumber();
 }

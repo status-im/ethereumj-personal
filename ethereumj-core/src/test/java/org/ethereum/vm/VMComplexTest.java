@@ -2,8 +2,10 @@ package org.ethereum.vm;
 
 import org.ethereum.core.AccountState;
 import org.ethereum.crypto.HashUtil;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 
+import org.ethereum.vm.program.Program;
+import org.ethereum.vm.program.invoke.ProgramInvokeMockImpl;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;

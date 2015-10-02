@@ -4,6 +4,7 @@ import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
 import org.ethereum.core.AccountState;
+import org.ethereum.core.Repository;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
@@ -29,7 +30,8 @@ public class eth_getBalance extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             BigInteger balance = ethereum.getRepository().getBalance(address);
@@ -40,7 +42,8 @@ public class eth_getBalance extends JsonRpcServerMethod {
             }
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(root);
             }
 
             String tmp = "0x" + balance.toString(16);

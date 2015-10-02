@@ -1,16 +1,20 @@
 package org.ethereum.cli;
 
+import org.ethereum.config.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.ethereum.config.SystemProperties.CONFIG;
+import javax.inject.Singleton;
 
 /**
  * @author Roman Mandeleil
  * @since 13.11.2014
  */
+@Singleton
 public class CLIInterface {
 
     private static final Logger logger = LoggerFactory.getLogger("cli");
@@ -19,6 +23,7 @@ public class CLIInterface {
     public static void call(String[] args) {
 
         try {
+            Map<String, String> cliOptions = new HashMap<>();
             for (int i = 0; i < args.length; ++i) {
 
                 // override the db directory
@@ -32,14 +37,14 @@ public class CLIInterface {
                 if (args[i].equals("-db") && i + 1 < args.length) {
                     String db = args[i + 1];
                     logger.info("DB directory set to [{}]", db);
-                    CONFIG.setDataBaseDir(db);
+                    cliOptions.put(SystemProperties.PROPERTY_DB_DIR, db);
                 }
 
                 // override the listen port directory
                 if (args[i].equals("-listen") && i + 1 < args.length) {
                     String port = args[i + 1];
                     logger.info("Listen port set to [{}]", port);
-                    CONFIG.setListenPort(Integer.valueOf(port));
+                    cliOptions.put(SystemProperties.PROPERTY_LISTEN_PORT, port);
                 }
 
                 // override the connect host:port directory
@@ -49,20 +54,20 @@ public class CLIInterface {
                     URI uri = new URI(connectStr);
                     if (!uri.getScheme().equals("enode"))
                         throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
-
-                    CONFIG.setActivePeerIP(uri.getHost());
-                    CONFIG.setActivePeerPort(uri.getPort());
-                    CONFIG.setActivePeerNodeid(uri.getUserInfo());
+                    cliOptions.put(SystemProperties.PROPERTY_PEER_ACTIVE, "[{url='" + connectStr + "'}]");
                 }
 
                 // override the listen port directory
                 if (args[i].equals("-reset") && i + 1 < args.length) {
                     Boolean resetStr = interpret(args[i + 1]);
                     logger.info("Resetting db set to [{}]", resetStr);
-                    CONFIG.setDatabaseReset(resetStr);
+                    cliOptions.put(SystemProperties.PROPERTY_DB_RESET, resetStr.toString());
                 }
             }
-            logger.info("");
+
+            logger.info("Overriding config file with CLI options: " + cliOptions);
+            SystemProperties.CONFIG.overrideParams(cliOptions);
+
         } catch (Throwable e) {
             logger.error("Error parsing command line: [{}]", e.getMessage());
             System.exit(1);

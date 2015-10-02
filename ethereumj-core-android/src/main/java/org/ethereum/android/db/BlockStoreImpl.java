@@ -1,6 +1,7 @@
 package org.ethereum.android.db;
 
 import org.ethereum.core.Block;
+import org.ethereum.core.BlockHeader;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.db.BlockStore;
 import org.ethereum.util.ByteUtil;
@@ -19,15 +20,47 @@ public class BlockStoreImpl implements BlockStore {
         this.database = database;
     }
 
+    @Override
+    public long getMaxNumber() {
+        return this.database.getMaxNumber();
+    }
+
+    //TODO: implement new functions
+
+    @Override
+    public List<Block> getListBlocksEndWith(byte[] hash, long qty) {
+        return null;
+    }
+
+    @Override
+    public List<BlockHeader> getListHeadersEndWith(byte[] hash, long qty) {
+        return null;
+    }
+
+    @Override
+    public boolean isBlockExist(byte[] hash) {
+        return false;
+    }
+
+    @Override
+    public void reBranch(Block forkBlock) {
+
+    }
+
+    @Override
+    public BigInteger getTotalDifficultyForHash(byte[] hash) {
+        return null;
+    }
+
     public byte[] getBlockHashByNumber(long blockNumber) {
 
-        Block block = getBlockByNumber(blockNumber);
+        Block block = getChainBlockByNumber(blockNumber);
         if (block != null) return block.getHash();
         return ByteUtil.EMPTY_BYTE_ARRAY;
     }
 
-
-    public Block getBlockByNumber(long blockNumber) {
+    @Override
+    public Block getChainBlockByNumber(long blockNumber) {
 
         List result = database.getByNumber(blockNumber);
         if (result.size() == 0) return null;
@@ -64,25 +97,11 @@ public class BlockStoreImpl implements BlockStore {
         database.deleteBlocksSince(number);
     }
 
-    public void saveBlock(Block block, List<TransactionReceipt> receipts) {
+    public void saveBlock(Block block, BigInteger cummDifficulty, boolean mainChain) {
 
         byte[] blockHash = block.getHash();
         BlockVO blockVO = new BlockVO(block.getNumber(), blockHash,
                 block.getEncoded(), block.getCumulativeDifficulty());
-
-        int index = 0;
-        for (TransactionReceipt receipt : receipts) {
-
-            byte[] transactionHash = receipt.getTransaction().getHash();
-            byte[] rlp = receipt.getEncoded();
-
-            TransactionReceiptVO transactionReceiptVO = new TransactionReceiptVO(transactionHash, rlp);
-            database.save(transactionReceiptVO);
-
-            BlockTransactionVO blockTransactionVO = new BlockTransactionVO(blockHash, transactionHash, index);
-            database.save(blockTransactionVO);
-            index++;
-        }
 
         database.save(blockVO);
     }

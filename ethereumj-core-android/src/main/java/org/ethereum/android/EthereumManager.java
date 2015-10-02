@@ -47,9 +47,11 @@ public class EthereumManager {
 
         long duration = 0;
         if (dumpFile == null) {
+            /*
             ethereum.connect(SystemProperties.CONFIG.activePeerIP(),
                     SystemProperties.CONFIG.activePeerPort(),
                     SystemProperties.CONFIG.activePeerNodeid());
+            */
         } else {
             BlockLoader blockLoader = (BlockLoader)ethereum.getBlockLoader();
             blockLoader.loadBlocks(dumpFile);

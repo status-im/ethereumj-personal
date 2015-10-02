@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
 
+import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.ethereum.util.ByteUtil.*;
 
 /**
@@ -33,7 +34,7 @@ public class Transaction {
 
     private static final Logger logger = LoggerFactory.getLogger(Transaction.class);
     private static final BigInteger DEFAULT_GAS_PRICE = new BigInteger("10000000000000");
-    private static final BigInteger DEFAULT_BALANCE_GAS = new BigInteger("500");
+    private static final BigInteger DEFAULT_BALANCE_GAS = new BigInteger("21000");
 
     /* SHA3 hash of the RLP encoded transaction */
     private byte[] hash;
@@ -67,10 +68,10 @@ public class Transaction {
      * (including public key recovery bits) */
     private ECDSASignature signature;
 
-    private byte[] sendAddress;
+    protected byte[] sendAddress;
 
     /* Tx in encoded form */
-    private byte[] rlpEncoded;
+    protected byte[] rlpEncoded;
     private byte[] rlpRaw;
     /* Indicates if this transaction has been parsed
      * from the RLP-encoded data */
@@ -114,16 +115,9 @@ public class Transaction {
         if (!parsed) rlpParse();
 
         long nonZeroes = nonZeroDataBytes();
-        long zeroVals  = getDataSize() - nonZeroes;
+        long zeroVals  = getLength(data) - nonZeroes;
 
         return GasCost.TRANSACTION + zeroVals * GasCost.TX_ZERO_DATA + nonZeroes * GasCost.TX_NO_ZERO_DATA;
-    }
-
-    private int getDataSize(){
-        if (data == null)
-            return 0;
-        else
-            return  data.length;
     }
 
     public void rlpParse() {
@@ -368,15 +362,16 @@ public class Transaction {
         return tx.hashCode() == this.hashCode();
     }
 
-    public static Transaction createDefault(String to, BigInteger ammount, BigInteger nonce){
-
-        return new Transaction(BigIntegers.asUnsignedByteArray(nonce),
-                BigIntegers.asUnsignedByteArray(DEFAULT_GAS_PRICE),
-                BigIntegers.asUnsignedByteArray(DEFAULT_BALANCE_GAS),
-                Hex.decode(to),
-                BigIntegers.asUnsignedByteArray(ammount),
-                null);
+    public static Transaction createDefault(String to, BigInteger amount, BigInteger nonce){
+        return create(to, amount, nonce, DEFAULT_GAS_PRICE, DEFAULT_BALANCE_GAS);
     }
 
-
+    public static Transaction create(String to, BigInteger amount, BigInteger nonce, BigInteger gasPrice, BigInteger gasLimit){
+        return new Transaction(BigIntegers.asUnsignedByteArray(nonce),
+                BigIntegers.asUnsignedByteArray(gasPrice),
+                BigIntegers.asUnsignedByteArray(gasLimit),
+                Hex.decode(to),
+                BigIntegers.asUnsignedByteArray(amount),
+                null);
+    }
 }

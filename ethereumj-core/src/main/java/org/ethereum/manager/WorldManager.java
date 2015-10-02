@@ -4,32 +4,27 @@ import org.ethereum.core.*;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.ByteArrayWrapper;
-import org.ethereum.facade.Blockchain;
-import org.ethereum.facade.Repository;
-import org.ethereum.listener.EthereumListener;
 import org.ethereum.listener.CompositeEthereumListener;
+import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.client.PeerClient;
+import org.ethereum.sync.SyncManager;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
+import org.ethereum.net.rlpx.discover.NodeManager;
 import org.ethereum.net.server.ChannelManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
-
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.Arrays;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.crypto.HashUtil.EMPTY_TRIE_HASH;
 
 /**
  * WorldManager is a singleton containing references to different parts of the system.
@@ -41,6 +36,8 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 public class WorldManager {
 
     private static final Logger logger = LoggerFactory.getLogger("general");
+
+    private EthereumListener listener;
 
     private Blockchain blockchain;
 
@@ -58,13 +55,15 @@ public class WorldManager {
 
     private AdminInfo adminInfo;
 
+    private NodeManager nodeManager;
 
-    private EthereumListener listener;
+    private SyncManager syncManager;
 
     @Inject
-	public WorldManager(Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, EthereumListener listener) {
+	public WorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
+                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager) {
         logger.info("World manager instantiated");
+        this.listener = listener;
         this.blockchain = blockchain;
         this.repository = repository;
         this.wallet = wallet;
@@ -72,7 +71,8 @@ public class WorldManager {
         this.blockStore = blockStore;
         this.channelManager = channelManager;
 		this.adminInfo = adminInfo;
-        this.listener = listener;
+        this.nodeManager = nodeManager;
+        this.syncManager = syncManager;
 
         this.init();
     }
@@ -84,6 +84,11 @@ public class WorldManager {
         String secret = CONFIG.coinbaseSecret();
         byte[] cbAddr = HashUtil.sha3(secret.getBytes());
         wallet.importKey(cbAddr);
+
+        loadBlockchain();
+
+        // must be initialized after blockchain is loaded
+        syncManager.init();
     }
 
     public void addListener(EthereumListener listener) {
@@ -117,8 +122,8 @@ public class WorldManager {
         this.wallet = wallet;
     }
 
-    public Repository getRepository() {
-        return repository;
+    public org.ethereum.facade.Repository getRepository() {
+        return (org.ethereum.facade.Repository)repository;
     }
 
     public Blockchain getBlockchain() {
@@ -137,9 +142,8 @@ public class WorldManager {
         return activePeer;
     }
 
-
-    public boolean isBlockchainLoading() {
-        return blockchain.getQueue().size() > 2;
+    public BlockStore getBlockStore() {
+        return blockStore;
     }
 
     public void loadBlockchain() {
@@ -157,7 +161,7 @@ public class WorldManager {
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
 
-            blockStore.saveBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
+            blockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
 
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
@@ -189,7 +193,11 @@ public class WorldManager {
         } else {
 
             // Update world state to latest loaded block from db
-            this.repository.syncToRoot(blockchain.getBestBlock().getStateRoot());
+            // if state is not generated from empty premine list
+            // todo this is just a workaround, move EMPTY_TRIE_HASH logic to Trie implementation
+            if (!Arrays.equals(blockchain.getBestBlock().getStateRoot(), EMPTY_TRIE_HASH)) {
+                this.repository.syncToRoot(blockchain.getBestBlock().getStateRoot());
+            }
         }
 
 /* todo: return it when there is no state conflicts on the chain
@@ -208,4 +216,5 @@ public class WorldManager {
         repository.close();
         blockchain.close();
     }
+
 }

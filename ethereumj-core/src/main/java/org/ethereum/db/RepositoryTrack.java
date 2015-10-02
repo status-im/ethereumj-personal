@@ -2,7 +2,7 @@ package org.ethereum.db;
 
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.vm.DataWord;
 
 import org.slf4j.Logger;
@@ -12,10 +12,14 @@ import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 
+import static org.ethereum.crypto.HashUtil.EMPTY_DATA_HASH;
+import static org.ethereum.crypto.HashUtil.EMPTY_TRIE_HASH;
 import static org.ethereum.crypto.SHA3Helper.sha3;
+import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.wrap;
 
 /**
@@ -105,14 +109,13 @@ public class RepositoryTrack implements Repository {
         cacheAccounts.put(wrap(addr), accountState.clone());
         ContractDetails contractDetailsLvl2 = new ContractDetailsCacheImpl(contractDetails);
         cacheDetails.put(wrap(addr), contractDetailsLvl2);
-
     }
 
 
     @Override
     public void delete(byte[] addr) {
-
         logger.trace("delete account: [{}]", Hex.toHexString(addr));
+
         getAccountState(addr).setDeleted(true);
         getContractDetails(addr).setDeleted(true);
     }
@@ -195,6 +198,14 @@ public class RepositoryTrack implements Repository {
 
     @Override
     public byte[] getCode(byte[] addr) {
+
+        if (!isExist(addr))
+            return EMPTY_BYTE_ARRAY;
+
+        byte[] codeHash = getAccountState(addr).getCodeHash();
+        if ( Arrays.equals(codeHash, EMPTY_DATA_HASH) )
+            return EMPTY_BYTE_ARRAY;
+
         return getContractDetails(addr).getCode();
     }
 
@@ -317,4 +328,14 @@ public class RepositoryTrack implements Repository {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Repository getSnapshotTo(byte[] root) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Repository getOriginRepository() {
+        return (repository instanceof RepositoryTrack)
+                ? ((RepositoryTrack) repository).getOriginRepository()
+                : repository;
+    }
 }

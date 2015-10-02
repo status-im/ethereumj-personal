@@ -1,10 +1,12 @@
 package org.ethereum.vm;
 
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.util.ByteUtil;
-import org.ethereum.vm.Program.BadJumpDestinationException;
-import org.ethereum.vm.Program.StackTooSmallException;
+import org.ethereum.vm.program.Program;
+import org.ethereum.vm.program.Program.BadJumpDestinationException;
+import org.ethereum.vm.program.Program.StackTooSmallException;
 
+import org.ethereum.vm.program.invoke.ProgramInvokeMockImpl;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -1028,18 +1030,6 @@ public class VMTest {
         assertEquals(expected, Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
     }
 
-    @Test  // NOT OP
-    public void testNOT_3() {
-
-        VM vm = new VM();
-        program = new Program(Hex.decode("61000019"), invoke);
-        String expected = "0000000000000000000000000000000000000000000000000000000000000000";
-
-        vm.step(program);
-        vm.step(program);
-
-        assertEquals(expected, Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
-    }
 
     @Test(expected = StackTooSmallException.class)  // BNOT OP
     public void testBNOT_4() {
@@ -1053,6 +1043,20 @@ public class VMTest {
             assertTrue(program.isStopped());
         }
     }
+
+    @Test  // NOT OP test from real failure
+    public void testNOT_5() {
+
+        VM vm = new VM();
+        program = new Program(Hex.decode("600019"), invoke);
+        String expected = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+
+        vm.step(program);
+        vm.step(program);
+
+        assertEquals(expected, Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
+    }
+
 
     @Test // POP OP
     public void testPOP_1() {
@@ -1579,7 +1583,7 @@ public class VMTest {
         vm.step(program);
 
         DataWord key = new DataWord(Hex.decode(s_expected_key));
-        DataWord val = program.getResult().getRepository().getStorageValue(invoke.getOwnerAddress()
+        DataWord val = program.getStorage().getStorageValue(invoke.getOwnerAddress()
                 .getNoLeadZeroesData(), key);
 
         assertEquals(s_expected_val, Hex.toHexString(val.getData()).toUpperCase());
@@ -1601,7 +1605,7 @@ public class VMTest {
         vm.step(program);
         vm.step(program);
 
-        Repository repository = program.getResult().getRepository();
+        Repository repository = program.getStorage();
         DataWord key = new DataWord(Hex.decode(s_expected_key));
         DataWord val = repository.getStorageValue(invoke.getOwnerAddress().getNoLeadZeroesData(), key);
 
@@ -1826,7 +1830,7 @@ public class VMTest {
         vm.step(program);
 
         DataWord key = new DataWord(Hex.decode(s_expected_key));
-        DataWord val = program.getResult().getRepository().getStorageValue(invoke.getOwnerAddress()
+        DataWord val = program.getStorage().getStorageValue(invoke.getOwnerAddress()
                 .getNoLeadZeroesData(), key);
 
         assertTrue(program.isStopped());
@@ -1851,7 +1855,7 @@ public class VMTest {
         vm.step(program);
 
         DataWord key = new DataWord(Hex.decode(s_expected_key));
-        DataWord val = program.getResult().getRepository().getStorageValue(invoke.getOwnerAddress()
+        DataWord val = program.getStorage().getStorageValue(invoke.getOwnerAddress()
                 .getNoLeadZeroesData(), key);
 
         assertTrue(program.isStopped());

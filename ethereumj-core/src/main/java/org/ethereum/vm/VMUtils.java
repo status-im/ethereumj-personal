@@ -1,6 +1,5 @@
 package org.ethereum.vm;
 
-import org.ethereum.config.SystemProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,11 +13,11 @@ import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.codec.binary.Base64.encodeBase64String;
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 public final class VMUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("VM");
-    private static final SystemProperties CONFIG = new SystemProperties();
 
     private VMUtils() {
     }
@@ -94,10 +93,10 @@ public final class VMUtils {
         }
     }
 
-    private static byte[] compress(String content) throws IOException {
+    public static byte[] compress(byte[] bytes) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        ByteArrayInputStream in = new ByteArrayInputStream(content.getBytes("UTF-8"));
+        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
         DeflaterOutputStream out = new DeflaterOutputStream(baos, new Deflater(), BUF_SIZE);
 
         write(in, out, BUF_SIZE);
@@ -105,7 +104,11 @@ public final class VMUtils {
         return baos.toByteArray();
     }
 
-    private static String decompress(byte[] data) throws IOException {
+    public static byte[] compress(String content) throws IOException {
+        return compress(content.getBytes("UTF-8"));
+    }
+
+    public static byte[] decompress(byte[] data) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
 
         ByteArrayInputStream in = new ByteArrayInputStream(data);
@@ -113,7 +116,7 @@ public final class VMUtils {
 
         write(in, out, BUF_SIZE);
 
-        return new String(baos.toByteArray(), "UTF-8");
+        return baos.toByteArray();
     }
 
     public static String zipAndEncode(String content) {
@@ -127,7 +130,8 @@ public final class VMUtils {
 
     public static String unzipAndDecode(String content) {
         try {
-            return decompress(decodeBase64(content));
+            byte[] decoded = decodeBase64(content);
+            return new String(decompress(decoded), "UTF-8");
         } catch (Exception e) {
             LOGGER.error("Cannot unzip or decode: ", e);
             return content;

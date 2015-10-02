@@ -16,9 +16,15 @@ public class NodeTable {
     private Map<Node, Date> expectedPongs = new HashMap<>();
 
     public NodeTable(Node n) {
+        this(n, true);
+    }
+
+    public NodeTable(Node n, boolean includeHomeNode) {
         this.node = n;
         initialize();
-        addNode(this.node);
+        if (includeHomeNode) {
+            addNode(this.node);
+        }
     }
 
     public Node getNode() {
@@ -102,6 +108,7 @@ public class NodeTable {
 
         for (NodeBucket b : buckets)
         {
+//            nodes.addAll(b.getNodes());
             for (NodeEntry e : b.getNodes())
             {
                 if (!e.getNode().equals(node)) {
@@ -110,6 +117,7 @@ public class NodeTable {
             }
         }
 
+//        boolean res = nodes.remove(node);
         return nodes;
     }
 

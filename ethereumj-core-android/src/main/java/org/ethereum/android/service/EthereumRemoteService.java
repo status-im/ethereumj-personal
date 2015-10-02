@@ -9,18 +9,24 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
+import org.ethereum.android.di.components.DaggerEthereumComponent;
+import org.ethereum.android.di.modules.EthereumModule;
 import org.ethereum.android.jsonrpc.JsonRpcServer;
 import org.ethereum.android.manager.BlockLoader;
 import org.ethereum.android.service.events.EventData;
 import org.ethereum.android.service.events.EventFlag;
+import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.server.ChannelManager;
+import org.ethereum.sync.PeersPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -209,6 +215,48 @@ public class EthereumRemoteService extends EthereumService {
         return true;
     }
 
+    @Override
+    protected void onEthereumCreated(List<String> privateKeys) {
+
+        if (ethereum != null) {
+            ethereum.init(privateKeys);
+            startJsonRpc(null);
+            broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
+            isEthereumStarted = true;
+            isInitialized = true;
+        }
+    }
+
+    @Override
+    protected void createEthereum() {
+
+        System.setProperty("sun.arch.data.model", "32");
+        System.setProperty("leveldb.mmap", "false");
+
+        String databaseFolder = getApplicationInfo().dataDir;
+        System.out.println("Database folder: " + databaseFolder);
+        CONFIG.setDataBaseDir(databaseFolder);
+        System.out.println("Loading genesis");
+        String genesisFile = CONFIG.genesisInfo();
+        try {
+            InputStream is = getApplication().getAssets().open("genesis/" + genesisFile);
+            Genesis.androidGetInstance(is);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        System.out.println("Genesis loaded");
+        component = DaggerEthereumComponent.builder()
+                .ethereumModule(new EthereumModule(this))
+                .build();
+        //component.udpListener();
+        ethereum = (org.ethereum.android.Ethereum)component.ethereum();
+        ethereum.addListener(new EthereumListener());
+        PeersPool peersPool = component.peersPool();
+        peersPool.setEthereum(ethereum);
+        ChannelManager channelManager = component.channelManager();
+        channelManager.setEthereum(ethereum);
+    }
+
     protected void init(Message message) {
 
         if (isEthereumStarted) {
@@ -216,12 +264,10 @@ public class EthereumRemoteService extends EthereumService {
             ethereum = null;
             component = null;
             isInitialized = false;
-            initializeEthereum();
         }
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
-        ethereum.init(privateKeys);
-        isEthereumStarted = true;
+        new InitializeTask(privateKeys).execute();
     }
 
     /**
@@ -445,7 +491,7 @@ public class EthereumRemoteService extends EthereumService {
      */
     protected void getBlockchainStatus(Message message) {
 
-        boolean isLoading = ethereum.isBlockchainLoading();
+        boolean isLoading = false;//ethereum.isBlockchainLoading();
         String status = isLoading ? "Loading" : "Loaded";
         Message replyMessage = Message.obtain(null, EthereumClientMessage.MSG_BLOCKCHAIN_STATUS, 0, 0, message.obj);
         Bundle replyData = new Bundle();

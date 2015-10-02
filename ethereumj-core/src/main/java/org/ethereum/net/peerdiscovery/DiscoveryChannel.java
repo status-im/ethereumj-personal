@@ -9,12 +9,13 @@ import io.netty.handler.timeout.ReadTimeoutHandler;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.Capability;
-import org.ethereum.net.eth.EthHandler;
-import org.ethereum.net.eth.StatusMessage;
+import org.ethereum.net.eth.handler.EthHandler;
+import org.ethereum.net.eth.message.StatusMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.wire.MessageCodec;
+import org.ethereum.net.swarm.bzz.BzzHandler;
+import org.ethereum.net.rlpx.MessageCodec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,14 +49,17 @@ public class DiscoveryChannel {
 
     ShhHandler shhHandler;
 
+    BzzHandler bzzHandler;
+
     @Inject
     public DiscoveryChannel(MessageQueue messageQueue, P2pHandler p2pHandler
-                            , EthHandler ethHandler, ShhHandler shhHandler,
+                            , EthHandler ethHandler, ShhHandler shhHandler, BzzHandler bzzHandler,
                             EthereumListener listener, Provider<MessageCodec> messageCodecProvider) {
         this.messageQueue = messageQueue;
         this.p2pHandler = p2pHandler;
         this.ethHandler = ethHandler;
         this.shhHandler = shhHandler;
+        this.bzzHandler = bzzHandler;
         this.listener = listener;
         this.messageCodecProvider = messageCodecProvider;
     }
@@ -84,6 +88,8 @@ public class DiscoveryChannel {
 
             shhHandler.setMsgQueue(messageQueue);
 
+            bzzHandler.setMsgQueue(messageQueue);
+
             final MessageCodec decoder = messageCodecProvider.get();
 
             b.handler(
@@ -101,6 +107,7 @@ public class DiscoveryChannel {
                             ch.pipeline().addLast(Capability.P2P, p2pHandler);
                             ch.pipeline().addLast(Capability.ETH, ethHandler);
                             ch.pipeline().addLast(Capability.SHH, shhHandler);
+                            ch.pipeline().addLast(Capability.BZZ, bzzHandler);
 
                             // limit the size of receiving buffer to 1024
                             ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(32368));

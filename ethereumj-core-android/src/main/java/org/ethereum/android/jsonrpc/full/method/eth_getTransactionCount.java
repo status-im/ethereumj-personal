@@ -5,6 +5,7 @@ import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServer;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
 import org.ethereum.core.AccountState;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
@@ -22,6 +23,7 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
         if (params.size() != 2) {
             return new JSONRPC2Response(JSONRPC2Error.INVALID_PARAMS, req.getID());
         } else {
+            Repository repository;
             byte[] address = jsToAddress((String) params.get(0));
             String height = (String)params.get(1);
 
@@ -30,12 +32,13 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             BigInteger nonce = BigInteger.ZERO;
-
-            AccountState accountState = ethereum.getRepository().getAccountState(address);
+            repository = (Repository)ethereum.getRepository();
+            AccountState accountState = repository.getAccountState(address);
             if (accountState != null)
                 nonce = accountState.getNonce();
 
@@ -50,7 +53,8 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
             }
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(root);
             }
 
             String tmp = "0x" + nonce.toString(16);

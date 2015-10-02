@@ -4,10 +4,11 @@ import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import net.minidev.json.JSONObject;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.vm.Program;
 import org.ethereum.vm.VM;
+import org.ethereum.vm.program.Program;
 import org.spongycastle.util.encoders.Hex;
 import java.util.List;
 
@@ -36,7 +37,8 @@ public class eth_call extends JsonRpcServerMethod {
             byte[] root = ethereum.getBlockchain().getBestBlock().getStateRoot();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(ethereum.getBlockchain().getBlockByNumber(blockNumber).getStateRoot());
             }
 
             VM vm = new VM();
@@ -45,7 +47,8 @@ public class eth_call extends JsonRpcServerMethod {
             byte[] result = program.getResult().getHReturn();
 
             if (blockNumber >= 0) {
-                ethereum.getRepository().syncToRoot(root);
+                Repository repository = (Repository)ethereum.getRepository();
+                repository.syncToRoot(root);
             }
 
             String tmp = "0x" + Hex.toHexString(result);

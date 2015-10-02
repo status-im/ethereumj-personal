@@ -8,8 +8,6 @@ import org.ethereum.net.MessageQueue;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import org.ethereum.net.eth.*;
-import org.ethereum.util.ByteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +75,7 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        logger.error(cause.getCause().toString());
+        logger.error("Shh handling failed", cause);
         super.exceptionCaught(ctx, cause);
         ctx.close();
     }

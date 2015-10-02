@@ -2,19 +2,37 @@ package org.ethereum.net.rlpx;
 
 import org.ethereum.util.RLP;
 import org.ethereum.util.RLPList;
+import org.ethereum.util.Utils;
 import org.spongycastle.util.encoders.Hex;
 
-import java.nio.charset.Charset;
+import java.io.Serializable;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static org.ethereum.util.ByteUtil.byteArrayToInt;
-import static org.ethereum.util.ByteUtil.intToBytes;
 
-public class Node {
+public class Node implements Serializable {
+    private static final long serialVersionUID = -4267600517925770636L;
 
     byte[] id;
     String host;
     int port;
+
+    public Node(String enodeURL) {
+        try {
+            URI uri = new URI(enodeURL);
+            if (!uri.getScheme().equals("enode")) {
+                throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
+            }
+            this.id = Hex.decode(uri.getUserInfo());
+            this.host = uri.getHost();
+            this.port = uri.getPort();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT", e);
+        }
+    }
 
     public Node(byte[] id, String host, int port) {
         this.id = id;
@@ -60,6 +78,14 @@ public class Node {
         return id;
     }
 
+    public String getHexId() {
+        return Hex.toHexString(id);
+    }
+
+    public String getHexIdShort() {
+        return Utils.getNodeIdShort(getHexId());
+    }
+
     public void setId(byte[] id) {
         this.id = id;
     }
@@ -82,11 +108,12 @@ public class Node {
 
     public byte[] getRLP() {
 
-        byte[] rlphost = RLP.encodeElement(host.getBytes(Charset.forName("UTF-8")));
-        byte[] rlpPort = RLP.encodeElement(intToBytes(port));
+        byte[] rlphost = RLP.encodeElement(host.getBytes(StandardCharsets.UTF_8));
+        byte[] rlpTCPPort = RLP.encodeInt(port);
+        byte[] rlpUDPPort = RLP.encodeInt(port);
         byte[] rlpId = RLP.encodeElement(id);
 
-        byte[] data = RLP.encodeList(rlphost, rlpPort, rlpId);
+        byte[] data = RLP.encodeList(rlphost, rlpUDPPort, rlpTCPPort, rlpId);
         return data;
     }
 

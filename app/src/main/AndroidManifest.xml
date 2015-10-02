@@ -29,15 +29,11 @@
 
         <service
             android:name=".EthereumService"
-            android:enabled="true"
-            android:exported="true"
-            android:process=":ethereum_process" >
+            android:enabled="true">
         </service>
         <service
             android:name=".EthereumRemoteService"
-            android:enabled="true"
-            android:exported="true"
-            android:process=":ethereum_remote_process" >
+            android:enabled="true">
         </service>
 
         <activity

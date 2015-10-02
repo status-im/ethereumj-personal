@@ -2,11 +2,14 @@ package org.ethereum.db;
 
 import org.ethereum.vm.DataWord;
 
+import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ContractDetails {
-    
+
     void put(DataWord key, DataWord value);
 
     DataWord get(DataWord key);
@@ -29,6 +32,12 @@ public interface ContractDetails {
 
     byte[] getEncoded();
 
+    int getStorageSize();
+
+    Set<DataWord> getStorageKeys();
+
+    Map<DataWord,DataWord> getStorage(@Nullable Collection<DataWord> keys);
+
     Map<DataWord, DataWord> getStorage();
 
     void setStorage(List<DataWord> storageKeys, List<DataWord> storageValues);
@@ -45,5 +54,5 @@ public interface ContractDetails {
 
     void syncStorage();
 
-    int getAllocatedMemorySize();
+    ContractDetails getSnapshotTo(byte[] hash);
 }

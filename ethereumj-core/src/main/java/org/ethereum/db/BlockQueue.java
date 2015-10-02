@@ -1,8 +1,11 @@
 package org.ethereum.db;
 
-import org.ethereum.core.Block;
+import org.ethereum.core.BlockHeader;
+import org.ethereum.core.BlockWrapper;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Mikhail Kalinin
@@ -10,15 +13,25 @@ import java.util.Collection;
  */
 public interface BlockQueue extends DiskStore {
 
-    void addAll(Collection<Block> blockList);
+    void addAll(Collection<BlockWrapper> blockList);
 
-    void add(Block block);
+    void add(BlockWrapper block);
 
-    Block poll();
+    BlockWrapper poll();
 
-    Block peek();
+    BlockWrapper peek();
+
+    BlockWrapper take();
 
     int size();
 
     boolean isEmpty();
+
+    void clear();
+
+    List<byte[]> filterExisting(Collection<byte[]> hashes);
+
+    List<BlockHeader> filterExistingHeaders(Collection<BlockHeader> headers);
+
+    boolean isBlockExist(byte[] hash);
 }

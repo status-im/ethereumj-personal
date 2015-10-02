@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.ethereum.config.SystemProperties.CONFIG;
 
@@ -37,6 +39,14 @@ public class PeerClient {
 
     Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider;
 
+    private static EventLoopGroup workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
+        AtomicInteger cnt = new AtomicInteger(0);
+        @Override
+        public Thread newThread(Runnable r) {
+            return new Thread(r, "EthJClientWorker-" + cnt.getAndIncrement());
+        }
+    });
+
     @Inject
 	public PeerClient(EthereumListener listener, ChannelManager channelManager,
                       Provider<EthereumChannelInitializer> ethereumChannelInitializerProvider) {
@@ -47,11 +57,14 @@ public class PeerClient {
     }
 
     public void connect(String host, int port, String remoteId) {
+        connect(host, port, remoteId, false);
+    }
 
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+    public void connect(String host, int port, String remoteId, boolean discoveryMode) {
         listener.trace("Connecting to: " + host + ":" + port);
 
         EthereumChannelInitializer ethereumChannelInitializer = ethereumChannelInitializerProvider.get();
+        ethereumChannelInitializer.setPeerDiscoveryMode(discoveryMode);
         ethereumChannelInitializer.setRemoteId(remoteId);
 
         try {
@@ -74,10 +87,11 @@ public class PeerClient {
             logger.debug("Connection is closed");
 
         } catch (Exception e) {
-            logger.debug("Exception: {} ({})", e.getMessage(), e.getClass().getName());
-        } finally {
-            workerGroup.shutdownGracefully();
+            if (discoveryMode) {
+                logger.debug("Exception:", e);
+            } else {
+                logger.error("Exception:", e);
+            }
         }
     }
-
 }

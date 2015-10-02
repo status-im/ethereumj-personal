@@ -3,7 +3,7 @@ package org.ethereum.jsontestsuite.builder;
 import org.ethereum.core.AccountState;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.db.*;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.jsontestsuite.model.AccountTck;
 
 import java.util.HashMap;
@@ -35,8 +35,9 @@ public class RepositoryBuilder {
         }
 
         RepositoryImpl repositoryDummy = new RepositoryImpl(new HashMapDB(), new HashMapDB());
-        repositoryDummy.updateBatch(stateBatch, detailsBatch);
-        repositoryDummy.flushNoReconnect();
+        Repository track = repositoryDummy.startTracking();
+        track.updateBatch(stateBatch, detailsBatch);
+        track.commit();
 
         return repositoryDummy;
     }

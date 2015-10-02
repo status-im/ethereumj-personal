@@ -24,9 +24,10 @@ import java.nio.file.Files;
 import java.util.*;
 
 import static java.math.BigInteger.ZERO;
-import static org.ethereum.TestUtils.createIndexMap;
-import static org.ethereum.TestUtils.createMapDB;
+import static org.ethereum.TestUtils.*;
+import static org.ethereum.util.ByteUtil.wrap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class IndexedBlockStoreTest {
@@ -71,7 +72,7 @@ public class IndexedBlockStoreTest {
     public void test1(){
 
         IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
-        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null);
+        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
 
         BigInteger cummDiff = BigInteger.ZERO;
         for (Block block : blocks){
@@ -177,10 +178,10 @@ public class IndexedBlockStoreTest {
     public void test2(){
 
         IndexedBlockStore cache = new IndexedBlockStore();
-        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null);
+        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
 
         IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
-        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), cache);
+        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), cache, null);
 
         BigInteger cummDiff = BigInteger.ZERO;
         for (Block block : blocks){
@@ -286,10 +287,10 @@ public class IndexedBlockStoreTest {
     public void test3(){
 
         IndexedBlockStore cache = new IndexedBlockStore();
-        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null);
+        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
 
         IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
-        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), cache);
+        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), cache, null);
 
         BigInteger cummDiff = BigInteger.ZERO;
         for (Block block : blocks){
@@ -402,14 +403,14 @@ public class IndexedBlockStoreTest {
         String testDir = "test_db_" + bi;
         SystemProperties.CONFIG.setDataBaseDir(testDir);
 
-        DB db = createMapDB(testDir);
-        Map<Long, List<IndexedBlockStore.BlockInfo>> indexDB = createIndexMap(db);
+        DB indexDB = createMapDB(testDir);
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = createIndexMap(indexDB);
 
         KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
         blocksDB.init();
 
         IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
-        indexedBlockStore.init(indexDB, blocksDB, null);
+        indexedBlockStore.init(indexMap, blocksDB, null, indexDB);
 
 
         BigInteger cummDiff = BigInteger.ZERO;
@@ -511,19 +512,19 @@ public class IndexedBlockStoreTest {
         }
 
         blocksDB.close();
-        db.close();
+        indexDB.close();
 
 
         // testing after: REOPEN
 
-        db = createMapDB(testDir);
-        indexDB = createIndexMap(db);
+        indexDB = createMapDB(testDir);
+        indexMap = createIndexMap(indexDB);
 
         blocksDB = new LevelDbDataSource("blocks");
         blocksDB.init();
 
         indexedBlockStore = new IndexedBlockStore();
-        indexedBlockStore.init(indexDB, blocksDB, null);
+        indexedBlockStore.init(indexMap, blocksDB, null, indexDB);
 
         //  testing: getListHashesStartWith(long, long)
 
@@ -537,7 +538,7 @@ public class IndexedBlockStoreTest {
         }
 
         blocksDB.close();
-        db.close();
+        indexDB.close();
         FileUtil.recursiveDelete(testDir);
     }
 
@@ -548,8 +549,8 @@ public class IndexedBlockStoreTest {
         String testDir = "test_db_" + bi;
         SystemProperties.CONFIG.setDataBaseDir(testDir);
 
-        DB db = createMapDB(testDir);
-        Map<Long, List<IndexedBlockStore.BlockInfo>> indexDB = createIndexMap(db);
+        DB indexDB = createMapDB(testDir);
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = createIndexMap(indexDB);
 
         KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
         blocksDB.init();
@@ -557,10 +558,10 @@ public class IndexedBlockStoreTest {
         try {
 
             IndexedBlockStore cache = new IndexedBlockStore();
-            cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null);
+            cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
 
             IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
-            indexedBlockStore.init(indexDB, blocksDB, cache);
+            indexedBlockStore.init(indexMap, blocksDB, cache, indexDB);
 
 
             BigInteger cummDiff = BigInteger.ZERO;
@@ -674,18 +675,18 @@ public class IndexedBlockStoreTest {
 
             indexedBlockStore.flush();
             blocksDB.close();
-            db.close();
+            indexDB.close();
+
             // testing after: REOPEN
 
-            db = createMapDB(testDir);
-            indexDB = createIndexMap(db);
+            indexDB = createMapDB(testDir);
+            indexMap = createIndexMap(indexDB);
 
             blocksDB = new LevelDbDataSource("blocks");
             blocksDB.init();
 
             indexedBlockStore = new IndexedBlockStore();
-            indexedBlockStore.init(indexDB, blocksDB, null);
-
+            indexedBlockStore.init(indexMap, blocksDB, null, indexDB);
 
             //  testing: getListHashesStartWith(long, long)
 
@@ -699,14 +700,324 @@ public class IndexedBlockStoreTest {
             }
         } finally {
             blocksDB.close();
-            db.close();
+            indexDB.close();
             FileUtil.recursiveDelete(testDir);
         }
 
     }
 
+    @Test // cache + leveldb + mapdb, multi branch, total difficulty test
+    public void test6() throws IOException {
+
+        BigInteger bi = new BigInteger(32, new Random());
+        String testDir = "test_db_" + bi;
+        SystemProperties.CONFIG.setDataBaseDir(testDir);
+
+        DB indexDB = createMapDB(testDir);
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = createIndexMap(indexDB);
+
+        KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
+        blocksDB.init();
+
+        try {
+
+            IndexedBlockStore cache = new IndexedBlockStore();
+            cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+            IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
+            indexedBlockStore.init(indexMap, blocksDB, cache, indexDB);
+
+            List<Block> bestLine = getRandomChain(Genesis.getInstance().getHash(), 1, 100);
+
+            indexedBlockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
+
+            for (int i = 0; i < bestLine.size(); ++i){
+
+                BigInteger td = indexedBlockStore.getTotalDifficulty();
+                Block newBlock = bestLine.get(i);
+                td = td.add(newBlock.getCumulativeDifficulty());
+
+                indexedBlockStore.saveBlock(newBlock, td, true);
+            }
+
+            byte[] forkParentHash = bestLine.get(60).getHash();
+            long forkParentNumber = bestLine.get(60).getNumber();
+            List<Block> forkLine = getRandomChain(forkParentHash, forkParentNumber + 1, 50);
+
+
+            for (int i = 0; i < forkLine.size(); ++i){
+
+                Block newBlock = forkLine.get(i);
+                Block parentBlock = indexedBlockStore.getBlockByHash(newBlock.getParentHash());
+                BigInteger td = indexedBlockStore.getTotalDifficultyForHash(parentBlock.getHash());
+
+                td = td.add(newBlock.getCumulativeDifficulty());
+                indexedBlockStore.saveBlock(newBlock, td, false);
+            }
+
+
+            // calc all TDs
+            Map<ByteArrayWrapper, BigInteger> tDiffs = new HashMap<>();
+            BigInteger td = Genesis.getInstance().getCumulativeDifficulty();
+            for (Block block : bestLine){
+                td = td.add(block.getCumulativeDifficulty());
+                tDiffs.put(wrap(block.getHash()), td);
+            }
+
+            Map<ByteArrayWrapper, BigInteger> tForkDiffs = new HashMap<>();
+            Block block = forkLine.get(0);
+            td = tDiffs.get(wrap(block.getParentHash()));
+            for (Block currBlock : forkLine){
+                td = td.add(currBlock.getCumulativeDifficulty());
+                tForkDiffs.put(wrap(currBlock.getHash()), td);
+            }
+
+
+            // Assert tds on bestLine
+            for ( ByteArrayWrapper hash :  tDiffs.keySet()){
+                BigInteger currTD = tDiffs.get(hash);
+                BigInteger checkTd =  indexedBlockStore.getTotalDifficultyForHash(hash.getData());
+                assertEquals(checkTd, currTD);
+            }
+
+            // Assert tds on forkLine
+            for ( ByteArrayWrapper hash :  tForkDiffs.keySet()){
+                BigInteger currTD = tForkDiffs.get(hash);
+                BigInteger checkTd =  indexedBlockStore.getTotalDifficultyForHash(hash.getData());
+                assertEquals(checkTd, currTD);
+            }
+
+            indexedBlockStore.flush();
+
+            // Assert tds on bestLine
+            for ( ByteArrayWrapper hash :  tDiffs.keySet()){
+                BigInteger currTD = tDiffs.get(hash);
+                BigInteger checkTd =  indexedBlockStore.getTotalDifficultyForHash(hash.getData());
+                assertEquals(checkTd, currTD);
+            }
+
+            // check total difficulty
+            BigInteger totalDifficulty  = indexedBlockStore.getTotalDifficulty();
+            Block bestBlock = bestLine.get(bestLine.size() - 1);
+            BigInteger totalDifficulty_ = tDiffs.get(wrap(bestBlock.getHash()));
+
+            assertEquals(totalDifficulty_, totalDifficulty);
+
+            // Assert tds on forkLine
+            for ( ByteArrayWrapper hash :  tForkDiffs.keySet()){
+                BigInteger currTD = tForkDiffs.get(hash);
+                BigInteger checkTd =  indexedBlockStore.getTotalDifficultyForHash(hash.getData());
+                assertEquals(checkTd, currTD);
+            }
+
+
+        } finally {
+            blocksDB.close();
+            indexDB.close();
+            FileUtil.recursiveDelete(testDir);
+        }
+    }
+
+    @Test // cache + leveldb + mapdb, multi branch, total re-branch test
+    public void test7() throws IOException {
+
+        BigInteger bi = new BigInteger(32, new Random());
+        String testDir = "test_db_" + bi;
+        SystemProperties.CONFIG.setDataBaseDir(testDir);
+
+        DB indexDB = createMapDB(testDir);
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = createIndexMap(indexDB);
+
+        KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
+        blocksDB.init();
+
+        try {
+
+            IndexedBlockStore cache = new IndexedBlockStore();
+            cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+            IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
+            indexedBlockStore.init(indexMap, blocksDB, cache, indexDB);
+
+            List<Block> bestLine = getRandomChain(Genesis.getInstance().getHash(), 1, 100);
+
+            indexedBlockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
+
+            for (int i = 0; i < bestLine.size(); ++i){
+
+                BigInteger td = indexedBlockStore.getTotalDifficulty();
+                Block newBlock = bestLine.get(i);
+                td = td.add(newBlock.getCumulativeDifficulty());
+
+                indexedBlockStore.saveBlock(newBlock, td, true);
+            }
+
+            byte[] forkParentHash = bestLine.get(60).getHash();
+            long forkParentNumber = bestLine.get(60).getNumber();
+            List<Block> forkLine = getRandomChain(forkParentHash, forkParentNumber + 1, 50);
+
+
+            for (int i = 0; i < forkLine.size(); ++i){
+
+                Block newBlock = forkLine.get(i);
+                Block parentBlock = indexedBlockStore.getBlockByHash(newBlock.getParentHash());
+                BigInteger td = indexedBlockStore.getTotalDifficultyForHash(parentBlock.getHash());
+
+                td = td.add(newBlock.getCumulativeDifficulty());
+                indexedBlockStore.saveBlock(newBlock, td, false);
+            }
+
+
+            Block bestBlock = bestLine.get(bestLine.size() - 1);
+            Block forkBlock = forkLine.get(forkLine.size() - 1);
+
+            // check total difficulty
+            BigInteger totalDifficulty  = indexedBlockStore.getTotalDifficulty();
+            BigInteger totalDifficulty_ = indexedBlockStore.getTotalDifficultyForHash( bestBlock.getHash() );
+            assertEquals(totalDifficulty_, totalDifficulty);
+
+
+            indexedBlockStore.reBranch(forkBlock);
+
+            // check total difficulty
+            totalDifficulty  = indexedBlockStore.getTotalDifficulty();
+            totalDifficulty_ = indexedBlockStore.getTotalDifficultyForHash( forkBlock.getHash() );
+            assertEquals(totalDifficulty_, totalDifficulty);
+
+
+        } finally {
+            blocksDB.close();
+            indexDB.close();
+            FileUtil.recursiveDelete(testDir);
+        }
+    }
+
+    @Test // cache + leveldb + mapdb, multi branch, total re-branch test
+    public void test8() throws IOException {
+
+        BigInteger bi = new BigInteger(32, new Random());
+        String testDir = "test_db_" + bi;
+        SystemProperties.CONFIG.setDataBaseDir(testDir);
+
+        DB indexDB = createMapDB(testDir);
+        Map<Long, List<IndexedBlockStore.BlockInfo>> indexMap = createIndexMap(indexDB);
+
+        KeyValueDataSource blocksDB = new LevelDbDataSource("blocks");
+        blocksDB.init();
+
+        try {
+
+            IndexedBlockStore cache = new IndexedBlockStore();
+            cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+            IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
+            indexedBlockStore.init(indexMap, blocksDB, cache, indexDB);
+
+            List<Block> bestLine = getRandomChain(Genesis.getInstance().getHash(), 1, 100);
+
+            indexedBlockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
+
+            for (int i = 0; i < bestLine.size(); ++i){
+
+                BigInteger td = indexedBlockStore.getTotalDifficulty();
+                Block newBlock = bestLine.get(i);
+                td = td.add(newBlock.getCumulativeDifficulty());
+
+                indexedBlockStore.saveBlock(newBlock, td, true);
+            }
+
+            byte[] forkParentHash = bestLine.get(60).getHash();
+            long forkParentNumber = bestLine.get(60).getNumber();
+            List<Block> forkLine = getRandomChain(forkParentHash, forkParentNumber + 1, 10);
+
+
+            for (int i = 0; i < forkLine.size(); ++i){
+
+                Block newBlock = forkLine.get(i);
+                Block parentBlock = indexedBlockStore.getBlockByHash(newBlock.getParentHash());
+                BigInteger td = indexedBlockStore.getTotalDifficultyForHash(parentBlock.getHash());
+
+                td = td.add(newBlock.getCumulativeDifficulty());
+                indexedBlockStore.saveBlock(newBlock, td, false);
+            }
+
+
+            Block bestBlock = bestLine.get(bestLine.size() - 1);
+            Block forkBlock = forkLine.get(forkLine.size() - 1);
+
+            assertTrue( indexedBlockStore.getBestBlock().getNumber() == 100);
+
+            // check total difficulty
+            BigInteger totalDifficulty  = indexedBlockStore.getTotalDifficulty();
+            BigInteger totalDifficulty_ = indexedBlockStore.getTotalDifficultyForHash( bestBlock.getHash() );
+            assertEquals(totalDifficulty_, totalDifficulty);
+
+
+            indexedBlockStore.reBranch(forkBlock);
+
+            assertTrue( indexedBlockStore.getBestBlock().getNumber() == 71);
+
+            // check total difficulty
+            totalDifficulty  = indexedBlockStore.getTotalDifficulty();
+            totalDifficulty_ = indexedBlockStore.getTotalDifficultyForHash( forkBlock.getHash() );
+            assertEquals(totalDifficulty_, totalDifficulty);
+
+
+            // Assert that all fork moved to the main line
+            for (Block currBlock : forkLine){
+
+                Long number = currBlock.getNumber();
+                Block chainBlock = indexedBlockStore.getChainBlockByNumber(number);
+                assertEquals(currBlock.getShortHash(), chainBlock.getShortHash());
+            }
+
+
+            // Assert that all fork moved to the main line
+            // re-branch back to previous line and assert that
+            // all the block really moved
+            bestBlock = bestLine.get(bestLine.size() - 1);
+            indexedBlockStore.reBranch(bestBlock);
+            for (Block currBlock : bestLine){
+
+                Long number = currBlock.getNumber();
+                Block chainBlock = indexedBlockStore.getChainBlockByNumber(number);
+                assertEquals(currBlock.getShortHash(), chainBlock.getShortHash());
+            }
+
+
+        } finally {
+            blocksDB.close();
+            indexDB.close();
+            FileUtil.recursiveDelete(testDir);
+        }
+    }
+
+    @Test // test index merging during the flush
+    public void test9() {
+
+        IndexedBlockStore cache = new IndexedBlockStore();
+        cache.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+
+        IndexedBlockStore indexedBlockStore = new IndexedBlockStore();
+        indexedBlockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), cache, null);
+
+        // blocks with the same block number
+        Block block1 = new Block(Hex.decode("f90202f901fda0ad0d51e8d64c364a7b77ef2fe252f3f4df0940c7cfa69cedc1fbd6ea66894936a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d493479414a3bc0f103706650a19c5d24e5c4cf1ea5af78ea0e0580f4fdd1e3ae8346efaa6b1018605361f6e2fb058580e31414c8cbf5b0d49a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008605065cf2c43a8303e52e832fefd8808455fcbe1b80a017247341fd5d2f1d384682fea9302065a95dbd3e4f8260dde88a386f3cb95be3880f3fc8d5e0c87378c0c0"));
+        Block block2 = new Block(Hex.decode("f90218f90213a0c63fc3626abc6f6ba695064e973126cccc6fd513d4f53485e11794a8855e8b2ba01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347941dcb8d1f0fcc8cbc8c2d76528e877f915e299fbea0ccb2ed2a8c585409fe5530d36320bc8c1406454b32a9e419e890ea49489e534aa056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008605079eb238d88303e52e832fefd8808455fcbe2596d583010103844765746885676f312e35856c696e7578a0a673a429161eb32e6d0887b2bce2b12b1edd6e4b4cf55371853cba13d57118bd88d44d3609c7e203c7c0c0"));
+
+        indexedBlockStore.saveBlock(block1, block1.getCumulativeDifficulty(), true);
+        indexedBlockStore.flush();
+
+        indexedBlockStore.saveBlock(block2, block2.getCumulativeDifficulty(), true);
+        indexedBlockStore.flush();
+
+        assertEquals(block1.getCumulativeDifficulty(), indexedBlockStore.getTotalDifficultyForHash(block1.getHash()));
+        assertEquals(block2.getCumulativeDifficulty(), indexedBlockStore.getTotalDifficultyForHash(block2.getHash()));
+    }
+
+
 // todo: test this
-//    public Block getBestBlock()
+
 //    public byte[] getBlockHashByNumber(long blockNumber)
 
 }

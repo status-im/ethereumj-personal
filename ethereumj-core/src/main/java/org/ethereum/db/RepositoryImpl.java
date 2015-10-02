@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.ethereum.core.AccountState;
 import org.ethereum.core.Block;
+import org.ethereum.core.Repository;
 import org.ethereum.datasource.KeyValueDataSource;
-import org.ethereum.facade.Repository;
 import org.ethereum.json.EtherObjectMapper;
 import org.ethereum.json.JSONHelper;
 import org.ethereum.trie.SecureTrie;
@@ -24,23 +24,23 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.Thread.sleep;
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.crypto.HashUtil.EMPTY_DATA_HASH;
+import static org.ethereum.crypto.HashUtil.EMPTY_TRIE_HASH;
 import static org.ethereum.crypto.SHA3Helper.sha3;
+import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.util.ByteUtil.wrap;
 
 /**
  * @author Roman Mandeleil
  * @since 17.11.2014
  */
-public class RepositoryImpl implements Repository {
+public class RepositoryImpl implements Repository , org.ethereum.facade.Repository{
 
     public final static String DETAILS_DB = "details";
     public final static String STATE_DB = "state";
@@ -61,9 +61,10 @@ public class RepositoryImpl implements Repository {
     private final ReentrantLock lock = new ReentrantLock();
     private final AtomicInteger accessCounter = new AtomicInteger();
 
+    private boolean isSnapshot = false;
 
     public RepositoryImpl() {
-        this(DETAILS_DB, STATE_DB);
+
     }
 
     public RepositoryImpl(boolean createDb) {
@@ -111,16 +112,19 @@ public class RepositoryImpl implements Repository {
             }
         });
     }
-    
+
     @Override
     public void close() {
         doWithLockedAccess(new Functional.InvokeWrapper() {
             @Override
             public void invoke() {
+
                 if (detailsDB != null) {
                     detailsDB.close();
                     detailsDB = null;
                 }
+
+
                 if (stateDB != null) {
                     stateDB.close();
                     stateDB = null;
@@ -166,8 +170,9 @@ public class RepositoryImpl implements Repository {
                 byte[] data = hash.getData();
                 updateContractDetails(data, contractDetails);
 
-                accountState.setStateRoot(contractDetails.getStorageHash());
-                accountState.setCodeHash(sha3(contractDetails.getCode()));
+                if ( !Arrays.equals(accountState.getCodeHash(), EMPTY_TRIE_HASH) )
+                    accountState.setStateRoot(contractDetails.getStorageHash());
+
                 updateAccountState(hash.getData(), accountState);
 
                 if (logger.isDebugEnabled()) {
@@ -223,15 +228,6 @@ public class RepositoryImpl implements Repository {
                 byte[] root = worldState.getRootHash();
                 reset();
                 worldState.setRoot(root);
-            }
-        });
-    }
-
-    public int getAllocatedMemorySize() {
-        return doWithAccessCounting(new Functional.InvokeWrapperWithResult<Integer>() {
-            @Override
-            public Integer invoke() {
-                return dds.getAllocatedMemorySize() + ((TrieImpl) worldState).getCache().getAllocatedMemorySize();
             }
         });
     }
@@ -376,7 +372,9 @@ public class RepositoryImpl implements Repository {
             public Set<byte[]> invoke() {
                 Set<byte[]> result = new HashSet<>();
                 for (ByteArrayWrapper key : dds.keys()) {
-                    result.add(key.getData());
+
+                    if (isExist(key.getData()))
+                        result.add(key.getData());
                 }
 
                 return result;
@@ -408,6 +406,24 @@ public class RepositoryImpl implements Repository {
     }
 
     @Override
+    public int getStorageSize(byte[] addr) {
+        ContractDetails details = getContractDetails(addr);
+        return (details == null) ? 0 : details.getStorageSize();
+    }
+
+    @Override
+    public Set<DataWord> getStorageKeys(byte[] addr) {
+        ContractDetails details = getContractDetails(addr);
+        return (details == null) ? Collections.EMPTY_SET : details.getStorageKeys();
+    }
+
+    @Override
+    public Map<DataWord, DataWord> getStorage(byte[] addr, Collection<DataWord> keys) {
+        ContractDetails details = getContractDetails(addr);
+        return (details == null) ? Collections.EMPTY_MAP : details.getStorage(keys);
+    }
+
+    @Override
     public void addStorageRow(byte[] addr, DataWord key, DataWord value) {
         ContractDetails details = getContractDetails(addr);
         if (details == null) {
@@ -422,6 +438,14 @@ public class RepositoryImpl implements Repository {
 
     @Override
     public byte[] getCode(byte[] addr) {
+
+        if (!isExist(addr))
+            return EMPTY_BYTE_ARRAY;
+
+        byte[] codeHash = getAccountState(addr).getCodeHash();
+        if (Arrays.equals(codeHash, EMPTY_DATA_HASH))
+            return EMPTY_BYTE_ARRAY;
+
         ContractDetails details = getContractDetails(addr);
         return (details == null) ? null : details.getCode();
     }
@@ -436,8 +460,11 @@ public class RepositoryImpl implements Repository {
         }
 
         details.setCode(code);
+        AccountState accountState = getAccountState(addr);
+        accountState.setCodeHash(sha3(code));
 
         updateContractDetails(addr, details);
+        updateAccountState(addr, accountState);
     }
 
 
@@ -486,7 +513,7 @@ public class RepositoryImpl implements Repository {
             @Override
             public void invoke() {
                 worldState.delete(addr);
-                dds.remove(addr);
+//                dds.remove(addr);
             }
         });
     }
@@ -496,7 +523,20 @@ public class RepositoryImpl implements Repository {
         return doWithAccessCounting(new Functional.InvokeWrapperWithResult<ContractDetails>() {
             @Override
             public ContractDetails invoke() {
-                return dds.get(addr);
+
+                // That part is important cause if we have
+                // to sync details storage according the trie root
+                // saved in the account
+                AccountState accountState = getAccountState(addr);
+                byte[] storageRoot = EMPTY_TRIE_HASH;
+                if (accountState != null)
+                    storageRoot = getAccountState(addr).getStateRoot();
+                ContractDetails details =  dds.get(addr);
+
+                if (details != null)
+                    details = details.getSnapshotTo(storageRoot);
+
+                return  details;
             }
         });
     }
@@ -601,5 +641,28 @@ public class RepositoryImpl implements Repository {
                 return null;
             }
         });
+    }
+
+
+    @Override
+    public Repository getSnapshotTo(byte[] root){
+
+        TrieImpl trie = new SecureTrie(stateDS);
+        trie.setRoot(root);
+        trie.setCache(((TrieImpl)(worldState)).getCache());
+
+        RepositoryImpl repo = new RepositoryImpl();
+        repo.worldState = trie;
+        repo.stateDB = this.stateDB;
+        repo.stateDS = this.stateDS;
+
+        repo.detailsDB = this.detailsDB;
+        repo.detailsDS = this.detailsDS;
+
+        repo.dds = this.dds;
+
+        repo.isSnapshot = true;
+
+        return repo;
     }
 }

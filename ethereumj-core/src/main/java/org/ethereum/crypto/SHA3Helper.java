@@ -7,7 +7,8 @@ import java.math.BigInteger;
 
 public class SHA3Helper {
 
-    private static int DEFAULT_SIZE = 256;
+    public static final int DEFAULT_SIZE = 256;
+    public static final int DEFAULT_SIZE_BYTES = DEFAULT_SIZE / 8;
 
     public static String sha3String(String message) {
         return sha3String(message, new SHA3Digest(DEFAULT_SIZE), true);
@@ -23,6 +24,10 @@ public class SHA3Helper {
 
     public static byte[] sha3(byte[] message) {
         return sha3(message, new SHA3Digest(DEFAULT_SIZE), true);
+    }
+
+    public static byte[] sha3(byte[] message, Size sz) {
+        return sha3(message, new SHA3Digest(sz.bits), true);
     }
 
     public static byte[] sha3(byte[] m1, byte[] m2) {

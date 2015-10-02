@@ -3,6 +3,7 @@ package org.ethereum.util;
 import org.spongycastle.util.encoders.DecoderException;
 import org.spongycastle.util.encoders.Hex;
 
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 
 import java.net.URL;
@@ -32,8 +33,9 @@ public class Utils {
         if (!match)
             return (new BigInteger(number));
         else{
-
-            byte[] numberBytes = Hex.decode(number.substring(2));
+            number = number.substring(2);
+            number = number.length() % 2 != 0 ? "0".concat(number) : number;
+            byte[] numberBytes = Hex.decode(number);
             return (new BigInteger(1, numberBytes));
         }
     }
@@ -139,4 +141,25 @@ public class Utils {
         return sb.append(" ").append(firstHash).append("...").append(lastHash).toString();
     }
 
+    public static String getNodeIdShort(String nodeId) {
+        return nodeId == null ? "<null>" : nodeId.substring(0, 8);
+    }
+
+    public static long toUnixTime(long javaTime) {
+        return javaTime / 1000;
+    }
+
+    public static <T> T[] mergeArrays(T[] ... arr) {
+        int size = 0;
+        for (T[] ts : arr) {
+            size += ts.length;
+        }
+        T[] ret = (T[]) Array.newInstance(arr[0].getClass().getComponentType(), size);
+        int off = 0;
+        for (T[] ts : arr) {
+            System.arraycopy(ts, 0, ret, off, ts.length);
+            off += ts.length;
+        }
+        return ret;
+    }
 }

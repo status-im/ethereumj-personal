@@ -3,7 +3,7 @@ package org.ethereum.android.manager;
 
 import org.ethereum.core.Block;
 import org.ethereum.core.ImportResult;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.core.Blockchain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;

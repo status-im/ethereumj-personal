@@ -3,23 +3,34 @@ package org.ethereum.jsontestsuite;
 import org.ethereum.core.Account;
 import org.ethereum.core.Block;
 import org.ethereum.core.BlockchainImpl;
-import org.ethereum.core.TransactionReceipt;
+import org.ethereum.core.ImportResult;
 import org.ethereum.core.Wallet;
+
+import org.ethereum.datasource.HashMapDB;
 import org.ethereum.db.*;
 import org.ethereum.di.components.DaggerEthereumComponent;
+import org.ethereum.di.components.EthereumComponent;
 import org.ethereum.di.modules.EthereumModule;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.facade.Repository;
+import org.ethereum.core.Repository;
 import org.ethereum.jsontestsuite.builder.BlockBuilder;
 import org.ethereum.jsontestsuite.builder.RepositoryBuilder;
 import org.ethereum.jsontestsuite.model.BlockTck;
+import org.ethereum.jsontestsuite.validators.BlockHeaderValidator;
+import org.ethereum.jsontestsuite.validators.RepositoryValidator;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.validator.ParentBlockHeaderValidator;
 import org.ethereum.vm.*;
-import org.ethereum.vmtrace.ProgramTrace;
+import org.ethereum.vm.program.Program;
+import org.ethereum.vm.program.invoke.ProgramInvoke;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.ethereum.vm.program.invoke.ProgramInvokeImpl;
+import org.ethereum.vm.trace.ProgramTrace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
@@ -29,7 +40,7 @@ import java.util.*;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-
+import static org.ethereum.crypto.HashUtil.shortHash;
 import static org.ethereum.jsontestsuite.Utils.parseData;
 import static org.ethereum.util.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.ethereum.vm.VMUtils.saveProgramTraceFile;
@@ -49,11 +60,20 @@ public class TestRunner {
     public ChannelManager channelManager;
 
     @Inject
+    public WorldManager worldManager;
+
+    @Inject
+    public ParentBlockHeaderValidator parentBlockHeaderValidator;
+
+    @Inject
     public TestRunner() {
 
-        channelManager  = DaggerEthereumComponent.builder()
+        EthereumComponent component = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule())
-                .build().channelManager();
+                .build();
+        channelManager  = component.channelManager();
+        worldManager  = component.worldManager();
+        parentBlockHeaderValidator = component.parentBlockHeaderValidator();
     }
 
     public List<String> runTestSuite(TestSuite testSuite) {
@@ -81,8 +101,9 @@ public class TestRunner {
         Block genesis = BlockBuilder.build(testCase.getGenesisBlockHeader(), null, null);
         final Repository repository = RepositoryBuilder.build(testCase.getPre());
 
-        BlockStore blockStore = new InMemoryBlockStore();
-        blockStore.saveBlock(genesis, new ArrayList<TransactionReceipt>());
+        IndexedBlockStore blockStore = new IndexedBlockStore();
+        blockStore.init(new HashMap<Long, List<IndexedBlockStore.BlockInfo>>(), new HashMapDB(), null, null);
+        blockStore.saveBlock(genesis, genesis.getCumulativeDifficulty(), true);
 
         Provider<Account> accountProvider = new Provider<Account>() {
             @Override
@@ -94,19 +115,14 @@ public class TestRunner {
         AdminInfo adminInfo = new AdminInfo();
         EthereumListener listener = new CompositeEthereumListener();
         ProgramInvokeFactoryImpl programInvokeFactory = new ProgramInvokeFactoryImpl();
-
-        BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener, channelManager);
+        BlockchainImpl blockchain = new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentBlockHeaderValidator, listener);
+        blockchain.byTest = true;
 
         blockchain.setBestBlock(genesis);
-        blockchain.setTotalDifficulty(BigInteger.ZERO);
+        blockchain.setTotalDifficulty(genesis.getCumulativeDifficulty());
         blockchain.setProgramInvokeFactory(programInvokeFactory);
         programInvokeFactory.setBlockchain(blockchain);
 
-
-        // todo: validate root of the genesis   *!!!*
-
-
-        bestStateRoot = Hex.toHexString(genesis.getStateRoot());
         /* 2 */ // Create block traffic list
         List<Block> blockTraffic = new ArrayList<>();
         for (BlockTck blockTck : testCase.getBlocks()) {
@@ -118,23 +134,18 @@ public class TestRunner {
                 && (blockTck.getUncleHeaders() == null)
                 && (blockTck.getBlockHeader() == null));
 
-            //DEBUG System.out.println(" --> " + setNewStateRoot);
             Block tBlock = null;
             try {
                 byte[] rlp = parseData(blockTck.getRlp());
                 tBlock = new Block(rlp);
 
-//            ArrayList<String> outputSummary =
-//                    BlockHeaderValidator.valid(tBlock.getHeader(), block.getHeader());
+                ArrayList<String> outputSummary =
+                        BlockHeaderValidator.valid(tBlock.getHeader(), block.getHeader());
 
-//            if (!outputSummary.isEmpty()){
-//                for (String output : outputSummary)
-//                    logger.error("%s", output);
-//
-//                System.exit(-1);
-//            }
-                if(setNewStateRoot)
-                  bestStateRoot = Hex.toHexString(tBlock.getStateRoot());
+                if (!outputSummary.isEmpty()){
+                    for (String output : outputSummary)
+                        logger.error("{}", output);
+                }
 
                 blockTraffic.add(tBlock);
             } catch (Exception e) {
@@ -144,23 +155,28 @@ public class TestRunner {
 
         /* 3 */ // Inject blocks to the blockchain execution
         for (Block block : blockTraffic) {
-            //DEBUG System.out.println(" Examine block: "); System.out.println(block.toString());
-            blockchain.tryToConnect(block);
+
+            ImportResult importResult = blockchain.tryToConnect(block);
+            logger.debug("{} ~ {} difficulty: {} ::: {}", block.getShortHash(), shortHash(block.getParentHash()),
+                    block.getCumulativeDifficulty(), importResult.toString());
         }
 
         //Check state root matches last valid block
         List<String> results = new ArrayList<>();
         String currRoot = Hex.toHexString(repository.getRoot());
-        if (!bestStateRoot.equals(currRoot)){
+
+        byte[] bestHash = Hex.decode(testCase.getLastblockhash());
+        String finalRoot = Hex.toHexString(blockStore.getBlockByHash(bestHash).getStateRoot());
+
+        if (!finalRoot.equals(currRoot)){
             String formattedString = String.format("Root hash doesn't match best: expected: %s current: %s",
-                    bestStateRoot, currRoot);
+                    finalRoot, currRoot);
             results.add(formattedString);
         }
 
         Repository postRepository = RepositoryBuilder.build(testCase.getPostState());
-
-        //Uncomment this if you want POST debugging checks enabled
-        //results.addAll(RepositoryValidator.rootValid(repository, postRepository));
+        List<String> repoResults = RepositoryValidator.valid(repository, postRepository);
+        results.addAll(repoResults);
 
         return results;
     }
@@ -223,7 +239,7 @@ public class TestRunner {
                 vmDidThrowAnEception = true;
                 e = ex;
             }
-            String content = program.getProgramTrace().asJsonString(true);
+            String content = program.getTrace().asJsonString(true);
             saveProgramTraceFile(testCase.getName(), content);
 
             if (testCase.getPost().size() == 0) {
@@ -243,7 +259,7 @@ public class TestRunner {
                     return results;
                 }
 
-                this.trace = program.getProgramTrace();
+                this.trace = program.getTrace();
 
                 logger.info("--------- POST --------");
 
@@ -308,7 +324,7 @@ public class TestRunner {
                         byte[] expectedStValue = storage.get(storageKey).getData();
 
                         ContractDetails contractDetails =
-                                program.getResult().getRepository().getContractDetails(accountState.getAddress());
+                                program.getStorage().getContractDetails(accountState.getAddress());
 
                         if (contractDetails == null) {
 

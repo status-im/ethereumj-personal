@@ -19,6 +19,7 @@ import android.widget.Toast;
 import org.ethereum.android.interop.IEthereumService;
 import org.ethereum.android.interop.IListener;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.net.rlpx.Node;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -85,9 +86,8 @@ public class AidlMainActivity extends ActionBarActivity implements ActivityInter
                     ethereumService.loadBlocks(blocksDump);
                 } else {
                     ethereumService.addListener(ethereumListener);
-                    ethereumService.connect(SystemProperties.CONFIG.activePeerIP(),
-                        SystemProperties.CONFIG.activePeerPort(),
-                        SystemProperties.CONFIG.activePeerNodeid());
+                    Node node = SystemProperties.CONFIG.peerActive().get(0);
+                    ethereumService.connect(node.getHost(), node.getPort(), node.getHexId());
                 }
                 Toast.makeText(AidlMainActivity.this, "connected to service", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {

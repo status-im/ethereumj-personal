@@ -1,21 +1,25 @@
 package org.ethereum.facade;
 
-import org.ethereum.core.Transaction;
-import org.ethereum.core.Wallet;
+import org.ethereum.core.*;
+import org.ethereum.core.Repository;
 import org.ethereum.listener.EthereumListener;
+import org.ethereum.listener.GasPriceTracker;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.manager.BlockLoader;
 import org.ethereum.manager.WorldManager;
 import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.peerdiscovery.PeerInfo;
+import org.ethereum.net.rlpx.Node;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.PeerServer;
 import org.ethereum.net.submit.TransactionExecutor;
 import org.ethereum.net.submit.TransactionTask;
 import org.ethereum.util.ByteUtil;
+import org.ethereum.vm.program.ProgramResult;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.HashSet;
@@ -38,8 +42,6 @@ public class EthereumImpl implements Ethereum {
 
     private static final Logger logger = LoggerFactory.getLogger("facade");
 
-    EthereumListener listener;
-
     WorldManager worldManager;
 
     AdminInfo adminInfo;
@@ -50,12 +52,16 @@ public class EthereumImpl implements Ethereum {
 
     BlockLoader blockLoader;
 
+    ProgramInvokeFactory programInvokeFactory;
+
     Provider<PeerClient> peerClientProvider;
+
+    private GasPriceTracker gasPriceTracker = new GasPriceTracker();
 
     @Inject
     public EthereumImpl(WorldManager worldManager, AdminInfo adminInfo,
-                        ChannelManager channelManager, BlockLoader blockLoader,
-                        Provider<PeerClient> peerClientProvider, EthereumListener listener) {
+                        ChannelManager channelManager, BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory,
+                        Provider<PeerClient> peerClientProvider) {
         System.out.println();
 		logger.info("EthereumImpl constructor");
         this.worldManager = worldManager;
@@ -63,22 +69,22 @@ public class EthereumImpl implements Ethereum {
         this.channelManager = channelManager;
         this.blockLoader = blockLoader;
         this.peerClientProvider = peerClientProvider;
-        this.listener = listener;
+        this.programInvokeFactory = programInvokeFactory;
 
         this.init();
     }
 
     public void init() {
-        worldManager.loadBlockchain();
         if (CONFIG.listenPort() > 0) {
             Executors.newSingleThreadExecutor().submit(
                     new Runnable() {
                         public void run() {
-//                            peerServer.start(CONFIG.listenPort());
+                            peerServer.start(CONFIG.listenPort());
                         }
                     }
             );
         }
+        addListener(gasPriceTracker);
     }
 
     /**
@@ -104,7 +110,7 @@ public class EthereumImpl implements Ethereum {
     public PeerInfo findOnlinePeer(Set<PeerInfo> excludePeers) {
         logger.info("Looking for online peers...");
 
-        final EthereumListener listener = this.listener;
+        final EthereumListener listener = worldManager.getListener();
         listener.trace("Looking for online peer");
 
         worldManager.startPeerDiscovery();
@@ -155,20 +161,25 @@ public class EthereumImpl implements Ethereum {
     }
 
     @Override
-    public void connect(String ip, int port, String remoteId) {
+    public void connect(final String ip, final int port, final String remoteId) {
         logger.info("Connecting to: {}:{}", ip, port);
-
-        PeerClient peerClient = worldManager.getActivePeer();
-        if (peerClient == null)
-            peerClient = peerClientProvider.get();
-        worldManager.setActivePeer(peerClient);
-
-        peerClient.connect(ip, port, remoteId);
+        final PeerClient peerClient = peerClientProvider.get();
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                peerClient.connect(ip, port, remoteId);
+            }
+        });
     }
 
     @Override
-    public Blockchain getBlockchain() {
-        return worldManager.getBlockchain();
+    public void connect(Node node) {
+        connect(node.getHost(), node.getPort(), Hex.toHexString(node.getId()));
+    }
+
+    @Override
+    public org.ethereum.facade.Blockchain getBlockchain() {
+        return (org.ethereum.facade.Blockchain)worldManager.getBlockchain();
     }
 
     @Override
@@ -177,13 +188,8 @@ public class EthereumImpl implements Ethereum {
     }
 
     @Override
-    public boolean isBlockchainLoading() {
-        return worldManager.isBlockchainLoading();
-    }
-
-    @Override
     public void close() {
-        worldManager.close();
+//        worldManager.close();
     }
 
     @Override
@@ -230,14 +236,45 @@ public class EthereumImpl implements Ethereum {
 
 
     @Override
+    public ProgramResult callConstantFunction(String receiveAddress, CallTransaction.Function function,
+                                              Object... funcArgs) {
+        Transaction tx = CallTransaction.createCallTransaction(0, 0, 100000000000000L,
+                receiveAddress, 0, function, funcArgs);
+        tx.sign(new byte[32]);
+
+        Block bestBlock = worldManager.getBlockchain().getBestBlock();
+
+        org.ethereum.core.TransactionExecutor executor = new org.ethereum.core.TransactionExecutor
+                (tx, bestBlock.getCoinbase(),(Repository) worldManager.getRepository(),
+                worldManager.getBlockStore(), programInvokeFactory, bestBlock)
+                .setLocalCall(true);
+
+        executor.init();
+        executor.execute();
+        executor.go();
+        executor.finalization();
+
+        return executor.getResult();
+    }
+
+    @Override
     public Wallet getWallet() {
         return worldManager.getWallet();
     }
 
 
     @Override
-    public Repository getRepository() {
+    public org.ethereum.facade.Repository getRepository() {
         return worldManager.getRepository();
+    }
+
+    @Override
+    public org.ethereum.facade.Repository getSnapshootTo(byte[] root){
+
+        Repository repository = (Repository) worldManager.getRepository();
+        org.ethereum.facade.Repository snapshot = (org.ethereum.facade.Repository) repository.getSnapshotTo(root);
+
+        return snapshot;
     }
 
     @Override
@@ -259,6 +296,11 @@ public class EthereumImpl implements Ethereum {
     @Override
     public BlockLoader getBlockLoader(){
         return  blockLoader;
+    }
+
+    @Override
+    public long getGasPrice() {
+        return gasPriceTracker.getGasPrice();
     }
 
     @Override

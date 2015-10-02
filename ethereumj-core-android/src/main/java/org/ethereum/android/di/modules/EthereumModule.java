@@ -6,37 +6,67 @@ import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.core.Blockchain;
 import org.ethereum.core.BlockchainImpl;
+import org.ethereum.core.Repository;
 import org.ethereum.core.Wallet;
+import org.ethereum.datasource.mapdb.MapDBFactory;
+import org.ethereum.datasource.mapdb.MapDBFactoryImpl;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.RepositoryImpl;
-import org.ethereum.facade.Blockchain;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.facade.EthereumImpl;
-import org.ethereum.facade.Repository;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
 import org.ethereum.android.manager.BlockLoader;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.MessageQueue;
 import org.ethereum.net.client.PeerClient;
-import org.ethereum.net.eth.EthHandler;
+import org.ethereum.net.eth.handler.Eth60;
+import org.ethereum.net.eth.handler.Eth61;
+import org.ethereum.net.eth.handler.Eth62;
+import org.ethereum.net.eth.handler.EthHandler;
+import org.ethereum.net.eth.handler.EthHandlerFactory;
+import org.ethereum.net.eth.handler.EthHandlerFactoryImpl;
 import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.peerdiscovery.DiscoveryChannel;
 import org.ethereum.net.peerdiscovery.PeerDiscovery;
 import org.ethereum.net.peerdiscovery.WorkerThread;
+import org.ethereum.net.rlpx.MessageCodec;
+import org.ethereum.net.rlpx.discover.NodeManager;
+import org.ethereum.net.rlpx.discover.PeerConnectionTester;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
-import org.ethereum.net.wire.MessageCodec;
-import org.ethereum.vm.ProgramInvokeFactory;
-import org.ethereum.vm.ProgramInvokeFactoryImpl;
+import org.ethereum.sync.PeersPool;
+import org.ethereum.sync.SyncManager;
+import org.ethereum.sync.SyncQueue;
+import org.ethereum.validator.BlockHeaderRule;
+import org.ethereum.validator.BlockHeaderValidator;
+import org.ethereum.validator.DependentBlockHeaderRule;
+import org.ethereum.validator.DifficultyRule;
+import org.ethereum.validator.ExtraDataRule;
+import org.ethereum.validator.GasLimitRule;
+import org.ethereum.validator.GasValueRule;
+import org.ethereum.validator.ParentBlockHeaderValidator;
+import org.ethereum.validator.ParentGasLimitRule;
+import org.ethereum.validator.ParentNumberRule;
+import org.ethereum.validator.ProofOfWorkRule;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
+import org.ethereum.vm.program.invoke.ProgramInvokeFactoryImpl;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+
+import static java.util.Arrays.asList;
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 @Module
 public class EthereumModule {
@@ -59,17 +89,19 @@ public class EthereumModule {
 
     @Provides
     @Singleton
-    Ethereum provideEthereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo, ChannelManager channelManager,
-                             BlockLoader blockLoader, Provider<PeerClient> peerClientProvider, EthereumListener listener, PeerDiscovery peerDiscovery, Wallet wallet) {
-        return new org.ethereum.android.Ethereum(blockchain, blockStore, repository, adminInfo, channelManager, blockLoader, peerClientProvider, listener, peerDiscovery, wallet);
+    Ethereum provideEthereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo,
+                             ChannelManager channelManager, BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory,
+                             Provider<PeerClient> peerClientProvider, EthereumListener listener,
+                             PeerDiscovery peerDiscovery, Wallet wallet) {
+        return new org.ethereum.android.Ethereum(blockchain, blockStore, repository, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider, listener, peerDiscovery, wallet);
     }
 
     @Provides
     @Singleton
-    Blockchain provideBlockchain(BlockStore blockStore, Repository repository,
-                                 Wallet wallet, AdminInfo adminInfo,
-                                 EthereumListener listener, ChannelManager channelManager) {
-        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, listener, channelManager);
+    org.ethereum.core.Blockchain provideBlockchain(BlockStore blockStore, org.ethereum.core.Repository repository,
+                                                   Wallet wallet, AdminInfo adminInfo,
+                                                   ParentBlockHeaderValidator parentHeaderValidator, EthereumListener listener) {
+        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, listener);
     }
 
     @Provides
@@ -85,6 +117,40 @@ public class EthereumModule {
         LevelDbDataSource detailsDS = new LevelDbDataSource();
         LevelDbDataSource stateDS = new LevelDbDataSource();
         return new RepositoryImpl(detailsDS, stateDS);
+    }
+
+    @Provides
+    @Singleton
+    SyncManager provideSyncManagery(Blockchain blockchain, SyncQueue queue, NodeManager nodeManager, EthereumListener ethereumListener
+            , PeersPool pool) {
+        return new SyncManager(blockchain, queue, nodeManager, ethereumListener, pool);
+    }
+
+    @Provides
+    @Singleton
+    PeersPool providePeersPool() {
+        return new PeersPool();
+    }
+
+    @Provides
+    @Singleton
+    SyncQueue provideSyncQueue(Blockchain blockchain, BlockHeaderValidator headerValidator) {
+        return new SyncQueue(blockchain, headerValidator);
+    }
+
+    @Provides
+    BlockHeaderValidator provideBlockHeaderValidator() {
+        List<BlockHeaderRule> rules = new ArrayList<>(asList(
+                new GasValueRule(),
+                new ExtraDataRule(),
+                new ProofOfWorkRule()
+        ));
+
+        if (!CONFIG.isFrontier()) {
+            rules.add(new GasLimitRule());
+        }
+
+        return new BlockHeaderValidator(rules);
     }
 
     @Provides
@@ -107,9 +173,28 @@ public class EthereumModule {
 
     @Provides
     @Singleton
-    ChannelManager provideChannelManager(EthereumListener listener) {
-        return new ChannelManager(listener);
+    ChannelManager provideChannelManager(EthereumListener listener, SyncManager syncManager, NodeManager nodeManager) {
+        return new ChannelManager(listener, syncManager, nodeManager);
     }
+
+    @Provides
+    @Singleton
+    NodeManager provideNodeManager(PeerConnectionTester peerConnectionManager, MapDBFactory mapDBFactory) {
+        return new NodeManager(peerConnectionManager, mapDBFactory);
+    }
+
+    @Provides
+    @Singleton
+    PeerConnectionTester providePeerConnectionTester() {
+        return new PeerConnectionTester();
+    }
+
+    @Provides
+    @Singleton
+    MapDBFactory provideMapDBFactory() {
+        return new MapDBFactoryImpl();
+    }
+
 
     @Provides
     @Singleton
@@ -123,10 +208,6 @@ public class EthereumModule {
         return new ProgramInvokeFactoryImpl();
     }
 
-    @Provides
-    EthHandler provideEthHandler(Blockchain blockchain, EthereumListener listener, Wallet wallet) {
-        return new EthHandler(blockchain, listener, wallet);
-    }
 
     @Provides
     ShhHandler provideShhHandler(EthereumListener listener) {
@@ -161,12 +242,43 @@ public class EthereumModule {
 
     @Provides
     String provideRemoteId() {
-        return SystemProperties.CONFIG.activePeerNodeid();
+        return SystemProperties.CONFIG.peerActive().get(0).getHexId();
     }
 
     @Provides
     @Singleton
     Context provideContext() {
         return context;
+    }
+
+    @Provides
+    Eth60 provideEth60() { return new Eth60(); }
+
+    @Provides
+    Eth61 provideEth61() { return new Eth61(); }
+
+    @Provides
+    Eth62 provideEth62(Blockchain blockchain, SyncQueue queue, WorldManager worldManager) { return new Eth62(blockchain, queue, worldManager); }
+
+    @Provides
+    @Singleton
+    EthHandlerFactory provideEthHandlerFactory(Provider<Eth60> eth60Provider, Provider<Eth61> eth61Provider, Provider<Eth62> eth62Provider) {
+        return new EthHandlerFactoryImpl(eth60Provider, eth61Provider, eth62Provider);
+    }
+
+    @Provides
+    @Singleton
+    ParentBlockHeaderValidator provideParentBlockHeaderValidator() {
+
+        List<DependentBlockHeaderRule> rules = new ArrayList<>(asList(
+                new ParentNumberRule(),
+                new DifficultyRule()
+        ));
+
+        if (!CONFIG.isFrontier()) {
+            rules.add(new ParentGasLimitRule());
+        }
+
+        return new ParentBlockHeaderValidator(rules);
     }
 }

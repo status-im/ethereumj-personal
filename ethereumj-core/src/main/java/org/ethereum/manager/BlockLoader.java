@@ -2,7 +2,7 @@ package org.ethereum.manager;
 
 
 import org.ethereum.core.Block;
-import org.ethereum.facade.Blockchain;
+import org.ethereum.core.Blockchain;
 import org.spongycastle.util.encoders.Hex;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class BlockLoader {
                 Block block = new Block(blockRLPBytes);
 
                 long t1 = System.nanoTime();
-                if (block.getNumber() > blockchain.getBestBlock().getNumber()){
+                if (block.getNumber() >= blockchain.getBestBlock().getNumber()){
                     blockchain.tryToConnect(block);
                     long t1_ = System.nanoTime();
 
@@ -67,6 +67,5 @@ public class BlockLoader {
         }
 
         System.out.println(" * Done * ");
-        System.exit(0);
     }
 }

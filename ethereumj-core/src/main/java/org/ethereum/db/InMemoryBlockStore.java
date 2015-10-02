@@ -1,7 +1,7 @@
 package org.ethereum.db;
 
 import org.ethereum.core.Block;
-import org.ethereum.core.TransactionReceipt;
+import org.ethereum.core.BlockHeader;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ import static java.math.BigInteger.ZERO;
 import static org.ethereum.util.ByteUtil.wrap;
 
 /**
- * @author: Roman Mandeleil
+ * @author Roman Mandeleil
  * Created on: 29/01/2015 20:43
  */
 
@@ -48,7 +48,7 @@ public class InMemoryBlockStore implements BlockStore{
     }
 
     @Override
-    public Block getBlockByNumber(long blockNumber) {
+    public Block getChainBlockByNumber(long blockNumber) {
 
         Block block = numberIndex.get(blockNumber);
 
@@ -70,26 +70,55 @@ public class InMemoryBlockStore implements BlockStore{
     }
 
     @Override
-    public List<byte[]> getListHashesEndWith(byte[] hash, long qty){
+    public boolean isBlockExist(byte[] hash) {
+        Block block = hashIndex.get(wrap(hash));
+        return block != null || dbGetBlockByHash(hash) != null;
+    }
 
+    @Override
+    public List<byte[]> getListHashesEndWith(byte[] hash, long qty) {
+        List<Block> blocks = getListBlocksEndWith(hash, qty);
+        List<byte[]> hashes = new ArrayList<>(blocks.size());
 
-        Block startBlock = hashIndex.get(wrap(hash));
-
-        long endIndex = startBlock.getNumber() + qty;
-        endIndex = getBestBlock().getNumber() < endIndex ? getBestBlock().getNumber() : endIndex;
-
-        List<byte[]> hashes = new ArrayList<>();
-
-        for (long i = startBlock.getNumber();  i <= endIndex; ++i){
-            Block block = getBlockByNumber(i);
-            hashes.add(block.getHash() );
+        for (Block b : blocks) {
+            hashes.add(b.getHash());
         }
 
         return hashes;
     }
 
     @Override
-    public void saveBlock(Block block, List<TransactionReceipt> receipts) {
+    public List<BlockHeader> getListHeadersEndWith(byte[] hash, long qty) {
+        List<Block> blocks = getListBlocksEndWith(hash, qty);
+        List<BlockHeader> headers = new ArrayList<>(blocks.size());
+
+        for (Block b : blocks) {
+            headers.add(b.getHeader());
+        }
+
+        return headers;
+    }
+
+    @Override
+    public List<Block> getListBlocksEndWith(byte[] hash, long qty) {
+
+        Block startBlock = hashIndex.get(wrap(hash));
+
+        long endIndex = startBlock.getNumber() + qty;
+        endIndex = getBestBlock().getNumber() < endIndex ? getBestBlock().getNumber() : endIndex;
+
+        List<Block> blocks = new ArrayList<>();
+
+        for (long i = startBlock.getNumber();  i <= endIndex; ++i){
+            Block block = getChainBlockByNumber(i);
+            blocks.add(block);
+        }
+
+        return blocks;
+    }
+
+    @Override
+    public void saveBlock(Block block, BigInteger cummDifficulty, boolean mainChain) {
         ByteArrayWrapper wHash = wrap(block.getHash());
         blocks.add(block);
         hashIndex.put(wHash, block);
@@ -186,7 +215,7 @@ public class InMemoryBlockStore implements BlockStore{
         hashIndex.clear();
         numberIndex.clear();
 
-        saveBlock(block, null);
+        saveBlock(block, BigInteger.ZERO, true);
 
         long t__ = System.nanoTime();
         logger.info("Flush block store in: {} ms", ((float)(t__ - t_) / 1_000_000));
@@ -213,7 +242,7 @@ public class InMemoryBlockStore implements BlockStore{
         BlockVO vo = (BlockVO) result.get(0);
 
         Block bestBlock = new Block(vo.rlp);
-        saveBlock(bestBlock, null);
+        saveBlock(bestBlock, ZERO, true);
 
         totalDifficulty =  (BigInteger) s.createQuery("select sum(cumulativeDifficulty) from BlockVO").uniqueResult();
 
@@ -223,9 +252,28 @@ public class InMemoryBlockStore implements BlockStore{
     }
 
     @Override
+    public long getMaxNumber() {
+        Session s = sessionFactory.openSession();
+
+        Long bestNumber = (Long)
+                s.createQuery("select max(number) from BlockVO").uniqueResult();
+
+        return bestNumber == null ? 0 : bestNumber;
+    }
+
+    @Override
     public void setSessionFactory(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
     }
 
+    @Override
+    public void reBranch(Block forkBlock) {
+
+    }
+
+    @Override
+    public BigInteger getTotalDifficultyForHash(byte[] hash) {
+        return null;
+    }
 }
 

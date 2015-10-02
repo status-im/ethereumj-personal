@@ -1,10 +1,7 @@
 buildscript {
     repositories {
-		jcenter()
-        maven {
-            name 'JFrog OSS snapshot repo'
-            url  'https://oss.jfrog.org/oss-snapshot-local/'
-        }
+        jcenter()
+        maven { url 'http://repo.spring.io/plugins-release-local' }
     }
     dependencies {
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1'
@@ -28,7 +25,7 @@ repositories {
 sourceCompatibility = 1.7
 
 mainClassName = 'org.ethereum.Start'
-applicationDefaultJvmArgs = ["-server", "-Xss32m", "-Xms3500m"]
+applicationDefaultJvmArgs = ["-server", "-Xss32m", "-Xms3g", "-XX:+UseCompressedOops", "-XX:-OmitStackTraceInFastThrow"]
 
 ext.generatedSrcDir = file('src/gen/java')
 
@@ -79,7 +76,7 @@ test {
         logger.lifecycle("Running test: ${descriptor}")
     }
 
-    jvmArgs += [ "-Xss32m", "-XX:MaxPermSize=256m" ]
+    jvmArgs '-Xss32m'
 
     testLogging {
         events "failed"
@@ -104,7 +101,7 @@ dependencies {
 
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
-    compile "io.netty:netty-all:4.0.28.Final"
+    compile "io.netty:netty-all:4.0.30.Final"
     compile "com.madgag.spongycastle:core:${scastleVersion}" // for SHA3 and SECP256K1
     compile "com.madgag.spongycastle:prov:${scastleVersion}" // for SHA3 and SECP256K1
 
@@ -121,15 +118,17 @@ dependencies {
     compile "com.google.code.findbugs:jsr305:3.0.0"
     compile "com.fasterxml.jackson.core:jackson-databind:2.5.1"
     compile "org.apache.commons:commons-collections4:4.0"
+    compile "org.apache.commons:commons-lang3:3.4"
     compile "commons-codec:commons-codec:1.10"
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
     compile "org.hibernate:hibernate-entitymanager:${hibernateVersion}"
     compile "commons-dbcp:commons-dbcp:1.4"
     compile "redis.clients:jedis:2.6.0"
     compile "com.h2database:h2:1.4.187"
+    compile "com.typesafe:config:1.2.1"
 
 //    compile "org.mapdb:mapdb:1.0.7"
-    compile "org.mapdb:mapdb:2.0-beta1"
+    compile "org.mapdb:mapdb:2.0-beta6"
 
     compile "org.slf4j:slf4j-log4j12:${slf4jVersion}"
     compile "log4j:apache-log4j-extras:${log4jVersion}"

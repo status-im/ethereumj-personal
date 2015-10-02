@@ -1,5 +1,6 @@
 package org.ethereum.net.server;
 
+import org.ethereum.config.SystemProperties;
 import org.ethereum.listener.EthereumListener;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -14,6 +15,7 @@ import io.netty.handler.logging.LoggingHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.spongycastle.util.encoders.Hex;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -69,6 +71,8 @@ public class PeerServer {
 
             // Start the client.
             logger.info("Listening for incoming connections, port: [{}] ", port);
+            logger.info("NodeId: [{}] ", Hex.toHexString(SystemProperties.CONFIG.nodeId()));
+
             ChannelFuture f = b.bind(port).sync();
 
             // Wait until the connection is closed.

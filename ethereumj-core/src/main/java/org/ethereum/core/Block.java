@@ -8,12 +8,14 @@ import org.ethereum.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.Arrays;
-import org.spongycastle.util.BigIntegers;
 import org.spongycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import static org.ethereum.config.SystemProperties.CONFIG;
 
 /**
  * The block in Ethereum is the collection of relevant pieces of information
@@ -30,7 +32,10 @@ public class Block {
 
     private static final Logger logger = LoggerFactory.getLogger("block");
 
-    public static final BigInteger BLOCK_REWARD = BigInteger.valueOf(1500000000000000000L);
+    public static final BigInteger BLOCK_REWARD = CONFIG.isFrontier() ?
+            new BigInteger("5000000000000000000") :
+            new BigInteger("1500000000000000000");
+
     public static final BigInteger UNCLE_REWARD = BLOCK_REWARD.multiply(
             BigInteger.valueOf(15)).divide(BigInteger.valueOf(16));
     public static final BigInteger INCLUSION_REWARD = BLOCK_REWARD
@@ -51,12 +56,14 @@ public class Block {
 
     private Trie txsState;
 
+
     /* Constructors */
 
+    private Block() {
+    }
+
     public Block(byte[] rawData) {
-        if (rawData != null) {
-            logger.debug("new from [" + Hex.toHexString(rawData) + "]");
-        }
+        logger.debug("new from [" + Hex.toHexString(rawData) + "]");
         this.rlpEncoded = rawData;
     }
 
@@ -154,25 +161,8 @@ public class Block {
 
     public byte[] getHash() {
         if (!parsed) parseRLP();
-        return HashUtil.sha3(this.header.getEncoded());
+        return this.header.getHash();
     }
-
-
-    public byte[] calcDifficulty() {
-        if (!parsed) parseRLP();
-        return this.header.calcDifficulty();
-    }
-
-    public boolean validateNonce() {
-        if (!parsed) parseRLP();
-        BigInteger max = BigInteger.valueOf(2).pow(256);
-        byte[] target = BigIntegers.asUnsignedByteArray(32, max.divide(new BigInteger(1, this.getDifficulty())));
-        byte[] hash = HashUtil.sha3(this.getEncodedWithoutNonce());
-        byte[] concat = Arrays.concatenate(hash, this.getNonce());
-        byte[] result = HashUtil.sha3(concat);
-        return FastByteComparisons.compareTo(result, 0, 32, target, 0, 32) < 0;
-    }
-
 
     public byte[] getParentHash() {
         if (!parsed) parseRLP();
@@ -356,12 +346,16 @@ public class Block {
     }
 
 
-    private void parseTxs(byte[] expectedRoot, RLPList txTransactions) {
+    private boolean parseTxs(byte[] expectedRoot, RLPList txTransactions) {
 
         parseTxs(txTransactions);
         String calculatedRoot = Hex.toHexString(txsState.getRootHash());
-        if (!calculatedRoot.equals(Hex.toHexString(expectedRoot)))
+        if (!calculatedRoot.equals(Hex.toHexString(expectedRoot))) {
             logger.error("Transactions trie root validation failed for block #{}", this.header.getNumber());
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -380,6 +374,17 @@ public class Block {
 
     public boolean isEqual(Block block) {
         return Arrays.areEqual(this.getHash(), block.getHash());
+    }
+
+    private byte[] getTransactionsEncoded() {
+
+        byte[][] transactionsEncoded = new byte[transactionsList.size()][];
+        int i = 0;
+        for (Transaction tx : transactionsList) {
+            transactionsEncoded[i] = tx.getEncoded();
+            ++i;
+        }
+        return RLP.encodeList(transactionsEncoded);
     }
 
     private byte[] getUnclesEncoded() {
@@ -402,9 +407,12 @@ public class Block {
     public byte[] getEncoded() {
         if (rlpEncoded == null) {
             byte[] header = this.header.getEncoded();
-            byte[] transactions = RLP.encodeList();
-            byte[] uncles = getUnclesEncoded();
-            this.rlpEncoded = RLP.encodeList(header, transactions, uncles);
+
+            List<byte[]> block = getBodyElements();
+            block.add(0, header);
+            byte[][] elements = block.toArray(new byte[block.size()][]);
+
+            this.rlpEncoded = RLP.encodeList(elements);
         }
         return rlpEncoded;
     }
@@ -414,8 +422,76 @@ public class Block {
         return this.header.getEncodedWithoutNonce();
     }
 
+    public byte[] getEncodedBody() {
+        List<byte[]> body = getBodyElements();
+        byte[][] elements = body.toArray(new byte[body.size()][]);
+        return RLP.encodeList(elements);
+    }
+
+    private List<byte[]> getBodyElements() {
+        if (!parsed) parseRLP();
+
+        byte[] transactions = getTransactionsEncoded();
+        byte[] uncles = getUnclesEncoded();
+
+        List<byte[]> body = new ArrayList<>();
+        body.add(transactions);
+        body.add(uncles);
+
+        return body;
+    }
+
     public String getShortHash() {
         if (!parsed) parseRLP();
         return Hex.toHexString(getHash()).substring(0, 6);
+    }
+
+    public static class Builder {
+
+        private BlockHeader header;
+        private byte[] body;
+
+        public Builder withHeader(BlockHeader header) {
+            this.header = header;
+            return this;
+        }
+
+        public Builder withBody(byte[] body) {
+            this.body = body;
+            return this;
+        }
+
+        public Block create() {
+            if (header == null || body == null) {
+                return null;
+            }
+
+            Block block = new Block();
+            block.header = header;
+            block.parsed = true;
+
+            RLPList items = (RLPList) RLP.decode2(body).get(0);
+
+            RLPList transactions = (RLPList) items.get(0);
+            RLPList uncles = (RLPList) items.get(1);
+
+            if (!block.parseTxs(header.getTxTrieRoot(), transactions)) {
+                return null;
+            }
+
+            byte[] unclesHash = HashUtil.sha3(uncles.getRLPData());
+            if (!java.util.Arrays.equals(header.getUnclesHash(), unclesHash)) {
+                return null;
+            }
+
+            for (RLPElement rawUncle : uncles) {
+
+                RLPList uncleHeader = (RLPList) rawUncle;
+                BlockHeader blockData = new BlockHeader(uncleHeader);
+                block.uncleList.add(blockData);
+            }
+
+            return block;
+        }
     }
 }
