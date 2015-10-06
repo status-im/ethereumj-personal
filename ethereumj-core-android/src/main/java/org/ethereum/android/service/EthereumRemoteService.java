@@ -154,6 +154,10 @@ public class EthereumRemoteService extends EthereumService {
                 startJsonRpc(message);
                 break;
 
+            case EthereumServiceMessage.MSG_CHANGE_JSON_RPC_SERVER:
+                changeJsonRpc(message);
+                break;
+
             case EthereumServiceMessage.MSG_FIND_ONLINE_PEER:
                 findOnlinePeer(message);
                 break;
@@ -341,6 +345,25 @@ public class EthereumRemoteService extends EthereumService {
             jsonRpcServerThread.start();
         }
     }
+
+    /**
+     * Start the json rpc server
+     *
+     * Incoming message parameters: none
+     * Sends message: none
+     */
+    protected void changeJsonRpc(Message message) {
+
+        Bundle data = message.getData();
+        String server = data.getString("rpc_server");
+        if (jsonRpcServer != null) {
+            ((org.ethereum.android.jsonrpc.light.JsonRpcServer)jsonRpcServer).addRemoteServer(server, true);
+        } else {
+            System.out.println("jsonRpcServer is null on changeJsonRpc ??");
+        }
+    }
+
+
 
     /**
      * Find an online peer

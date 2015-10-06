@@ -389,4 +389,9 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
         blockchain.setExitOn(number);
     }
+
+    public EthereumListener getListener() {
+
+        return this.listener;
+    }
 }

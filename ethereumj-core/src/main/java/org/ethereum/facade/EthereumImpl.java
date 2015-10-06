@@ -265,4 +265,9 @@ public class EthereumImpl implements Ethereum {
     public void exitOn(long number) {
         worldManager.getBlockchain().setExitOn(number);
     }
+
+    @Override
+    public EthereumListener getListener() {
+        return listener;
+    }
 }

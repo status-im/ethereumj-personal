@@ -137,4 +137,6 @@ public interface Ethereum {
     public BlockLoader getBlockLoader();
 
     public void exitOn(long number);
+
+    public EthereumListener getListener();
 }

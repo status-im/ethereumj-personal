@@ -27,12 +27,14 @@ public class EthereumConnector extends ServiceConnector {
 
     public void init(List<String> privateKeys) {
 
-        if (!isBound)
+        if (!isBound) {
+            System.out.println(" Not bound ???");
             return;
+        }
 
         Message msg = Message.obtain(null, EthereumServiceMessage.MSG_INIT, 0, 0);
         Bundle data = new Bundle();
-        data.putStringArrayList("privateKeys", (ArrayList)privateKeys);
+        data.putStringArrayList("privateKeys", (ArrayList) privateKeys);
         msg.setData(data);
         try {
             serviceMessenger.send(msg);
@@ -112,6 +114,33 @@ public class EthereumConnector extends ServiceConnector {
             serviceMessenger.send(msg);
         } catch (RemoteException e) {
             logger.error("Exception sending message(startJsonRpc) to service: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Change the json rpc server url
+     *
+     * Sends message parameters: ( "key": type [description] ):
+     * {
+     *     "rpc_server": String [Rpc server url]
+     * }
+     */
+    public void changeJsonRpc(String serverUrl) {
+
+        if (!isBound) {
+            System.out.println("Connector is not bound.");
+            return;
+        }
+
+        Message msg = Message.obtain(null, EthereumServiceMessage.MSG_CHANGE_JSON_RPC_SERVER, 0, 0);
+        Bundle data = new Bundle();
+        data.putString("rpc_server", serverUrl);
+        msg.setData(data);
+        try {
+            serviceMessenger.send(msg);
+            System.out.println("Sent change rpc server message");
+        } catch (RemoteException e) {
+            logger.error("Exception sending message(changeJsonRpc) to service: " + e.getMessage());
         }
     }
 
