@@ -216,6 +216,7 @@ public class EthereumRemoteService extends EthereumService {
     protected void init(Message message) {
 
         if (isEthereumStarted) {
+            stopJsonRpcServer();
             closeEthereum(null);
             ethereum = null;
             component = null;
@@ -225,6 +226,7 @@ public class EthereumRemoteService extends EthereumService {
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
         ethereum.init(privateKeys);
+        startJsonRpc(null);
         isEthereumStarted = true;
     }
 
@@ -315,6 +317,17 @@ public class EthereumRemoteService extends EthereumService {
         protected void onPostExecute(Void results) {
 
 
+        }
+    }
+
+    protected void stopJsonRpcServer() {
+        if (jsonRpcServerThread != null) {
+            jsonRpcServerThread.interrupt();
+            jsonRpcServerThread = null;
+        }
+        if (jsonRpcServer != null) {
+            jsonRpcServer.stop();
+            jsonRpcServer = null;
         }
     }
 
