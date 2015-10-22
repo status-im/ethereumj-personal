@@ -42,6 +42,7 @@ public class EthereumRemoteService extends EthereumService {
     static EnumMap<EventFlag, List<String>> listenersByType = new EnumMap<EventFlag, List<String>>(EventFlag.class);
 
     public boolean isEthereumStarted = false;
+    private String currentJsonRpcServer = null;
 
     public EthereumRemoteService() {
 
@@ -227,6 +228,9 @@ public class EthereumRemoteService extends EthereumService {
         List<String> privateKeys = data.getStringArrayList("privateKeys");
         ethereum.init(privateKeys);
         startJsonRpc(null);
+        if (currentJsonRpcServer != null) {
+            this.changeJsonRpc(null);
+        }
         isEthereumStarted = true;
     }
 
@@ -367,12 +371,20 @@ public class EthereumRemoteService extends EthereumService {
      */
     protected void changeJsonRpc(Message message) {
 
-        Bundle data = message.getData();
-        String server = data.getString("rpc_server");
-        if (jsonRpcServer != null) {
+        String server = null;
+        if (message == null) {
+            if (currentJsonRpcServer != null) {
+                server = currentJsonRpcServer;
+            }
+        } else {
+            Bundle data = message.getData();
+            server = data.getString("rpc_server");
+            currentJsonRpcServer = server;
+        }
+        if (jsonRpcServer != null && server != null) {
             ((org.ethereum.android.jsonrpc.light.JsonRpcServer)jsonRpcServer).addRemoteServer(server, true);
         } else {
-            System.out.println("jsonRpcServer is null on changeJsonRpc ??");
+            System.out.println("jsonRpcServer or server is null on changeJsonRpc");
         }
     }
 
