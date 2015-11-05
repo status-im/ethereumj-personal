@@ -30,6 +30,9 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
     private Ethereum ethereum;
     private Dispatcher dispatcher;
 
+    EventLoopGroup bossGroup;
+    EventLoopGroup workerGroup;
+
     public JsonRpcServer(Ethereum ethereum) {
         super(ethereum);
         this.ethereum = ethereum;
@@ -46,13 +49,29 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
         this.dispatcher.register(new proxy(this.ethereum));
 
-        addRemoteServer("http://139.162.13.89:8545/");
+        //addRemoteServer("http://rpc0.syng.io:8545/", true);
     }
 
-    public static void addRemoteServer(String address) {
+    public static void addRemoteServer(String serverUrl) {
         try {
-            RemoteServer.add(new URL(address));
+            RemoteServer.add(new URL(serverUrl));
         } catch (Exception e) {
+            System.out.println("Exception adding remote server: " + e.getMessage());
+
+        }
+    }
+
+    public void addRemoteServer(String serverUrl, boolean clearList) {
+        try {
+            if (clearList) {
+                RemoteServer.clear();
+            }
+            RemoteServer.add(new URL(serverUrl));
+            System.out.println("Changed rpc remote server to: " + serverUrl);
+            this.ethereum.getListener().trace("Slaving to <" + serverUrl + ">");
+        } catch (Exception e) {
+            System.out.println("Exception adding remote server: " + e.getMessage());
+            this.ethereum.getListener().trace("Exception adding remote server: " + e.getMessage());
         }
     }
 
@@ -67,8 +86,8 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
     }
 
     public void start() throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
@@ -82,6 +101,13 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
             ch.closeFuture().sync();
         } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+    }
+
+    public void stop() {
+        if (bossGroup != null) {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }

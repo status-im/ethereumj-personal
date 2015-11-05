@@ -82,4 +82,9 @@ public class EthereumServiceMessage {
      * Command to the service to initialize with specific addresses. If already initialized, restart the service
      */
     public static final int MSG_INIT = 16;
+
+    /**
+     * Command to the service to change the json rpc server
+     */
+    public static final int MSG_CHANGE_JSON_RPC_SERVER = 17;
 }

@@ -56,12 +56,14 @@ public class ServiceConnector {
         public void handleMessage(Message message) {
 
             boolean isClaimed = false;
-            String identifier = ((Bundle)message.obj).getString("identifier");
-            if (identifier != null) {
+            if (message.obj != null) {
+                String identifier = ((Bundle) message.obj).getString("identifier");
+                if (identifier != null) {
 
-                for (ConnectorHandler handler : handlers) {
-                    if (identifier.equals(handler.getID())) {
-                        isClaimed = handler.handleMessage(message);
+                    for (ConnectorHandler handler : handlers) {
+                        if (identifier.equals(handler.getID())) {
+                            isClaimed = handler.handleMessage(message);
+                        }
                     }
                 }
             }

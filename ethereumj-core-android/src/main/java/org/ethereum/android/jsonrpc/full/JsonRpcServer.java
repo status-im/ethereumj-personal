@@ -26,6 +26,8 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
     private Ethereum ethereum;
     private Dispatcher dispatcher;
+    EventLoopGroup bossGroup;
+    EventLoopGroup workerGroup;
 
     public JsonRpcServer(Ethereum ethereum) {
         super(ethereum);
@@ -105,8 +107,8 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
     }
 
     public void start() throws Exception {
-        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        bossGroup = new NioEventLoopGroup(1);
+        workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
             b.option(ChannelOption.SO_BACKLOG, 1024);
@@ -120,6 +122,13 @@ public final class JsonRpcServer extends org.ethereum.android.jsonrpc.JsonRpcSer
 
             ch.closeFuture().sync();
         } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+    }
+
+    public void stop() {
+        if (bossGroup != null) {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }

@@ -48,6 +48,7 @@ public class EthereumRemoteService extends EthereumService {
     static EnumMap<EventFlag, List<String>> listenersByType = new EnumMap<EventFlag, List<String>>(EventFlag.class);
 
     public boolean isEthereumStarted = false;
+    private String currentJsonRpcServer = null;
 
     public EthereumRemoteService() {
 
@@ -160,6 +161,10 @@ public class EthereumRemoteService extends EthereumService {
                 startJsonRpc(message);
                 break;
 
+            case EthereumServiceMessage.MSG_CHANGE_JSON_RPC_SERVER:
+                changeJsonRpc(message);
+                break;
+
             case EthereumServiceMessage.MSG_FIND_ONLINE_PEER:
                 findOnlinePeer(message);
                 break;
@@ -260,14 +265,21 @@ public class EthereumRemoteService extends EthereumService {
     protected void init(Message message) {
 
         if (isEthereumStarted) {
+            stopJsonRpcServer();
             closeEthereum(null);
             ethereum = null;
             component = null;
             isInitialized = false;
+            initializeEthereum();
         }
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
-        new InitializeTask(privateKeys).execute();
+        ethereum.init(privateKeys);
+        startJsonRpc(null);
+        if (currentJsonRpcServer != null) {
+            this.changeJsonRpc(null);
+        }
+        isEthereumStarted = true;
     }
 
     /**
@@ -360,6 +372,17 @@ public class EthereumRemoteService extends EthereumService {
         }
     }
 
+    protected void stopJsonRpcServer() {
+        if (jsonRpcServerThread != null) {
+            jsonRpcServerThread.interrupt();
+            jsonRpcServerThread = null;
+        }
+        if (jsonRpcServer != null) {
+            jsonRpcServer.stop();
+            jsonRpcServer = null;
+        }
+    }
+
     /**
      * Start the json rpc server
      *
@@ -387,6 +410,33 @@ public class EthereumRemoteService extends EthereumService {
             jsonRpcServerThread.start();
         }
     }
+
+    /**
+     * Start the json rpc server
+     *
+     * Incoming message parameters: none
+     * Sends message: none
+     */
+    protected void changeJsonRpc(Message message) {
+
+        String server = null;
+        if (message == null) {
+            if (currentJsonRpcServer != null) {
+                server = currentJsonRpcServer;
+            }
+        } else {
+            Bundle data = message.getData();
+            server = data.getString("rpc_server");
+            currentJsonRpcServer = server;
+        }
+        if (jsonRpcServer != null && server != null) {
+            ((org.ethereum.android.jsonrpc.light.JsonRpcServer)jsonRpcServer).addRemoteServer(server, true);
+        } else {
+            System.out.println("jsonRpcServer or server is null on changeJsonRpc");
+        }
+    }
+
+
 
     /**
      * Find an online peer

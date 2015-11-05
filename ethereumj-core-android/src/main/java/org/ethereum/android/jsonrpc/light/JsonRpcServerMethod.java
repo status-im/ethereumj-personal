@@ -9,6 +9,7 @@ import org.ethereum.core.Transaction;
 import org.ethereum.facade.Ethereum;
 import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -17,6 +18,7 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
     private String name = "";
     protected Ethereum ethereum;
     private JSONRPC2Session jpSession;
+    private String currentUrl;
 
     public JsonRpcServerMethod(Ethereum ethereum) {
         this.ethereum = ethereum;
@@ -149,13 +151,25 @@ public abstract class JsonRpcServerMethod implements RequestHandler {
 
 
     protected JSONRPC2Response getRemoteData(JSONRPC2Request req) {
-        if (jpSession == null) {
-            jpSession = new JSONRPC2Session(JsonRpcServer.getRemoteServer());
+        URL url = JsonRpcServer.getRemoteServer();
+        boolean isChanged = !url.toString().equals(currentUrl);
+        if (isChanged) {
+            currentUrl = url.toString();
         }
         try {
+            if (jpSession == null) {
+                jpSession = new JSONRPC2Session(url);
+            } else {
+                if (isChanged) {
+                    currentUrl = url.toString();
+                    jpSession = new JSONRPC2Session(url);
+                }
+            }
+
             return jpSession.send(req);
         } catch (Exception e) {
-            jpSession = new JSONRPC2Session(JsonRpcServer.getRemoteServer());
+            System.out.println("Exception getting remote rpc data: " + e.getMessage());
+            ethereum.getListener().trace("Exception getting remote rpc data: " + e.getMessage());
             if (!JsonRpcServer.IsRemoteServerRecuring) {
                 return getRemoteData(req);
             } else {
