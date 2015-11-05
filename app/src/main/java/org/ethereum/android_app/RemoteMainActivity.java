@@ -30,15 +30,13 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 
-public class RemoteMainActivity extends ActionBarActivity implements ActivityInterface, ConnectorHandler {
+public class RemoteMainActivity extends ActionBarActivity implements ActivityInterface {
 
     private Toolbar toolbar;
     private ViewPager viewPager;
     private SlidingTabLayout tabs;
     private TabsPagerAdapter adapter;
     protected ArrayList<FragmentInterface> fragments = new ArrayList<>();
-    protected String handlerIdentifier = UUID.randomUUID().toString();
-    static DateFormat formatter = new SimpleDateFormat("HH:mm:ss:SSS");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,8 +54,6 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
         tabs = (SlidingTabLayout) findViewById(R.id.tabs);
         tabs.setDistributeEvenly(true);
         tabs.setViewPager(viewPager);
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.ethereum.registerHandler(this);
     }
 
     @Override
@@ -91,98 +87,4 @@ public class RemoteMainActivity extends ActionBarActivity implements ActivityInt
         }
     }
 
-    @Override
-    public boolean handleMessage(Message message) {
-
-        boolean isClaimed = true;
-        switch(message.what) {
-            case EthereumClientMessage.MSG_EVENT:
-                Bundle data = message.getData();
-                data.setClassLoader(EventFlag.class.getClassLoader());
-                EventFlag event = (EventFlag)data.getSerializable("event");
-                EventData eventData;
-                MessageEventData messageEventData;
-                switch(event) {
-                    case EVENT_BLOCK:
-                        BlockEventData blockEventData = data.getParcelable("data");
-                        addLogEntry(blockEventData.registeredTime, "Added block with " + blockEventData.receipts.size() + " transaction receipts.");
-                        break;
-                    case EVENT_HANDSHAKE_PEER:
-                        messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Peer " + new HelloMessage(messageEventData.message).getPeerId() + " said hello");
-                        break;
-                    case EVENT_NO_CONNECTIONS:
-                        eventData = data.getParcelable("data");
-                        addLogEntry(eventData.registeredTime, "No connections");
-                        break;
-                    case EVENT_PEER_DISCONNECT:
-                        PeerDisconnectEventData peerDisconnectEventData = data.getParcelable("data");
-                        addLogEntry(peerDisconnectEventData.registeredTime, "Peer " + peerDisconnectEventData.host + ":" + peerDisconnectEventData.port + " disconnected.");
-                        break;
-                    case EVENT_PENDING_TRANSACTIONS_RECEIVED:
-                        PendingTransactionsEventData pendingTransactionsEventData = data.getParcelable("data");
-                        addLogEntry(pendingTransactionsEventData.registeredTime, "Received " + pendingTransactionsEventData.transactions.size() + " pending transactions");
-                        break;
-                    case EVENT_RECEIVE_MESSAGE:
-                        messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Received message: " + messageEventData.messageClass.getName());
-                        break;
-                    case EVENT_SEND_MESSAGE:
-                        messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Sent message: " + messageEventData.messageClass.getName());
-                        break;
-                    case EVENT_SYNC_DONE:
-                        eventData = data.getParcelable("data");
-                        addLogEntry(eventData.registeredTime, "Sync done");
-                        break;
-                    case EVENT_VM_TRACE_CREATED:
-                        VMTraceCreatedEventData vmTraceCreatedEventData = data.getParcelable("data");
-                        addLogEntry(vmTraceCreatedEventData.registeredTime, "CM trace created: " + vmTraceCreatedEventData.transactionHash + " - " + vmTraceCreatedEventData.trace);
-                        break;
-                    case EVENT_TRACE:
-                        TraceEventData traceEventData = data.getParcelable("data");
-                        addLogEntry(traceEventData.registeredTime, traceEventData.message);
-                        break;
-                }
-                break;
-            default:
-                isClaimed = false;
-        }
-        return isClaimed;
-    }
-
-    protected void addLogEntry(long timestamp, String message) {
-
-        Date date = new Date(timestamp);
-
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.log += formatter.format(date) + " -> " + message + "\n\n";
-        if (app.log.length() > 10000) {
-            app.log = app.log.substring(5000);
-        }
-        for(FragmentInterface fragment: fragments) {
-            fragment.onMessage(app.log);
-        }
-    }
-
-    @Override
-    public String getID() {
-
-        return handlerIdentifier;
-    }
-
-    @Override
-    public void onConnectorConnected() {
-
-        EthereumApplication app = (EthereumApplication)getApplication();
-        app.ethereum.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
-        //Node node = SystemProperties.CONFIG.peerActive().get(0);
-        //app.ethereum.connect(node.getHost(), node.getPort(), node.getHexId());
-        app.ethereum.startJsonRpc();
-    }
-
-    @Override
-    public void onConnectorDisconnected() {
-
-    }
 }

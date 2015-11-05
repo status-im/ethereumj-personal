@@ -3,6 +3,8 @@ package org.ethereum.android.jsonrpc.full.method;
 import com.thetransactioncompany.jsonrpc2.*;
 import com.thetransactioncompany.jsonrpc2.server.*;
 import org.ethereum.android.jsonrpc.full.JsonRpcServerMethod;
+import org.ethereum.core.Blockchain;
+import org.ethereum.core.BlockchainImpl;
 import org.ethereum.facade.Ethereum;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class eth_getBlockTransactionCountByNumber extends JsonRpcServerMethod {
 
             int count = 0;
             if (blockNumber == -2) {
-                count = ethereum.getBlockchain().getPendingTransactions().size();
+                count = ((BlockchainImpl)ethereum.getBlockchain()).getPendingState().getPendingTransactions().size();
             } else {
                 count = ethereum.getBlockchain().getBlockByNumber(blockNumber).getTransactionsList().size();
             }

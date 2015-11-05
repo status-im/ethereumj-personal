@@ -375,7 +375,11 @@ public class SyncQueue {
     }
 
     public boolean isHashesEmpty() {
-        return hashStore.isEmpty() && headerStore.isEmpty();
+        return hashStore.isEmpty();
+    }
+
+    public boolean isHeadersEmpty() {
+        return headerStore.isEmpty();
     }
 
     public boolean isBlocksEmpty() {
@@ -383,8 +387,13 @@ public class SyncQueue {
     }
 
     public void clearHashes() {
-        hashStore.clear();
-        headerStore.clear();
+        if (!hashStore.isEmpty())
+            hashStore.clear();
+    }
+
+    public void clearHeaders() {
+        if (!headerStore.isEmpty())
+            headerStore.clear();
     }
 
     public int hashStoreSize() {

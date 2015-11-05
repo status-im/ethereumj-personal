@@ -17,6 +17,7 @@ import java.util.*;
 import javax.inject.Inject;
 
 import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.ethereum.net.eth.EthVersion.V60;
 import static org.ethereum.net.eth.EthVersion.V62;
 import static org.ethereum.sync.SyncStateName.*;
@@ -128,7 +129,7 @@ public class Eth62 extends EthHandler {
         List<BlockHeader> headers = blockchain.getListOfHeadersStartFrom(
                 msg.getBlockIdentifier(),
                 msg.getSkipBlocks(),
-                msg.getMaxHeaders(),
+                min(msg.getMaxHeaders(), MAX_HASHES_TO_SEND),
                 msg.isReverse()
         );
 
@@ -137,6 +138,8 @@ public class Eth62 extends EthHandler {
     }
 
     private void processBlockHeaders(BlockHeadersMessage msg) {
+
+        // todo check if remote peer responds with same headers on different GET_BLOCK_HEADERS
 
         if(logger.isTraceEnabled()) logger.trace(
                 "Peer {}: processing BlockHeaders, size [{}]",

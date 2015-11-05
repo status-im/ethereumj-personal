@@ -1,9 +1,10 @@
 package org.ethereum.di.modules;
 
-import com.sun.corba.se.impl.orbutil.concurrent.Sync;
 
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.BlockchainImpl;
+import org.ethereum.core.PendingState;
+import org.ethereum.core.PendingStateImpl;
 import org.ethereum.core.Wallet;
 import org.ethereum.datasource.mapdb.MapDBDataSource;
 import org.ethereum.datasource.mapdb.MapDBFactory;
@@ -37,6 +38,7 @@ import org.ethereum.net.rlpx.discover.PeerConnectionTester;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
+import org.ethereum.net.shh.WhisperImpl;
 import org.ethereum.sync.PeersPool;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.sync.SyncQueue;
@@ -83,16 +85,16 @@ public class EthereumModule {
     @Provides
     @Singleton
     WorldManager provideWorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager) {
-        return new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager);
+            ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager, PendingState pendingState) {
+        return new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
     }
 
     @Provides
     @Singleton
     Blockchain provideBlockchain(BlockStore blockStore, Repository repository,
                                  Wallet wallet, AdminInfo adminInfo,
-                                 ParentBlockHeaderValidator parentHeaderValidator, EthereumListener listener) {
-        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, listener);
+                                 ParentBlockHeaderValidator parentHeaderValidator, PendingState pendingState, EthereumListener listener) {
+        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, pendingState, listener);
     }
 
     @Provides
@@ -107,6 +109,12 @@ public class EthereumModule {
         MapDBDataSource detailsDS = new MapDBDataSource();
         MapDBDataSource stateDS = new MapDBDataSource();
         return new RepositoryImpl(detailsDS, stateDS);
+    }
+
+    @Provides
+    @Singleton
+    PendingState providePendingState() {
+        return new PendingStateImpl();
     }
 
     @Provides
@@ -198,8 +206,14 @@ public class EthereumModule {
     }
 
     @Provides
-    ShhHandler provideShhHandler(EthereumListener listener) {
-        return new ShhHandler(listener);
+    @Singleton
+    WhisperImpl provideWhisperImpl() {
+        return new WhisperImpl();
+    }
+
+    @Provides
+    ShhHandler provideShhHandler(EthereumListener listener, WhisperImpl whisper) {
+        return new ShhHandler(listener, whisper);
     }
 
     @Provides

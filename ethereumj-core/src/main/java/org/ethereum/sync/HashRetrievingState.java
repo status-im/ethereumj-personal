@@ -62,7 +62,7 @@ public class HashRetrievingState extends AbstractSyncState {
             }
 
             if (master == null) {
-                master = syncManager.pool.getBest();
+                master = syncManager.pool.getMaster();
             }
 
             if (master == null) {
@@ -73,12 +73,7 @@ public class HashRetrievingState extends AbstractSyncState {
 
         // Since Eth V61 it makes sense to download blocks and hashes simultaneously
         if (master.getEthVersion().getCode() > V60.getCode()) {
-            syncManager.pool.changeState(BLOCK_RETRIEVING, new Functional.Predicate<Channel>() {
-                @Override
-                public boolean test(Channel peer) {
-                    return peer.isIdle();
-                }
-            });
+            syncManager.pool.changeStateForIdles(BLOCK_RETRIEVING, syncManager.masterVersion);
         }
     }
 }

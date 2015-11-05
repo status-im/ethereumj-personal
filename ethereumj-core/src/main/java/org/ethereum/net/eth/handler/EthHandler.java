@@ -2,6 +2,7 @@ package org.ethereum.net.eth.handler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.ethereum.core.*;
 import org.ethereum.core.Block;
 import org.ethereum.core.Blockchain;
 import org.ethereum.core.Transaction;
@@ -48,11 +49,19 @@ public abstract class EthHandler extends SimpleChannelInboundHandler<EthMessage>
     private final static Logger loggerNet = LoggerFactory.getLogger("net");
     private final static Logger loggerSync = LoggerFactory.getLogger("sync");
 
+    protected static final int MAX_HASHES_TO_SEND = 65536;
+
+    //@Autowired
     protected Blockchain blockchain;
 
+    //@Autowired
     protected SyncQueue queue;
 
+    //@Autowired
     protected WorldManager worldManager;
+
+    //@Autowired
+    protected PendingState pendingState;
 
     protected Channel channel;
 
@@ -68,7 +77,7 @@ public abstract class EthHandler extends SimpleChannelInboundHandler<EthMessage>
 
     protected SyncStateName syncState = IDLE;
     protected boolean syncDone = false;
-    protected boolean processTransactions = true;
+    protected boolean processTransactions = false;
 
     protected byte[] bestHash;
 
@@ -90,7 +99,7 @@ public abstract class EthHandler extends SimpleChannelInboundHandler<EthMessage>
      * filled by data gained from NewBlockHashes and NewBlock messages
      */
     protected long newBlockLowerNumber = Long.MAX_VALUE;
-	
+
     public EthHandler() {
     }
 
@@ -215,7 +224,7 @@ public abstract class EthHandler extends SimpleChannelInboundHandler<EthMessage>
         }
 
         Set<Transaction> txSet = msg.getTransactions();
-        blockchain.addPendingTransactions(txSet);
+        pendingState.addWireTransactions(txSet);
 
         for (Transaction tx : txSet) {
             worldManager.getWallet().addTransaction(tx);
@@ -280,7 +289,7 @@ public abstract class EthHandler extends SimpleChannelInboundHandler<EthMessage>
             }
         }
         if (newState == BLOCKS_LACK) {
-            if(++blocksLackHits < BLOCKS_LACK_MAX_HITS) {
+            if (syncDone || ++blocksLackHits < BLOCKS_LACK_MAX_HITS) {
                 return;
             }
             blocksLackHits = 0; // reset

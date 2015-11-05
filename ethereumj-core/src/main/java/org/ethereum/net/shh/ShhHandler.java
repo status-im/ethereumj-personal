@@ -19,30 +19,26 @@ import javax.inject.Inject;
  * Peers with 'shh' capability can send/receive:
  */
 public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
+    private final static Logger logger = LoggerFactory.getLogger("net.shh");
+    public final static byte VERSION = 3;
 
-    public final static byte VERSION = 2;
     private MessageQueue msgQueue = null;
-    private ECKey privKey;
-
-    private Whisper whisper;
-
     private boolean active = false;
+    private BloomFilter peerBloomFilter = BloomFilter.createAll();
 
-    private final static Logger logger = LoggerFactory.getLogger("net");
 
     EthereumListener listener;
 
+    private WhisperImpl whisper;
+
     @Inject
-    public ShhHandler(EthereumListener listener) {
+    public ShhHandler(EthereumListener listener, WhisperImpl whisper) {
         this.listener = listener;
+        this.whisper = whisper;
     }
 
     public ShhHandler(MessageQueue msgQueue) {
         this.msgQueue = msgQueue;
-    }
-
-    public void setPrivKey(ECKey privKey) {
-        this.privKey = privKey;
     }
 
     @Override
@@ -60,17 +56,19 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
                 listener.trace("[Recv: " + msg + "]");
                 break;
             case MESSAGE:
-                whisper.processEnvelope((Envelope) msg);
+                whisper.processEnvelope((ShhEnvelopeMessage) msg, this);
                 break;
-            case ADD_FILTER:
-                break;
-            case REMOVE_FILTER:
-                break;
-            case PACKET_COUNT:
+            case FILTER:
+                setBloomFilter((ShhFilterMessage) msg);
                 break;
             default:
+                logger.error("Unknown SHH message type: " + msg.getCommand());
                 break;
         }
+    }
+
+    private void setBloomFilter(ShhFilterMessage msg) {
+        peerBloomFilter = new BloomFilter(msg.getBloomFilter());
     }
 
     @Override
@@ -83,28 +81,43 @@ public class ShhHandler extends SimpleChannelInboundHandler<ShhMessage> {
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         active = false;
+        whisper.removePeer(this);
         logger.debug("handlerRemoved: ... ");
     }
 
     public void activate() {
         logger.info("SHH protocol activated");
         listener.trace("SHH protocol activated");
-        whisper = new Whisper(msgQueue);
+        whisper.addPeer(this);
         sendStatus();
+        sendHostBloom();
         this.active = true;
     }
 
     private void sendStatus() {
         byte protocolVersion = ShhHandler.VERSION;
-        StatusMessage msg = new StatusMessage(protocolVersion);
-        msgQueue.sendMessage(msg);
+        ShhStatusMessage msg = new ShhStatusMessage(protocolVersion);
+        sendMessage(msg);
     }
 
-    private void processEnvelop(Envelope envelope) {
-        if (!envelope.isEmpty()) {
-            Message m = envelope.open(privKey);
-            logger.info("ShhHandler invoke: [{}]", m);
-        }
+    void sendHostBloom() {
+        ShhFilterMessage msg = ShhFilterMessage.createFromFilter(whisper.hostBloomFilter.toBytes());
+        sendMessage(msg);
+    }
+
+    void sendEnvelope(ShhEnvelopeMessage env) {
+        sendMessage(env);
+//        Topic[] topics = env.getTopics();
+//        for (Topic topic : topics) {
+//            if (peerBloomFilter.hasTopic(topic)) {
+//                sendMessage(env);
+//                break;
+//            }
+//        }
+    }
+
+    void sendMessage(ShhMessage msg) {
+        msgQueue.sendMessage(msg);
     }
 
     public boolean isActive() {

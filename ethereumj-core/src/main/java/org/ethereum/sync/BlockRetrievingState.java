@@ -1,8 +1,7 @@
 package org.ethereum.sync;
 
-import org.ethereum.net.server.Channel;
-import org.ethereum.util.Functional;
-
+import static org.ethereum.net.eth.EthVersion.V61;
+import static org.ethereum.net.eth.EthVersion.V62;
 import static org.ethereum.sync.SyncStateName.*;
 
 /**
@@ -28,16 +27,13 @@ public class BlockRetrievingState extends AbstractSyncState {
 
         super.doMaintain();
 
-        if (syncManager.queue.isHashesEmpty()) {
+        if ((syncManager.queue.isHashesEmpty()  || !syncManager.pool.hasCompatible(V61)) &&
+            (syncManager.queue.isHeadersEmpty() || !syncManager.pool.hasCompatible(V62))) {
+
             syncManager.changeState(IDLE);
             return;
         }
 
-        syncManager.pool.changeState(BLOCK_RETRIEVING, new Functional.Predicate<Channel>() {
-            @Override
-            public boolean test(Channel peer) {
-                return peer.isIdle();
-            }
-        });
+        syncManager.pool.changeStateForIdles(BLOCK_RETRIEVING);
     }
 }

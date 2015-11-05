@@ -46,10 +46,6 @@ public interface Blockchain {
 
     public List<Block> getGarbage();
 
-    public Set<Transaction> getPendingTransactions();
-    public void addPendingTransactions(Set<Transaction> transactions);
-    public void clearPendingTransactions(List<Transaction> receivedTransactions);
-
     public void setExitOn(long exitOn);
 
     boolean isBlockExist(byte[] hash);

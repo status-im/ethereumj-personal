@@ -693,7 +693,7 @@ public class EthereumRemoteService extends EthereumService {
 
         Message replyMessage = Message.obtain(null, EthereumClientMessage.MSG_PENDING_TRANSACTIONS, 0, 0, message.obj);
         Bundle replyData = new Bundle();
-        Set<Transaction> transactions = ethereum.getPendingTransactions();
+        List<Transaction> transactions = ethereum.getPendingTransactions();
         org.ethereum.android.interop.Transaction[] convertedTransactions = new org.ethereum.android.interop.Transaction[transactions.size()];
         int index = 0;
         for (Transaction transaction: transactions) {

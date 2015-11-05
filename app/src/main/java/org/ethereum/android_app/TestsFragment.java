@@ -57,9 +57,6 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
         getEthereumStatus.setOnClickListener(onClickListener);
         getBlockchainStatus.setOnClickListener(onClickListener);
 
-        EthereumApplication app = (EthereumApplication)getActivity().getApplication();
-        app.ethereum.registerHandler(this);
-
         return view;
     }
 
@@ -67,18 +64,17 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
         @Override
         public void onClick(final View v) {
 
-            EthereumApplication app = (EthereumApplication)getActivity().getApplication();
             switch(v.getId()){
                 case R.id.connectButton:
                     Node node = CONFIG.peerActive().get(0);
-                    app.ethereum.connect(node.getHost(), node.getPort(), node.getHexId());
+                    EthereumApplication.ethereumConnector.connect(node.getHost(), node.getPort(), node.getHexId());
                     break;
                 case R.id.getEthereumStatus:
-                    app.ethereum.getConnectionStatus(identifier);
-                    app.ethereum.getAdminInfo(identifier);
+                    EthereumApplication.ethereumConnector.getConnectionStatus(identifier);
+                    EthereumApplication.ethereumConnector.getAdminInfo(identifier);
                     break;
                 case R.id.getBlockchainStatus:
-                    app.ethereum.getBlockchainStatus(identifier);
+                    EthereumApplication.ethereumConnector.getBlockchainStatus(identifier);
                     break;
             }
         }
@@ -137,7 +133,7 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
     public void onConnectorConnected() {
 
         EthereumApplication app = (EthereumApplication)getActivity().getApplication();
-        app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
+        //app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
         //Node node = SystemProperties.CONFIG.peerActive().get(0);
         //app.ethereum.connect(node.getHost(), node.getPort(), node.getHexId());
     }

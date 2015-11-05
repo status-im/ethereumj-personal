@@ -8,6 +8,8 @@ import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Blockchain;
 import org.ethereum.core.BlockchainImpl;
+import org.ethereum.core.PendingState;
+import org.ethereum.core.PendingStateImpl;
 import org.ethereum.core.Repository;
 import org.ethereum.core.Wallet;
 import org.ethereum.datasource.mapdb.MapDBFactory;
@@ -39,6 +41,7 @@ import org.ethereum.net.rlpx.discover.PeerConnectionTester;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.net.server.EthereumChannelInitializer;
 import org.ethereum.net.shh.ShhHandler;
+import org.ethereum.net.shh.WhisperImpl;
 import org.ethereum.sync.PeersPool;
 import org.ethereum.sync.SyncManager;
 import org.ethereum.sync.SyncQueue;
@@ -100,8 +103,8 @@ public class EthereumModule {
     @Singleton
     org.ethereum.core.Blockchain provideBlockchain(BlockStore blockStore, org.ethereum.core.Repository repository,
                                                    Wallet wallet, AdminInfo adminInfo,
-                                                   ParentBlockHeaderValidator parentHeaderValidator, EthereumListener listener) {
-        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, listener);
+                                                   ParentBlockHeaderValidator parentHeaderValidator, PendingState pendingState, EthereumListener listener) {
+        return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, pendingState, listener);
     }
 
     @Provides
@@ -204,14 +207,25 @@ public class EthereumModule {
 
     @Provides
     @Singleton
+    WhisperImpl provideWhisperImpl() {
+        return new WhisperImpl();
+    }
+
+    @Provides
+    @Singleton
+    PendingState providePendingState() {
+        return new PendingStateImpl();
+    }
+
+    @Provides
+    @Singleton
     ProgramInvokeFactory provideProgramInvokeFactory() {
         return new ProgramInvokeFactoryImpl();
     }
 
-
     @Provides
-    ShhHandler provideShhHandler(EthereumListener listener) {
-        return new ShhHandler(listener);
+    ShhHandler provideShhHandler(EthereumListener listener, WhisperImpl whisper) {
+        return new ShhHandler(listener, whisper);
     }
 
     @Provides

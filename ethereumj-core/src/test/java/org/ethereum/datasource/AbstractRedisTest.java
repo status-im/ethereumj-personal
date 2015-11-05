@@ -1,6 +1,7 @@
 package org.ethereum.datasource;
 
 import org.ethereum.config.SystemProperties;
+import org.ethereum.config.NoAutoscan;
 import org.ethereum.datasource.redis.RedisConnection;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.InMemoryBlockStore;

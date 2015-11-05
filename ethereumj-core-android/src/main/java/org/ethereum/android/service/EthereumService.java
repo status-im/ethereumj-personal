@@ -224,16 +224,19 @@ public class EthereumService extends Service {
         @Override
         public void onEthStatusUpdated(Node node, StatusMessage status) {
 
+            broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData("Eth status update: " + status.toString()));
         }
 
         @Override
         public void onNodeDiscovered(Node node) {
 
+            broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData("Node discovered: " + node.toString()));
         }
 
         @Override
         public void onTransactionExecuted(TransactionExecutionSummary summary) {
 
+            broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData("Transaction executed: " + summary.toString()));
         }
     }
 }

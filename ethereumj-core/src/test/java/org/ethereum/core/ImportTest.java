@@ -2,7 +2,7 @@ package org.ethereum.core;
 
 
 import org.ethereum.TestContext;
-import org.ethereum.config.SystemProperties;
+import org.ethereum.config.NoAutoscan;
 import org.ethereum.datasource.HashMapDB;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.IndexedBlockStore;

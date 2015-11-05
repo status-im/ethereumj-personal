@@ -59,9 +59,12 @@ public class WorldManager {
 
     private SyncManager syncManager;
 
+    private PendingState pendingState;
+
     @Inject
 	public WorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
-                        ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager) {
+                        , BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager
+                        , PendingState pendingState) {
         logger.info("World manager instantiated");
         this.listener = listener;
         this.blockchain = blockchain;
@@ -73,6 +76,7 @@ public class WorldManager {
 		this.adminInfo = adminInfo;
         this.nodeManager = nodeManager;
         this.syncManager = syncManager;
+        this.pendingState = pendingState;
 
         this.init();
     }
@@ -89,6 +93,7 @@ public class WorldManager {
 
         // must be initialized after blockchain is loaded
         syncManager.init();
+        pendingState.init();
     }
 
     public void addListener(EthereumListener listener) {
@@ -144,6 +149,10 @@ public class WorldManager {
 
     public BlockStore getBlockStore() {
         return blockStore;
+    }
+
+    public PendingState getPendingState() {
+        return pendingState;
     }
 
     public void loadBlockchain() {

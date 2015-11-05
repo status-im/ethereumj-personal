@@ -43,8 +43,8 @@ public class eth_getTransactionCount extends JsonRpcServerMethod {
                 nonce = accountState.getNonce();
 
             if (blockNumber == -1) {
-                synchronized (ethereum.getBlockchain().getPendingTransactions()) {
-                    for (Transaction tx : ethereum.getBlockchain().getPendingTransactions()) {
+                synchronized (ethereum.getPendingStateTransactions()) {
+                    for (Transaction tx : ethereum.getPendingStateTransactions()) {
                         if (Arrays.equals(address, tx.getSender())) {
                             nonce.add(BigInteger.ONE);
                         }

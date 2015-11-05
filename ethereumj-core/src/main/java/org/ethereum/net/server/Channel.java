@@ -44,6 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import static org.ethereum.config.SystemProperties.CONFIG;
+import static org.ethereum.net.eth.EthVersion.V61;
+import static org.ethereum.net.eth.EthVersion.V62;
 
 /**
  * @author Roman Mandeleil
@@ -113,7 +115,6 @@ public class Channel {
         messageCodec.setP2pMessageFactory(new P2pMessageFactory());
 
         shhHandler.setMsgQueue(msgQueue);
-        shhHandler.setPrivKey(CONFIG.getMyKey());
         messageCodec.setShhMessageFactory(new ShhMessageFactory());
 
         bzzHandler.setMsgQueue(msgQueue);
@@ -247,6 +248,10 @@ public class Channel {
     }
 
     // ETH sub protocol
+
+    public boolean isEthCompatible(Channel peer) {
+        return peer != null && peer.getEthVersion().isCompatible(getEthVersion());
+    }
 
     public boolean hasEthStatusSucceeded() {
         return eth.hasStatusSucceeded();

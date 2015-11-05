@@ -126,7 +126,7 @@ TODO: Roman must implement Bloom contain. When it will be done - we can use just
         }
 
         if (blockFrom < 0 || blockTo < 0) {
-            for (Transaction tx : ethereum.getPendingTransactions()) {
+            for (Transaction tx : ethereum.getPendingStateTransactions()) {
                 Blockchain blockchain = (Blockchain)ethereum.getBlockchain();
                 TransactionReceipt txr = blockchain.getTransactionReceiptByHash(tx.getHash());
                 if (txr != null) {

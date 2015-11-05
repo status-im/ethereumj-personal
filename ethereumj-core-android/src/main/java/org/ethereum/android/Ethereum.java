@@ -411,11 +411,24 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
         return channelManager;
     }
 
+    public List<Transaction> getPendingTransactions() {
+
+        return ((org.ethereum.core.BlockchainImpl)blockchain).getPendingState().getPendingTransactions();
+    }
 
     @Override
-    public Set<Transaction> getPendingTransactions() {
+    public Set<Transaction> getWireTransactions() {
+        return ((org.ethereum.core.BlockchainImpl)blockchain).getPendingState().getWireTransactions();
+    }
 
-        return blockchain.getPendingTransactions();
+    @Override
+    public org.ethereum.facade.Repository getPendingState() {
+        return (org.ethereum.facade.Repository)((org.ethereum.core.BlockchainImpl)blockchain).getPendingState().getRepository();
+    }
+
+    @Override
+    public List<Transaction> getPendingStateTransactions() {
+        return ((org.ethereum.core.BlockchainImpl)blockchain).getPendingState().getPendingTransactions();
     }
 
     @Override

@@ -37,9 +37,9 @@ public class eth_getTransactionByBlockNumberAndIndex extends JsonRpcServerMethod
             Block block = null;
             JSONObject tx = null;
             if (blockNumber == -2) {
-                if (ethereum.getPendingTransactions().size() <= index)
+                if (ethereum.getPendingStateTransactions().size() <= index)
                     return new JSONRPC2Response(null, req.getID());
-                tx = transactionToJS(null, (Transaction)ethereum.getPendingTransactions().toArray()[index]);
+                tx = transactionToJS(null, (Transaction)ethereum.getPendingStateTransactions().toArray()[index]);
             } else {
                 block = ethereum.getBlockchain().getBlockByNumber(blockNumber);
                 if (block == null)
