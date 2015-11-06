@@ -20,6 +20,7 @@ import org.ethereum.core.Transaction;
 import org.ethereum.crypto.HashUtil;
 import org.ethereum.facade.Ethereum;
 import org.ethereum.manager.AdminInfo;
+import org.ethereum.manager.WorldManager;
 import org.ethereum.net.peerdiscovery.PeerInfo;
 import org.ethereum.net.server.ChannelManager;
 import org.ethereum.sync.PeersPool;
@@ -224,8 +225,12 @@ public class EthereumRemoteService extends EthereumService {
     protected void onEthereumCreated(List<String> privateKeys) {
 
         if (ethereum != null) {
-            ethereum.init(privateKeys);
-            startJsonRpc(null);
+            //ethereum.init(privateKeys);
+            ethereum.init();
+            //startJsonRpc(null);
+            //if (currentJsonRpcServer != null) {
+            //    this.changeJsonRpc(null);
+            //}
             broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
             isEthereumStarted = true;
             isInitialized = true;
@@ -254,12 +259,15 @@ public class EthereumRemoteService extends EthereumService {
                 .ethereumModule(new EthereumModule(this))
                 .build();
         //component.udpListener();
-        ethereum = (org.ethereum.android.Ethereum)component.ethereum();
+        //ethereum = (org.ethereum.android.Ethereum)component.ethereum();
+        ethereum = component.ethereum();
         ethereum.addListener(new EthereumListener());
         PeersPool peersPool = component.peersPool();
         peersPool.setEthereum(ethereum);
         ChannelManager channelManager = component.channelManager();
         channelManager.setEthereum(ethereum);
+        WorldManager worldManager = component.worldManager();
+        worldManager.init();
     }
 
     protected void init(Message message) {
@@ -270,16 +278,11 @@ public class EthereumRemoteService extends EthereumService {
             ethereum = null;
             component = null;
             isInitialized = false;
-            initializeEthereum();
+            isConnected = false;
         }
         Bundle data = message.getData();
         List<String> privateKeys = data.getStringArrayList("privateKeys");
-        ethereum.init(privateKeys);
-        startJsonRpc(null);
-        if (currentJsonRpcServer != null) {
-            this.changeJsonRpc(null);
-        }
-        isEthereumStarted = true;
+        new InitializeTask(privateKeys).execute();
     }
 
     /**
@@ -295,8 +298,8 @@ public class EthereumRemoteService extends EthereumService {
      */
     protected void connect(Message message) {
 
-        if (!isConnected) {
-            isConnected = true;
+        if (!isConnected && ethereum != null) {
+            //isConnected = true;
             new ConnectTask(message).execute(ethereum);
         }
     }
@@ -743,7 +746,7 @@ public class EthereumRemoteService extends EthereumService {
 
         Message replyMessage = Message.obtain(null, EthereumClientMessage.MSG_PENDING_TRANSACTIONS, 0, 0, message.obj);
         Bundle replyData = new Bundle();
-        List<Transaction> transactions = ethereum.getPendingTransactions();
+        List<Transaction> transactions = null;//ethereum.getPendingTransactions();
         org.ethereum.android.interop.Transaction[] convertedTransactions = new org.ethereum.android.interop.Transaction[transactions.size()];
         int index = 0;
         for (Transaction transaction: transactions) {

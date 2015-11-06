@@ -23,7 +23,7 @@ import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionExecutionSummary;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
-import org.ethereum.android.Ethereum;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.net.eth.message.StatusMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.rlpx.Node;
@@ -44,11 +44,11 @@ public class EthereumService extends Service {
 
     static boolean isInitialized = false;
 
-    static Ethereum ethereum = null;
-    static EthereumComponent component = null;
+    protected static Ethereum ethereum = null;
+    protected static EthereumComponent component = null;
 
-    static JsonRpcServer jsonRpcServer;
-    static Thread jsonRpcServerThread;
+    protected static JsonRpcServer jsonRpcServer;
+    protected static Thread jsonRpcServerThread;
 
     public EthereumService() {
     }
@@ -62,6 +62,7 @@ public class EthereumService extends Service {
     public void onCreate() {
 
         super.onCreate();
+        /*
         if (!isInitialized) {
             isInitialized = true;
             new InitializeTask(null).execute();
@@ -69,6 +70,7 @@ public class EthereumService extends Service {
             System.out.println(" Already initialized");
             System.out.println("x " + (ethereum != null));
         }
+        */
     }
 
     @Override
@@ -112,14 +114,13 @@ public class EthereumService extends Service {
                 byte[] cbAddr = HashUtil.sha3(secret.getBytes());
                 privateKeys.add(Hex.toHexString(cbAddr));
             }
-            ethereum.init(privateKeys);
+            //ethereum.init(privateKeys);
+            ethereum.init();
             broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
         }
     }
 
     protected void createEthereum() {
-
-        Ethereum ethereum = null;
 
         System.setProperty("sun.arch.data.model", "32");
         System.setProperty("leveldb.mmap", "false");

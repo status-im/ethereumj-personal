@@ -117,7 +117,7 @@ public class SystemProperties {
                 this.projectVersionModifier = props.getProperty("modifier");
                 this.projectVersionModifier = this.projectVersionModifier.replaceAll("\"", "");
             }
-            if (this.projectVersion == null) this.projectVersion = "-.-.-";
+            if (this.projectVersion == null) this.projectVersion = "1.0.0";
 
         } catch (Exception e) {
             logger.error("Can't read config.", e);

@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.ethereum.android.EthereumManager;
 import org.ethereum.android.interop.AdminInfo;
 import org.ethereum.android.service.ConnectorHandler;
 import org.ethereum.android.service.EthereumClientMessage;

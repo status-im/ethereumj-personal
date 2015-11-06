@@ -77,6 +77,7 @@ public class EthereumModule {
     private Context context;
 
     boolean storeAllBlocks;
+    static WorldManager worldManager = null;
 
     public EthereumModule(Context context) {
 
@@ -90,6 +91,7 @@ public class EthereumModule {
         this.storeAllBlocks = storeAllBlocks;
     }
 
+    /*
     @Provides
     @Singleton
     Ethereum provideEthereum(Blockchain blockchain, BlockStore blockStore, Repository repository, AdminInfo adminInfo,
@@ -97,6 +99,26 @@ public class EthereumModule {
                              Provider<PeerClient> peerClientProvider, EthereumListener listener,
                              PeerDiscovery peerDiscovery, Wallet wallet) {
         return new org.ethereum.android.Ethereum(blockchain, blockStore, repository, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider, listener, peerDiscovery, wallet);
+    }
+    */
+
+    @Provides
+    @Singleton
+    WorldManager provideWorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
+            , BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager
+            , PendingState pendingState) {
+        if (worldManager == null) {
+            worldManager = new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
+        }
+        return worldManager;
+    }
+
+    @Provides
+    @Singleton
+    Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo,
+                             ChannelManager channelManager, org.ethereum.manager.BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory,
+                             Provider<PeerClient> peerClientProvider) {
+        return new org.ethereum.facade.EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider);
     }
 
     @Provides
@@ -213,8 +235,9 @@ public class EthereumModule {
 
     @Provides
     @Singleton
-    PendingState providePendingState() {
-        return new PendingStateImpl();
+    PendingState providePendingState(EthereumListener listener, Repository repository,
+                                     BlockStore blockStore, ProgramInvokeFactory programInvokeFactory) {
+        return new PendingStateImpl(listener, repository, blockStore, programInvokeFactory);
     }
 
     @Provides

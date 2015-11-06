@@ -447,4 +447,9 @@ public class Ethereum implements org.ethereum.facade.Ethereum {
 
         blockchain.setExitOn(number);
     }
+
+    @Override
+    public EthereumListener getListener() {
+        return listener;
+    }
 }

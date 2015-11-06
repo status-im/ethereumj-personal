@@ -78,7 +78,7 @@ public class WorldManager {
         this.syncManager = syncManager;
         this.pendingState = pendingState;
 
-        this.init();
+        //this.init();
     }
 
     public void init() {

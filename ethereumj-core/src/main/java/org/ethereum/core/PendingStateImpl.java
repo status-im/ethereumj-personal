@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 
 import javax.annotation.Resource;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.math.BigInteger;
@@ -52,6 +53,7 @@ public class PendingStateImpl implements PendingState {
     public PendingStateImpl() {
     }
 
+    @Inject
     public PendingStateImpl(EthereumListener listener, Repository repository,
                             BlockStore blockStore, ProgramInvokeFactory programInvokeFactory) {
         this.listener = listener;

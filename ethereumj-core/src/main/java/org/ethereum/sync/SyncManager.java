@@ -46,7 +46,7 @@ public class SyncManager {
     private static final long GAP_RECOVERY_TIMEOUT = secondsToMillis(2);
 
     @Resource
-    private Map<SyncStateName, SyncState> syncStates;
+    private Map<SyncStateName, SyncState> syncStates = new IdentityHashMap<>();
     private SyncState state;
     private final Object stateMutex = new Object();
 
@@ -91,6 +91,14 @@ public class SyncManager {
         this.nodeManager = nodeManager;
         this.ethereumListener = ethereumListener;
         this.pool = pool;
+
+        syncStates.put(SyncStateName.IDLE, new IdleState());
+        syncStates.put(SyncStateName.HASH_RETRIEVING, new HashRetrievingState());
+        syncStates.put(SyncStateName.BLOCK_RETRIEVING, new BlockRetrievingState());
+
+        for (SyncState state : syncStates.values()) {
+            ((AbstractSyncState)state).setSyncManager(this);
+        }
     }
 
     public void setChannelManager(ChannelManager channelManager) {

@@ -82,7 +82,6 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
         isEthereumConnected = true;
         ethereumConnector.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
         ethereumConnector.init(getDefaultAccounts());
-        //ethereumConnector.startJsonRpc();
         Node node = SystemProperties.CONFIG.peerActive().get(0);
         ethereumConnector.connect(node.getHost(), node.getPort(), node.getHexId());
     }

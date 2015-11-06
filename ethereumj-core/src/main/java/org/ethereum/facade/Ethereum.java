@@ -177,4 +177,6 @@ public interface Ethereum {
     long getGasPrice();
 
     void exitOn(long number);
+
+    public EthereumListener getListener();
 }
