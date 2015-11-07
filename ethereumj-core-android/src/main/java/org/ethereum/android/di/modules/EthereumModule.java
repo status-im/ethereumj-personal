@@ -6,6 +6,7 @@ import org.ethereum.android.datasource.LevelDbDataSource;
 import org.ethereum.android.db.InMemoryBlockStore;
 import org.ethereum.android.db.OrmLiteBlockStoreDatabase;
 import org.ethereum.config.SystemProperties;
+import org.ethereum.core.Account;
 import org.ethereum.core.Blockchain;
 import org.ethereum.core.BlockchainImpl;
 import org.ethereum.core.PendingState;
@@ -17,7 +18,6 @@ import org.ethereum.datasource.mapdb.MapDBFactoryImpl;
 import org.ethereum.db.BlockStore;
 import org.ethereum.db.RepositoryImpl;
 import org.ethereum.facade.Ethereum;
-import org.ethereum.facade.EthereumImpl;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.manager.AdminInfo;
@@ -28,7 +28,6 @@ import org.ethereum.net.client.PeerClient;
 import org.ethereum.net.eth.handler.Eth60;
 import org.ethereum.net.eth.handler.Eth61;
 import org.ethereum.net.eth.handler.Eth62;
-import org.ethereum.net.eth.handler.EthHandler;
 import org.ethereum.net.eth.handler.EthHandlerFactory;
 import org.ethereum.net.eth.handler.EthHandlerFactoryImpl;
 import org.ethereum.net.p2p.P2pHandler;
@@ -78,6 +77,7 @@ public class EthereumModule {
 
     boolean storeAllBlocks;
     static WorldManager worldManager = null;
+    static Ethereum ethereum = null;
 
     public EthereumModule(Context context) {
 
@@ -107,10 +107,8 @@ public class EthereumModule {
     WorldManager provideWorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
             , BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager
             , PendingState pendingState) {
-        if (worldManager == null) {
-            worldManager = new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
-        }
-        return worldManager;
+
+        return new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
     }
 
     @Provides
@@ -118,7 +116,8 @@ public class EthereumModule {
     Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo,
                              ChannelManager channelManager, org.ethereum.manager.BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory,
                              Provider<PeerClient> peerClientProvider) {
-        return new org.ethereum.facade.EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider);
+
+        return new org.ethereum.android.Ethereum(worldManager, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider);
     }
 
     @Provides
@@ -127,6 +126,12 @@ public class EthereumModule {
                                                    Wallet wallet, AdminInfo adminInfo,
                                                    ParentBlockHeaderValidator parentHeaderValidator, PendingState pendingState, EthereumListener listener) {
         return new BlockchainImpl(blockStore, repository, wallet, adminInfo, parentHeaderValidator, pendingState, listener);
+    }
+
+    @Provides
+    @Singleton
+    Wallet provideWallet(Repository repository, Provider<Account> accountProvider) {
+        return new Wallet(repository, accountProvider);
     }
 
     @Provides

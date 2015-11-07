@@ -22,14 +22,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".TestActivity"
-            android:label="@string/title_activity_test" >
-        </activity>
 
         <service
             android:name=".EthereumRemoteService"
-            android:enabled="true">
+            android:enabled="true"
+            android:process=":ethereum_service">
         </service>
 
     </application>

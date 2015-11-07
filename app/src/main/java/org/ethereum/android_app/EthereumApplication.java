@@ -53,6 +53,7 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
 
         super.onCreate();
         if (ethereumConnector == null) {
+            System.out.println("Creating ethereum connector");
             ethereumConnector = new EthereumConnector(this, EthereumRemoteService.class);
             ethereumConnector.registerHandler(this);
             ethereumConnector.bindService();
@@ -79,16 +80,19 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
     @Override
     public void onConnectorConnected() {
         System.out.println("Connector connected");
-        isEthereumConnected = true;
-        ethereumConnector.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
-        ethereumConnector.init(getDefaultAccounts());
-        Node node = SystemProperties.CONFIG.peerActive().get(0);
-        ethereumConnector.connect(node.getHost(), node.getPort(), node.getHexId());
+        if (!isEthereumConnected) {
+            isEthereumConnected = true;
+            ethereumConnector.addListener(handlerIdentifier, EnumSet.allOf(EventFlag.class));
+            ethereumConnector.init(getDefaultAccounts());
+            //Node node = SystemProperties.CONFIG.peerActive().get(0);
+            //ethereumConnector.connect(node.getHost(), node.getPort(), node.getHexId());
+        }
     }
 
     @Override
     public void onConnectorDisconnected() {
         System.out.println("Connector Disconnected");
+        ethereumConnector.removeListener(handlerIdentifier);
         isEthereumConnected = false;
     }
 
@@ -99,7 +103,7 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
 
     private void addLogEntry(long timestanp, String message) {
         Date date = new Date(timestanp);
-        consoleLog += dateFormatter.format(date) + " -> " + message + "\n";
+        consoleLog += dateFormatter.format(date) + " -> " + (message.length() > 100 ? message.substring(0, 100) + "..." : message) + "\n";
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -116,47 +120,69 @@ public class EthereumApplication extends MultiDexApplication implements Connecto
                     return false;
                 EventData eventData;
                 MessageEventData messageEventData;
+                String logMessage;
+                long time;
                 switch (event) {
                     case EVENT_BLOCK:
                         BlockEventData blockEventData = data.getParcelable("data");
-                        addLogEntry(blockEventData.registeredTime, "Added block with " + blockEventData.receipts.size() + " transaction receipts.");
+                        logMessage = "Added block with " + blockEventData.receipts.size() + " transaction receipts.";
+                        time = blockEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_HANDSHAKE_PEER:
                         messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Peer " + new HelloMessage(messageEventData.message).getPeerId() + " said hello");
+                        logMessage = "Peer " + new HelloMessage(messageEventData.message).getPeerId() + " said hello";
+                        time = messageEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_NO_CONNECTIONS:
                         eventData = data.getParcelable("data");
-                        addLogEntry(eventData.registeredTime, "No connections");
+                        logMessage = "No connections";
+                        time = eventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_PEER_DISCONNECT:
                         PeerDisconnectEventData peerDisconnectEventData = data.getParcelable("data");
-                        addLogEntry(peerDisconnectEventData.registeredTime, "Peer " + peerDisconnectEventData.host + ":" + peerDisconnectEventData.port + " disconnected.");
+                        logMessage = "Peer " + peerDisconnectEventData.host + ":" + peerDisconnectEventData.port + " disconnected.";
+                        time = peerDisconnectEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_PENDING_TRANSACTIONS_RECEIVED:
                         PendingTransactionsEventData pendingTransactionsEventData = data.getParcelable("data");
-                        addLogEntry(pendingTransactionsEventData.registeredTime, "Received " + pendingTransactionsEventData.transactions.size() + " pending transactions");
+                        logMessage = "Received " + pendingTransactionsEventData.transactions.size() + " pending transactions";
+                        time = pendingTransactionsEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_RECEIVE_MESSAGE:
                         messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Received message: " + messageEventData.messageClass.getName());
+                        logMessage = "Received message: " + messageEventData.messageClass.getName();
+                        time = messageEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_SEND_MESSAGE:
                         messageEventData = data.getParcelable("data");
-                        addLogEntry(messageEventData.registeredTime, "Sent message: " + messageEventData.messageClass.getName());
+                        logMessage = "Sent message: " + messageEventData.messageClass.getName();
+                        time = messageEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_SYNC_DONE:
                         eventData = data.getParcelable("data");
-                        addLogEntry(eventData.registeredTime, "Sync done");
+                        logMessage = "Sync done";
+                        time = eventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_VM_TRACE_CREATED:
                         VMTraceCreatedEventData vmTraceCreatedEventData = data.getParcelable("data");
-                        addLogEntry(vmTraceCreatedEventData.registeredTime, "CM trace created: " + vmTraceCreatedEventData.transactionHash + " - " + vmTraceCreatedEventData.trace);
+                        logMessage = "VM trace created: " + vmTraceCreatedEventData.transactionHash;// + " - " + vmTraceCreatedEventData.trace);
+                        time = vmTraceCreatedEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                     case EVENT_TRACE:
                         TraceEventData traceEventData = data.getParcelable("data");
-                        System.out.println("We got a trace message: " + traceEventData.message);
-                        addLogEntry(traceEventData.registeredTime, traceEventData.message);
+                        //System.out.println("We got a trace message: " + traceEventData.message);
+                        logMessage = traceEventData.message;
+                        time = traceEventData.registeredTime;
+                        addLogEntry(time, logMessage);
                         break;
                 }
                 break;

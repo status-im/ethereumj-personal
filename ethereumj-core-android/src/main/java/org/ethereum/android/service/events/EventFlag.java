@@ -55,6 +55,8 @@ public enum EventFlag {
     /**
      * VM trace created event
      */
-    EVENT_VM_TRACE_CREATED
+    EVENT_VM_TRACE_CREATED,
+
+    EVENT_ETHEREUM_CREATED
 
 }

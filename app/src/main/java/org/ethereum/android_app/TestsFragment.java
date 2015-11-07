@@ -131,7 +131,6 @@ public class TestsFragment extends Fragment implements ConnectorHandler {
     @Override
     public void onConnectorConnected() {
 
-        EthereumApplication app = (EthereumApplication)getActivity().getApplication();
         //app.ethereum.addListener(identifier, EnumSet.allOf(EventFlag.class));
         //Node node = SystemProperties.CONFIG.peerActive().get(0);
         //app.ethereum.connect(node.getHost(), node.getPort(), node.getHexId());

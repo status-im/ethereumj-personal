@@ -25,7 +25,7 @@ public class EthereumConnector extends ServiceConnector {
         super(context, serviceClass);
     }
 
-    public void init(List<String> privateKeys) {
+    public void init(String identifier, List<String> privateKeys) {
 
         if (!isBound) {
             System.out.println(" Not bound ???");
@@ -33,6 +33,8 @@ public class EthereumConnector extends ServiceConnector {
         }
 
         Message msg = Message.obtain(null, EthereumServiceMessage.MSG_INIT, 0, 0);
+        msg.replyTo = clientMessenger;
+        msg.obj = getIdentifierBundle(identifier);
         Bundle data = new Bundle();
         data.putStringArrayList("privateKeys", (ArrayList) privateKeys);
         msg.setData(data);
@@ -351,7 +353,7 @@ public class EthereumConnector extends ServiceConnector {
         try {
             serviceMessenger.send(msg);
         } catch (RemoteException e) {
-            logger.error("Exception sending message(addListener) to service: " + e.getMessage());
+            logger.error("Exception sending message(removeListener) to service: " + e.getMessage());
         }
     }
 

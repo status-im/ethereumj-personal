@@ -41,23 +41,23 @@ import static org.ethereum.config.SystemProperties.CONFIG;
 @Singleton
 public class EthereumImpl implements Ethereum {
 
-    private static final Logger logger = LoggerFactory.getLogger("facade");
+    protected static final Logger logger = LoggerFactory.getLogger("facade");
 
-    WorldManager worldManager;
+    protected WorldManager worldManager;
 
-    AdminInfo adminInfo;
+    protected AdminInfo adminInfo;
 
-    ChannelManager channelManager;
+    protected ChannelManager channelManager;
 
-    PeerServer peerServer;
+    protected PeerServer peerServer;
 
-    BlockLoader blockLoader;
+    protected BlockLoader blockLoader;
 
-    ProgramInvokeFactory programInvokeFactory;
+    protected ProgramInvokeFactory programInvokeFactory;
 
-    Provider<PeerClient> peerClientProvider;
+    protected Provider<PeerClient> peerClientProvider;
 
-    private GasPriceTracker gasPriceTracker = new GasPriceTracker();
+    protected GasPriceTracker gasPriceTracker = new GasPriceTracker();
 
     @Inject
     public EthereumImpl(WorldManager worldManager, AdminInfo adminInfo,
@@ -72,7 +72,6 @@ public class EthereumImpl implements Ethereum {
         this.peerClientProvider = peerClientProvider;
         this.programInvokeFactory = programInvokeFactory;
 
-        this.init();
     }
 
     public void init() {

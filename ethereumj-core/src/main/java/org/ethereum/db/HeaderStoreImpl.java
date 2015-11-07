@@ -59,6 +59,28 @@ public class HeaderStoreImpl implements HeaderStore {
                     init.signalAll();
 
                     logger.info("Header store loaded, size [{}]", size());
+                } catch(Exception e) {
+                    logger.error("Error creating header store: " + e.getMessage());
+                    try {
+                        db = mapDBFactory.createTransactionalDB(dbName());
+                        headers = db.hashMapCreate(STORE_NAME)
+                                .keySerializer(Serializer.LONG)
+                                .valueSerializer(Serializers.BLOCK_HEADER)
+                                .makeOrGet();
+
+                        if (CONFIG.databaseReset()) {
+                            headers.clear();
+                            db.commit();
+                        }
+
+                        index = new BlockQueueImpl.ArrayListIndex(headers.keySet());
+                        initDone = true;
+                        init.signalAll();
+
+                        logger.info("Header store loaded, size [{}]", size());
+                    } catch (Exception e1) {
+                        logger.error("Second error creating header store: " + e1.getMessage());
+                    }
                 } finally {
                     initLock.unlock();
                 }

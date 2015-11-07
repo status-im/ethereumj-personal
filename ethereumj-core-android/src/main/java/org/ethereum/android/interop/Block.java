@@ -17,7 +17,7 @@ public class Block extends org.ethereum.core.Block implements Parcelable {
 
     public Block(Parcel in) {
 
-        super(null);
+        super(new byte[0]);
         rlpEncoded = new byte[in.readInt()];
         in.readByteArray(rlpEncoded);
     }

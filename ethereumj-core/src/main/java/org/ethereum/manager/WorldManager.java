@@ -18,6 +18,7 @@ import org.spongycastle.util.encoders.Hex;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
@@ -35,7 +36,7 @@ import static org.ethereum.crypto.HashUtil.EMPTY_TRIE_HASH;
 @Singleton
 public class WorldManager {
 
-    private static final Logger logger = LoggerFactory.getLogger("general");
+    private static final Logger logger = LoggerFactory.getLogger("worldManager");
 
     private EthereumListener listener;
 
@@ -78,18 +79,16 @@ public class WorldManager {
         this.syncManager = syncManager;
         this.pendingState = pendingState;
 
-        //this.init();
     }
 
     public void init() {
-        byte[] cowAddr = HashUtil.sha3("cow".getBytes());
-        wallet.importKey(cowAddr);
-
-        String secret = CONFIG.coinbaseSecret();
-        byte[] cbAddr = HashUtil.sha3(secret.getBytes());
-        wallet.importKey(cbAddr);
 
         loadBlockchain();
+
+
+    }
+
+    public void initSync() {
 
         // must be initialized after blockchain is loaded
         syncManager.init();
@@ -163,9 +162,16 @@ public class WorldManager {
         Block bestBlock = blockStore.getBestBlock();
         if (bestBlock == null) {
             logger.info("DB is empty - adding Genesis");
-
+            listener.trace("Importing Genesis");
             Genesis genesis = (Genesis)Genesis.getInstance();
-            for (ByteArrayWrapper key : genesis.getPremine().keySet()) {
+            Set<ByteArrayWrapper> keys = genesis.getPremine().keySet();
+            int size = keys.size();
+            int index = 0;
+            for (ByteArrayWrapper key : keys) {
+                index++;
+                if (index % 500 == 0 || index == size) {
+                    listener.trace("Importing genesis accounts: " + index + "/" + size);
+                }
                 repository.createAccount(key.getData());
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
@@ -174,11 +180,12 @@ public class WorldManager {
 
             blockchain.setBestBlock(Genesis.getInstance());
             blockchain.setTotalDifficulty(Genesis.getInstance().getCumulativeDifficulty());
-
-            listener.onBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>() );
+            blockStore.flush();
+            listener.onBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
             repository.dumpState(Genesis.getInstance(), 0, 0, null);
 
-            logger.info("Genesis block loaded");
+
+            logger.info("Genesis block imported");
         } else {
 
             blockchain.setBestBlock(bestBlock);

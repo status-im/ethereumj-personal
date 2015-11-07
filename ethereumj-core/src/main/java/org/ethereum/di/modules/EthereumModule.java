@@ -79,14 +79,16 @@ public class EthereumModule {
     @Singleton
     Ethereum provideEthereum(WorldManager worldManager, AdminInfo adminInfo, ChannelManager channelManager,
                              BlockLoader blockLoader, ProgramInvokeFactory programInvokeFactory, Provider<PeerClient> peerClientProvider) {
-        return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider);
+        return null;
+        //return new EthereumImpl(worldManager, adminInfo, channelManager, blockLoader, programInvokeFactory, peerClientProvider);
     }
 
     @Provides
     @Singleton
     WorldManager provideWorldManager(EthereumListener listener, Blockchain blockchain, Repository repository, Wallet wallet, PeerDiscovery peerDiscovery
             ,BlockStore blockStore, ChannelManager channelManager, AdminInfo adminInfo, NodeManager nodeManager, SyncManager syncManager, PendingState pendingState) {
-        return new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
+        return null;
+        //return new WorldManager(listener, blockchain, repository, wallet, peerDiscovery, blockStore, channelManager, adminInfo, nodeManager, syncManager, pendingState);
     }
 
     @Provides

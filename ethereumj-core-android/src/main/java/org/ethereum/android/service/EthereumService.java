@@ -4,6 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.os.Messenger;
 
 import org.ethereum.android.di.components.DaggerEthereumComponent;
 import org.ethereum.android.di.components.EthereumComponent;
@@ -17,13 +18,12 @@ import org.ethereum.android.service.events.PeerDisconnectEventData;
 import org.ethereum.android.service.events.PendingTransactionsEventData;
 import org.ethereum.android.service.events.TraceEventData;
 import org.ethereum.android.service.events.VMTraceCreatedEventData;
-import org.ethereum.config.SystemProperties;
 import org.ethereum.core.Genesis;
 import org.ethereum.core.Transaction;
 import org.ethereum.core.TransactionExecutionSummary;
 import org.ethereum.core.TransactionReceipt;
 import org.ethereum.crypto.HashUtil;
-import org.ethereum.facade.Ethereum;
+import org.ethereum.android.Ethereum;
 import org.ethereum.net.eth.message.StatusMessage;
 import org.ethereum.net.p2p.HelloMessage;
 import org.ethereum.net.rlpx.Node;
@@ -85,10 +85,14 @@ public class EthereumService extends Service {
     protected class InitializeTask extends AsyncTask<Void, Void, Void> {
 
         protected List<String> privateKeys = null;
+        protected Object reply = null;
+        protected Messenger replyTo = null;
 
-        public InitializeTask(List<String> privateKeys) {
+        public InitializeTask(List<String> privateKeys, Messenger replyTo, Object reply) {
 
             this.privateKeys = privateKeys;
+            this.replyTo = replyTo;
+            this.reply = reply;
         }
 
         protected Void doInBackground(Void... args) {
@@ -99,14 +103,16 @@ public class EthereumService extends Service {
 
         protected void onPostExecute(Void results) {
 
-            onEthereumCreated(privateKeys);
+            onEthereumCreated(privateKeys, replyTo, reply);
         }
     }
 
-    protected void onEthereumCreated(List<String> privateKeys) {
+    protected void onEthereumCreated(List<String> privateKeys, Messenger replyTo, Object reply) {
 
-        if (ethereum != null) {
+        /*
+        if (false && ethereum != null) {
             if (privateKeys == null || privateKeys.size() == 0) {
+                privateKeys = new ArrayList<>();
                 byte[] cowAddr = HashUtil.sha3("cow".getBytes());
                 privateKeys.add(Hex.toHexString(cowAddr));
 
@@ -114,14 +120,15 @@ public class EthereumService extends Service {
                 byte[] cbAddr = HashUtil.sha3(secret.getBytes());
                 privateKeys.add(Hex.toHexString(cbAddr));
             }
-            //ethereum.init(privateKeys);
-            ethereum.init();
+            ethereum.init(privateKeys);
             broadcastEvent(EventFlag.EVENT_SYNC_DONE, new EventData());
         }
+        */
     }
 
     protected void createEthereum() {
 
+        /*
         System.setProperty("sun.arch.data.model", "32");
         System.setProperty("leveldb.mmap", "false");
 
@@ -140,12 +147,13 @@ public class EthereumService extends Service {
         component = DaggerEthereumComponent.builder()
                 .ethereumModule(new EthereumModule(this))
                 .build();
-        ethereum = (Ethereum)component.ethereum();
+        ethereum = component.ethereum();
         ethereum.addListener(new EthereumListener());
         PeersPool peersPool = component.peersPool();
         peersPool.setEthereum(ethereum);
         ChannelManager channelManager = component.channelManager();
         channelManager.setEthereum(ethereum);
+        */
     }
 
     @Override
