@@ -55,8 +55,6 @@ public class Channel {
 
     private final static Logger logger = LoggerFactory.getLogger("net");
 
-    ChannelManager channelManager;
-
     private MessageQueue msgQueue;
 
     private P2pHandler p2pHandler;
@@ -81,10 +79,9 @@ public class Channel {
     private boolean discoveryMode;
 
     @Inject
-    public Channel(ChannelManager channelManager, MessageQueue msgQueue, P2pHandler p2pHandler
+    public Channel(MessageQueue msgQueue, P2pHandler p2pHandler
             , ShhHandler shhHandler, BzzHandler bzzHandler, MessageCodec messageCodec
             , NodeManager nodeManager, EthHandlerFactory ethHandlerFactory) {
-        this.channelManager = channelManager;
         this.msgQueue = msgQueue;
         this.p2pHandler = p2pHandler;
         this.shhHandler = shhHandler;

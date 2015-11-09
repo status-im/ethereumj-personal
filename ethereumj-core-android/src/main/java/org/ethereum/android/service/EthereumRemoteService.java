@@ -231,13 +231,35 @@ public class EthereumRemoteService extends EthereumService {
         if (ethereum != null) {
             System.out.println("Loading genesis");
             broadcastEvent(EventFlag.EVENT_TRACE, new TraceEventData("Loading genesis block. This may take a few minutes..."));
+            /*
             String genesisFile = CONFIG.genesisInfo();
+            long startTime = System.nanoTime();
             try {
-                InputStream is = getApplication().getAssets().open("genesis/" + genesisFile);
-                Genesis.androidGetInstance(is);
+                InputStream genesis = getApplication().getAssets().open("genesis/" + genesisFile);
+                Genesis.androidGetInstance(genesis);
+                genesis.close();
             } catch (Exception e) {
                 System.out.println(e.getMessage());
             }
+            long endTime = System.nanoTime();
+            System.out.println((endTime - startTime)/1000000);
+            Genesis.reset();
+            */
+            long startTime1 = System.nanoTime();
+            try {
+                InputStream genesis = getApplication().getAssets().open("genesis/genesis.bin");
+                InputStream premine = getApplication().getAssets().open("genesis/premine.bin");
+                InputStream roothash = getApplication().getAssets().open("genesis/roothash.bin");
+                Genesis.binaryGetInstance(genesis, premine, roothash);
+                genesis.close();
+                premine.close();
+                roothash.close();
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+            }
+            long endTime1 = System.nanoTime();
+            System.out.println((endTime1 - startTime1)/1000000);
+
             System.out.println("Genesis loaded");
             if (privateKeys == null || privateKeys.size() == 0) {
                 privateKeys = new ArrayList<>();

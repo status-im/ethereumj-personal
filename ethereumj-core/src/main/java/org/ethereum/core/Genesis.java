@@ -9,7 +9,13 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +41,7 @@ import static org.ethereum.util.ByteUtil.wrap;
  * <p>
  * See Yellow Paper: http://www.gavwood.com/Paper.pdf (Appendix I. Genesis Block)
  */
-public class Genesis extends Block {
+public class Genesis extends Block implements Serializable {
 
     private Map<ByteArrayWrapper, AccountState> premine = new HashMap<>();
 
@@ -44,6 +50,10 @@ public class Genesis extends Block {
     public static long NUMBER = 0;
 
     private static Block instance;
+
+    public Genesis(byte[] rlpEncoded) {
+        super(rlpEncoded);
+    }
 
     public Genesis(byte[] parentHash, byte[] unclesHash, byte[] coinbase, byte[] logsBloom,
                    byte[] difficulty, long number, long gasLimit,
@@ -68,11 +78,35 @@ public class Genesis extends Block {
         return instance;
     }
 
+    public static void reset() {
+        instance = null;
+    }
+
+    public static Block binaryGetInstance(InputStream genesis, InputStream premine, InputStream roothash) {
+        if (instance == null) {
+            instance = GenesisLoader.loadBinaryGenesis(genesis, premine, roothash);
+        }
+        return instance;
+    }
+
     public Map<ByteArrayWrapper, AccountState> getPremine() {
         return premine;
     }
 
     public void setPremine(Map<ByteArrayWrapper, AccountState> premine) {
         this.premine = premine;
+    }
+
+    public static byte[] serialize(Object obj) throws IOException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        ObjectOutputStream o = new ObjectOutputStream(b);
+        o.writeObject(obj);
+        return b.toByteArray();
+    }
+
+    public static Object deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream b = new ByteArrayInputStream(bytes);
+        ObjectInputStream o = new ObjectInputStream(b);
+        return o.readObject();
     }
 }

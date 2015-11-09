@@ -5,11 +5,12 @@ import org.ethereum.util.RLPList;
 
 import org.spongycastle.util.encoders.Hex;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 
 import static org.ethereum.crypto.HashUtil.*;
 
-public class AccountState {
+public class AccountState implements Serializable {
 
     private byte[] rlpEncoded;
 

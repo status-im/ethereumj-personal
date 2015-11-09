@@ -167,6 +167,7 @@ public class WorldManager {
             Set<ByteArrayWrapper> keys = genesis.getPremine().keySet();
             int size = keys.size();
             int index = 0;
+            long startTime0 = System.nanoTime();
             for (ByteArrayWrapper key : keys) {
                 index++;
                 if (index % 500 == 0 || index == size) {
@@ -175,6 +176,8 @@ public class WorldManager {
                 repository.createAccount(key.getData());
                 repository.addBalance(key.getData(), genesis.getPremine().get(key).getBalance());
             }
+            long endTime0 = System.nanoTime();
+            System.out.println("Import accounts time: " + ((endTime0 - startTime0) / 1000000));
 
             blockStore.saveBlock(Genesis.getInstance(), Genesis.getInstance().getCumulativeDifficulty(), true);
 
@@ -183,7 +186,7 @@ public class WorldManager {
             blockStore.flush();
             listener.onBlock(Genesis.getInstance(), new ArrayList<TransactionReceipt>());
             repository.dumpState(Genesis.getInstance(), 0, 0, null);
-
+            repository.flush();
 
             logger.info("Genesis block imported");
         } else {
